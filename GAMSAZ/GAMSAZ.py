@@ -5,6 +5,8 @@ import argparse as ap
 import os
 import sys
 
+from HydraLib.HydraException import HydraPluginError
+
 from GAMSexport import GAMSexport
 
 
@@ -66,6 +68,8 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-m', '--gms-file',
                         help='''Full path to the GAMS model (*.gms) used for
                         the simulation.''')
+    parser.add_argument('-o', '--output',
+                        help='''Output file containing exported data''')
     parser.add_argument('-nn', '--node-node', action='store_true',
                         help="""(Default) Export links as 'from_name .
                         end_name'.""")
