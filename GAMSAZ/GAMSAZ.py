@@ -89,7 +89,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='''Time axis for the modelling period (a list of
                         comma separated time stamps).''')
 
-    parser.add_argument('-e', '--export-only',
+    parser.add_argument('-e', '--export-only', action='store_true',
                         help='''Export data to file, don't run the model''')
     # Optional arguments
     parser.add_argument('-u', '--server-url',
