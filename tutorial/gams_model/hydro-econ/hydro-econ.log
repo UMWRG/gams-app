@@ -1,0 +1,46 @@
+
+--- Job hydro-econ.gms Start 05/02/14 16:09:34 24.1.3 r41464 WEX-WEI x86_64/MS Windows
+GAMS 24.1.3   Copyright (C) 1987-2013 GAMS Development. All rights reserved
+*** License File has expired 133 days ago
+*** More than 30 days since expiration, sorry...
+*** System downgraded to demonstration mode
+***
+*** Contact your distributor or GAMS Development Corp
+*** 202-342-0180, -0181 fax, support@gams.com
+*** GAMS Base Module 24.1.3 r41464 Released Jul 26, 2013 WEI x86_64/MS Windows 
+***
+*** GAMS Release     : 24.1.3 r41464 WEX-WEI x86_64/MS Windows
+*** Release Date     : Released Jul 26, 2013
+*** License Date     : May 30, 2013
+*** To use this release, the maintenance expiration date for
+*** your license must be later than the License Date (May 30, 2013).
+*** System Directory : C:\GAMS\win64\24.1\
+*** License          : C:\GAMS\win64\24.1\gamslice.txt
+***
+*** Course License                                 S131120:0513AN-GEN
+*** University College London, Dep. of Civil, Environmental & Geomati
+*** DC9412  01COCLM5                                             1111
+*** License for teaching and research at degree granting institutions
+***
+--- Starting compilation
+--- hydro-econ.gms(22) 2 Mb
+--- .hydraoutput.txt(461) 3 Mb
+--- hydro-econ.gms(46) 3 Mb
+--- .Subsets.txt(16) 3 Mb
+--- hydro-econ.gms(49) 3 Mb
+--- .Aggregate_Parameters.txt(6) 3 Mb 1 Error
+*** Error 140 in F:\work\HYDRA\GAMS\hydro-econ_onefile\Aggregate_Parameters.txt
+    Unknown symbol
+--- .Aggregate_Parameters.txt(45) 3 Mb
+--- hydro-econ.gms(189) 3 Mb 2 Errors
+*** Error 257 in F:\work\HYDRA\GAMS\hydro-econ_onefile\hydro-econ.gms
+    Solve statement not checked because of previous errors
+--- hydro-econ.gms(193) 3 Mb 3 Errors
+*** Error 141 in F:\work\HYDRA\GAMS\hydro-econ_onefile\hydro-econ.gms
+    Symbol neither initialized nor assigned
+       A wild shot: You may have spurious commas in the explanatory
+       text of a declaration. Check symbol reference list.
+--- hydro-econ.gms(222) 3 Mb 3 Errors
+*** Status: Compilation error(s)
+--- Job hydro-econ.gms Stop 05/02/14 16:09:35 elapsed 0:00:00.457
+Exit code = 2

@@ -1,0 +1,89 @@
+<plugin_info>
+    <plugin_name>GAMS Export Plugin</plugin_name>
+    <plugin_dir>GAMSexport.py</plugin_dir>
+    <plugin_description>Export a network from Hydra to a gams input text file.
+
+Written by Philipp Meier philipp@diemeiers.ch
+(c) Copyright 2014, University of Manchester.
+</plugin_description>
+    <smallicon>icon.gif</smallicon>
+    <largeicon>icon.gif</largeicon>
+    <plugin_epilog>For more information visit www.hydraplatform.org</plugin_epilog>
+    <mandatory_args>
+        <arg>
+            <name>network</name>
+            <switch>-t</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help> ID of the network that will be exported.</help>
+        </arg>
+        <arg>
+            <name>scenario</name>
+            <switch>-s</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help> ID of the scenario that will be exported.</help>
+        </arg>
+        <arg>
+            <name>template</name>
+            <switch>-tp</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
+        </arg>
+        <arg>
+            <name>output</name>
+            <switch>-o</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Filename of the output file.</help>
+        </arg>
+    </mandatory_args>
+   <non_mandatory_args>
+       <arg>
+           <name>group-nodes-by</name>
+           <switch>-gn</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>Group nodes by this attribute(s).</help>
+        </arg>
+       <arg>
+           <name>group-links-by</name>
+           <switch>-gl</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>Group links by this attribute(s).</help>
+        </arg>
+        <arg>
+           <name>start-date</name>
+           <switch>-st</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>Start date of the time period used for simulation.</help>
+        </arg>
+         <arg>
+           <name>end-date</name>
+           <switch>-en</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>End date of the time period used for simulation.</help>
+        </arg>
+         <arg>
+           <name>time-step</name>
+           <switch>-dt</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
+        </arg>
+         <arg>
+           <name>time-axis</name>
+           <switch>-tx</switch>
+           <multiple>N</multiple>
+           <argtype>string</argtype>
+           <help>Time axis for the modelling period (a list of comma separated time stamps).</help>
+        </arg>
+    </non_mandatory_args> 
+    <switches>
+    </switches>
+ </plugin_info>
+

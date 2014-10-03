@@ -1,0 +1,78 @@
+[PROJECT]
+
+[RP:UNTITLED_2]
+1=
+
+[GDXDISP: MassBalance_nonstorage Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Z Var 0]
+PlaneDim=0
+RowDim=0
+Squeeze=1
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Q Var 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+Order=1,2,3,4
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: MassBalance_storage Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: S Var 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[RP:WATERSYS-DEMO VMK1]
+1=
+
+[RP:UNTITLED_1]
+1=
+
+[RP:HYDRO-ECON]
+1=
+
+[RP:WATERSYS-DEMO (TIME-STEP VERSION)]
+1=
+
+[RP:TIME-STEP VERSION]
+1=
+
+[MRUFILES]
+1=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\Time-step by time-step version\WaterSys-Demo (time-step version).lst
+2=D:\My Manchester\E-mails\From Philipp\hydro-econ_onefile\hydro-econ.gms
+3=D:\My Manchester\E-mails\From Philipp\hydro-econ_onefile\Untitled_1.gms
+4=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\WaterSys-Demo (time-step version).lst
+5=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\WaterSys-Demo vMK1.gms
+6=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\Untitled_1.gms
+7=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\genResults.gdx
+
+[OPENWINDOW_1]
+FILE0=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\Time-step by time-step version\time-step version.gms
+FILE1=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\Time-step by time-step version\time-step version.lst
+FILE2=D:\My Manchester\E-mails\From Philipp\new example\WaterSys-Demo\Time-step by time-step version\time-step version.lst
+MAXIM=0
+TOP=0
+LEFT=0
+HEIGHT=635
+WIDTH=751

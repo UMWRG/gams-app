@@ -1,0 +1,46 @@
+
+--- Job time-step version.gms Start 09/22/14 18:02:05
+GAMS Rev 227  Copyright (C) 1987-2008 GAMS Development. All rights reserved
+Licensee: Julien Harou                                   S111125:0840AN-WIN
+          University College London, Dep. of Civil, Environmental & GDC9389
+          License for teaching and research at degree granting institutions
+--- Starting compilation
+--- time-step version.gms(8) 2 Mb
+--- .Input.txt(228) 3 Mb
+--- time-step version.gms(86) 3 Mb
+--- Starting execution: elapsed 0:00:00.004
+--- time-step version.gms(135) 4 Mb
+--- Generating LP model WaterSys_Demo
+--- time-step version.gms(307) 4 Mb
+---   138 rows  55 columns  226 non-zeroes
+--- time-step version.gms(307) 4 Mb
+--- Executing CPLEX: elapsed 0:00:00.013
+
+ILOG CPLEX       May  1, 2008 22.7.2 WEX 4792.4799 WEI x86_64/MS Windows
+Cplex 11.0.1, GAMS Link 34 
+
+Reading data...
+Starting Cplex...
+Row 'MassBalance_storage(Desal1.1)' infeasible, all entries at implied bounds.
+Presolve time =    0.00 sec.
+Presolve found the problem infeasible or unbounded.
+Rerunning with presolve turned off.
+Initializing dual steep norms . . .
+
+Iteration log . . .
+Iteration:     1   Dual infeasibility =             0.000000
+Iteration:     2   Dual objective     =             0.000000
+Dual infeasible or unbounded. Switching to primal to aid diagnosis.
+
+Iteration log . . .
+Iteration:     1    Infeasibility =          5408.654971
+
+Model has been proven infeasible.
+--- Restarting execution
+--- time-step version.gms(307) 2 Mb
+--- Reading solution for model WaterSys_Demo
+--- time-step version.gms(307) 2 Mb
+--- Executing after solve: elapsed 0:00:00.093
+--- time-step version.gms(309) 3 Mb
+*** Status: Normal completion
+--- Job time-step version.gms Stop 09/22/14 18:02:05 elapsed 0:00:00.096

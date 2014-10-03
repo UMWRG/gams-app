@@ -1,0 +1,74 @@
+$TITLE    Priority_based_time_step.gms
+* vMK3
+
+** ----------------------------------------------------------------------
+**  Loading Data: sets, parameters and tables
+** ----------------------------------------------------------------------
+
+$        include "input.txt";
+
+** ----------------------------------------------------------------------
+**  Model variables and equations
+** ----------------------------------------------------------------------
+
+VARIABLES
+Q(i,j,t) flow in each link in each period
+S(i,t) storage volume in storage nodes
+Z objective function
+;
+
+POSITIVE VARIABLES
+Q
+S
+;
+
+EQUATIONS
+MassBalance_nonstorage(mb_ns_nodes,t)
+MassBalance_storage(mb_s_nodes,t)
+MinFlow(i,j,t)
+MaxFlow(i,j,t)
+Objective
+;
+
+* Objective function for time step by time step formulation
+
+Objective ..
+    Z =E= SUM(t,SUM((i,j)$links(i,j), Q(i,j,t) * cost(i,j,t)));
+
+* Mass balance constrait for non-storage nodes
+
+MassBalance_nonstorage(mb_ns_nodes,t) ..
+    SUM(j$links(j,mb_ns_nodes), Q(j,mb_ns_nodes,t) * flowmultiplier(j,mb_ns_nodes,t))
+    - SUM(j$links(mb_ns_nodes,j), Q(mb_ns_nodes,j,t))
+    =E= 0;
+
+* Storage constraint for storage nodes:
+
+MassBalance_storage(mb_s_nodes,t$(ord(t) GT 1)..
+
+         SUM(j$Connect(j,mb_s_nodes), Q(j,mb_s_nodes,t))
+         - SUM(j$Connect(mb_s_nodes,j), Q(mb_s_nodes,j,t) * flowmultiplier(mb_s_nodes,j,t) )
+         +S(mb_s_nodes,t)
+         -S(mb_s_nodes,t--1)
+         =E= 0;
+
+* Lower and upper bound of possible flow in links
+
+MinFlow(i,j,t)$links(i,j) ..
+    Q(i,j,t) =G= lower(i,j,t);
+
+MaxFlow(i,j,t)$links(i,j) ..
+    Q(i,j,t) =L= upper(i,j,t);
+
+** ----------------------------------------------------------------------
+**  Model declaration and solve statements
+** ----------------------------------------------------------------------
+
+MODEL Priority_based_time_step /ALL/;
+
+SOLVE Priority_based_time_step USING LP MINIMIZING Z;
+
+execute_unload "genResults.gdx" ,
+    Q,
+    MassBalance,
+    z

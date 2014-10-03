@@ -1,0 +1,55 @@
+<plugin_info>
+    <plugin_name>GAMS Import Plugin</plugin_name>
+    <plugin_dir>GAMSimport.py</plugin_dir>
+    <plugin_description>Import a gdx results file into Hydra.
+
+Written by Philipp Meier philipp@diemeiers.ch
+(c) Copyright 2014, University of Manchester.
+</plugin_description>
+    <smallicon>icon.gif</smallicon>
+    <largeicon>icon.gif</largeicon>
+    <plugin_epilog>For more information visit www.hydraplatform.org</plugin_epilog>
+    <mandatory_args>
+        <arg>
+            <name>network</name>
+            <switch>-t</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>ID of the network where results will be imported to. This coincides with the network exported to GAMS..</help>
+        </arg>
+        <arg>
+            <name>scenario</name>
+            <switch>-s</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help> ID of the underlying scenario used for the most recent simulation run.</help>
+        </arg>
+        <arg>
+            <name>gdx-file</name>
+            <switch>-f</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>GDX file containing GAMS results</help>
+        </arg>
+        <arg>
+            <name>gams-model</name>
+            <switch>-m</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Full path to the GAMS model (*.gms) used for the simulation.</help>
+        </arg>
+        
+    </mandatory_args>
+   <non_mandatory_args>
+        <arg>
+            <name>gams-path</name>
+            <switch>-G</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>File path of the GAMS installation (the folder containing gams.exe or equivalent). This is only necessary if gams is installed in a non-standard location.</help>
+        </arg>
+    </non_mandatory_args> 
+    <switches>
+    </switches>
+ </plugin_info>
+
