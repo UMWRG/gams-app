@@ -1,0 +1,7 @@
+Name       , From   , To   , Type, cost       , flowmultiplier       , min_flow       , max_flow       , Description
+Units      ,        ,      ,     ,            , -                    ,                ,                ,
+StartPt_SR1, StartPt, SR1  , link, TS/cost.csv, TS/flowmultiplier.csv, TS/min_flow.csv, TS/max_flow.csv,
+SR1_J1     , SR1    , J1   , link, TS/cost.csv, TS/flowmultiplier.csv, TS/min_flow.csv, TS/max_flow.csv,
+SR1_Ag1    , SR1    , Ag1  , link, TS/cost.csv, TS/flowmultiplier.csv, TS/min_flow.csv, TS/max_flow.csv,
+J1_Urb1    , J1     , Urb1 , link, TS/cost.csv, TS/flowmultiplier.csv, TS/min_flow.csv, TS/max_flow.csv,
+J1_EndPt   , J1     , EndPt, link, TS/cost.csv, TS/flowmultiplier.csv, TS/min_flow.csv, TS/max_flow.csv,

@@ -1,0 +1,8 @@
+Name    , X , Y , Type , min_stor        , max_stor        , init_stor , S      , delivery      , consumption_coeff
+Units   ,   ,   ,      , 1e6m^3          , 1e6m^3          , 1e6m^3    , 1e6m^3 , 1e6m^3 mon^-1 , -
+J1      ,   ,   , jn   ,                 ,                 ,           ,        ,               ,
+Urb1    ,   ,   , ur   ,                 ,                 ,           ,        , NULL          , 1
+Ag1     ,   ,   , ag   ,                 ,                 ,           ,        , NULL          , 1
+EndPt   ,   ,   , jn   ,                 ,                 ,           ,        ,               ,
+StartPt ,   ,   , jn   ,                 ,                 ,           ,        ,               ,
+SR1     ,   ,   , sr   , TS/min_stor.csv , TS/max_stor.csv , 500       , NULL   ,               ,

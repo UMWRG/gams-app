@@ -1,0 +1,5 @@
+Name, Type, Description
+Units, , 
+storage,, Nodes that feature a storage
+no_storage,, Nodes that don't feature a storage
+dem_nodes,, Demand nodes
