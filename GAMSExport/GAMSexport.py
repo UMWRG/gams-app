@@ -291,7 +291,7 @@ class GAMSexport(object):
                                                    'include_data': 'Y',
                                                    'template_id':template_id,
                                                    'scenario_ids':[scenario_id]})
-       
+
         log.info("Network retrieved")
         attrs = self.connection.call('get_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
@@ -443,9 +443,9 @@ class GAMSexport(object):
             txt = []
             for j in range(connlen):
                 txt.append('%10s' % conn[i][j])
-            x = "".join(txt) 
+            x = "".join(txt)
             rows.append("%s%s"%(x, '\n\n'))
-        
+
         self.output = self.output + "".join(rows)
 
     def export_data(self):
@@ -577,7 +577,7 @@ class GAMSexport(object):
                                                          'timestamps' : soap_time})
                             if data.data is None:
                                 continue
-                       
+
                             try:
                                 attr_outputs.append(' %14f' % data.data[0])
                             except TypeError:
@@ -667,7 +667,7 @@ class GAMSexport(object):
                 self.time_index.append(start_date)
                 start_date += timedelta(delta_t)
                 t += 1
-            
+
             time_index.append('/\n\n')
 
         else:
@@ -779,9 +779,9 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-en', '--end-date',
                         help='''End date of the time period used for
                         simulation.''')
-    parser.add_argument('-dt', '--time-step',
+    parser.add_argument('-dt', '--time-step', nargs='+',
                         help='''Time step used for simulation.''')
-    parser.add_argument('-tx', '--time-axis',
+    parser.add_argument('-tx', '--time-axis', nargs='+',
                         help='''Time axis for the modelling period (a list of
                         comma separated time stamps).''')
     # Optional arguments
