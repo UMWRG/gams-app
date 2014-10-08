@@ -1,8 +1,8 @@
-Name    , X , Y , Type              , min_stor        , max_stor        , init_stor , S       , delivery       , consumption_coeff
-Units   ,   ,   ,                   , 1e6 m^3         , 1e6 m^3         , 1e6 m^3   , 1e6 m^3 , 1e6 m^3 mon^-1 , -
-J1      ,   ,   , junction          ,                 ,                 ,           ,         ,                ,
-Urb1    ,   ,   , urban             ,                 ,                 ,           ,         , NULL           , 1
-Ag1     ,   ,   , agriculture       ,                 ,                 ,           ,         , NULL           , 1
-EndPt   ,   ,   , junction          ,                 ,                 ,           ,         ,                ,
-StartPt ,   ,   , junction          ,                 ,                 ,           ,         ,                ,
-SR1     ,   ,   , surface_reservoir , TS/min_stor.csv , TS/max_stor.csv , 500       , NULL    ,                ,
+Name    , X , Y , Type              , min_stor        , max_stor        , init_stor , S       , delivery       , consumption_coeff , Description
+Units   ,   ,   ,                   , 1e6 m^3         , 1e6 m^3         , 1e6 m^3   , 1e6 m^3 , 1e6 m^3 mon^-1 , -                 ,
+J1      ,   ,   , junction          ,                 ,                 ,           ,         ,                ,                   ,
+Urb1    ,   ,   , urban             ,                 ,                 ,           ,         , NULL           , 1                 ,
+Ag1     ,   ,   , agriculture       ,                 ,                 ,           ,         , NULL           , 1                 ,
+EndPt   ,   ,   , junction          ,                 ,                 ,           ,         ,                ,                   ,
+StartPt ,   ,   , junction          ,                 ,                 ,           ,         ,                ,                   ,
+SR1     ,   ,   , surface_reservoir , TS/min_stor.csv , TS/max_stor.csv , 500       , NULL    ,                ,                   ,

@@ -60,7 +60,7 @@
   </resource>
   <resource>
     <type>LINK</type>
-    <name>conduct</name>
+    <name>link</name>
     <attribute>
       <name>cost</name>
       <dimension/>
