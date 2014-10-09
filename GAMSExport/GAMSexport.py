@@ -255,6 +255,7 @@ from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
+from HydraLib.dateutil import guess_timefmt, date_to_string
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
@@ -292,6 +293,8 @@ class GAMSexport(object):
                                                    'template_id':template_id,
                                                    'scenario_ids':[scenario_id]})
 
+        import pudb
+        pudb.set_trace()
         log.info("Network retrieved")
         attrs = self.connection.call('get_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
@@ -571,17 +574,16 @@ class GAMSexport(object):
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
-                            soap_time = [PluginLib.date_to_string(timestamp)]
-                            data = self.connection.call('get_val_at_time',
+                            soap_time = [date_to_string(timestamp)]
+                            json_data = self.connection.call('get_val_at_time',
                                                         {'dataset_id':attr.dataset_id,
                                                          'timestamps' : soap_time})
-                            if data.data is None:
+
+                            data = parse_array(json_data.data)[0]
+                            if data is None:
                                 continue
 
-                            try:
-                                attr_outputs.append(' %14f' % data.data[0])
-                            except TypeError:
-                                attr_outputs.append(' %14f' % data.data)
+                            attr_outputs.append(' %14f' % data)
                 attr_outputs.append('\n')
             attr_outputs.append('\n')
         return attr_outputs
@@ -709,7 +711,7 @@ class GAMSexport(object):
         HydraLib.PluginLib.guess_timefmt can be used.
         """
         # Guess format of the string
-        FORMAT = PluginLib.guess_timefmt(date)
+        FORMAT = guess_timefmt(date)
         return datetime.strptime(date, FORMAT)
 
     def write_file(self):
