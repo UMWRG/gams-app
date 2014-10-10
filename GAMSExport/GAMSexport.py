@@ -293,8 +293,6 @@ class GAMSexport(object):
                                                    'template_id':template_id,
                                                    'scenario_ids':[scenario_id]})
 
-        import pudb
-        pudb.set_trace()
         log.info("Network retrieved")
         attrs = self.connection.call('get_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
@@ -556,16 +554,23 @@ class GAMSexport(object):
                 attr_outputs.append('Table ' + obj_type + \
                     '_timeseries_data(t,i,' + obj_type + \
                     '_timeseries) \n\n       ')
+            col_header_length = dict()
             for attribute in attributes:
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr.dataset_id is not None:
                         if islink:
-                            attr_outputs.append(' %14s' % (resource.gams_name + '.'
-                                                      + attribute.name))
+                            col_header = ' %14s' % (resource.gams_name + '.'
+                                                    + attribute.name)
+                            col_header_length.update({(attribute, resource):
+                                                      len(col_header)})
+                            attr_outputs.append(col_header)
                         else:
-                            attr_outputs.append(' %14s' % (resource.name + '.'
-                                                      + attribute.name))
+                            col_header = ' %14s' % (resource.name + '.'
+                                                    + attribute.name)
+                            col_header_length.update({(attribute, resource):
+                                                      len(col_header)})
+                            attr_outputs.append(col_header)
             attr_outputs.append('\n')
 
             for t, timestamp in enumerate(self.time_index):
@@ -583,7 +588,9 @@ class GAMSexport(object):
                             if data is None:
                                 continue
 
-                            attr_outputs.append(' %14f' % data)
+                            data_str = ' %14f' % data
+                            attr_outputs.append(
+                                data_str.rjust(col_header_length[(attribute, resource)]))
                 attr_outputs.append('\n')
             attr_outputs.append('\n')
         return attr_outputs

@@ -4,5 +4,3 @@ storage    , Node , SR1
 no_storage , Node , J1
 no_storage , Node , Urb1
 no_storage , Node , Ag1
-dem_nodes  , Node , Ag1
-dem_nodes  , Node , Urb1
