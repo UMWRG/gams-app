@@ -5,17 +5,17 @@ $TITLE    Demo.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "hydra_data.txt";
+$        include hydra_data.txt
 
 ** ----------------------------------------------------------------------
 **  Model variables and equations
 ** ----------------------------------------------------------------------
 
 VARIABLES
-Q(i,j,t) flow in each link in each period
-S(i,t) storage volume in storage nodes
-delivery (i,t) water delivered to demand node i in each period
-Z objective function
+Q(i,j,t) flow in each link in each period [1e6 m^3 mon^-1]
+S(i,t) storage volume in storage nodes unit: [1e6 m^3]
+delivery (i,t) delivery to demand node i in each period unit: [1e6 m^3 mon^-1]
+Z objective function unit: [-]
 ;
 
 POSITIVE VARIABLES

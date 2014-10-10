@@ -44,13 +44,14 @@ API docs
 """
 
 import os
+import re
 import logging
 import argparse
 
 from operator import mul
 
 from HydraLib.HydraException import HydraPluginError
-from HydraLib.util import ordinal_to_timestamp
+from HydraLib.dateutil import ordinal_to_timestamp, date_to_string
 from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection
 from decimal import Decimal
@@ -92,6 +93,7 @@ class GAMSimport(object):
         self.symbol_count = 0
         self.element_count = 0
         self.gdx_variables = dict()
+        self.units = dict()
         self.gdx_ts_vars = dict()
         self.network = None
         self.res_scenario = None
@@ -174,7 +176,7 @@ class GAMSimport(object):
         while line.split('(', 1)[0].strip() == 'timestamp':
             idx = int(line.split('"')[1])
             timestamp = ordinal_to_timestamp(Decimal(line.split()[2]))
-            timestamp = PluginLib.date_to_string(timestamp)
+            timestamp = date_to_string(timestamp)
             self.time_axis.update({idx: timestamp})
             i += 1
             line = self.gms_data[i]
@@ -192,11 +194,13 @@ class GAMSimport(object):
         while line.strip() != ';':
             var = line.split()[0]
             splitvar = var.split('(', 1)
-            varname = splitvar[0]
-            if len(splitvar) == 1:
+            if len(splitvar) <= 1:
                 params = []
             else:
                 params = splitvar[1][0:-1].split(',')
+            varname = splitvar[0]
+            self.units.update({varname:
+                                re.search(r'\[(.*?)\]', line).group(1)})
             if 't' in params:
                 self.gdx_ts_vars.update({varname: params.index('t')})
 
@@ -211,9 +215,8 @@ class GAMSimport(object):
             if attr.attr_is_var == 'Y':
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
-                    dataset = dict(
-                        name = 'GAMS import - ' + gdxvar.name,
-                    )
+                    dataset = dict(name='GAMS import - ' + gdxvar.name,)
+                    dataset['unit'] = self.units[gdxvar.name]
                     if gdxvar.name in self.gdx_ts_vars.keys():
                         dataset['type'] = 'timeseries'
                         index = []
@@ -251,6 +254,7 @@ class GAMSimport(object):
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         dataset = dict(name = 'GAMS import - ' + node.name + ' ' \
                             + gdxvar.name)
+                        dataset['unit'] = self.units[gdxvar.name]
                         if gdxvar.name in self.gdx_ts_vars.keys():
                             dataset['type'] = 'timeseries'
                             index = []
@@ -303,6 +307,7 @@ class GAMSimport(object):
                         dataset = dict(name = 'GAMS import - ' + link.name + ' ' \
                             + gdxvar.name,
                                       locked='N')
+                        dataset['unit'] = self.units[gdxvar.name]
                         if gdxvar.name in self.gdx_ts_vars.keys():
                             dataset['type'] = 'timeseries'
                             index = []
@@ -395,7 +400,7 @@ class GAMSimport(object):
 
     def create_descriptor(self, value):
         descriptor = dict(desc_val = value)
-        return descriptor 
+        return descriptor
 
     def save(self):
         self.network.scenarios[0].resourcescenarios = self.res_scenario
