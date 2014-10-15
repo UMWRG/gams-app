@@ -257,6 +257,13 @@ from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
 from HydraLib.dateutil import guess_timefmt, date_to_string
 
+import os
+import sys
+gamslibpath = '../lib'
+api_path = os.path.realpath(os.path.abspath(gamslibpath))
+if api_path not in sys.path:
+    sys.path.insert(0, api_path)
+
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
 from HydraGAMSlib import arr_to_matrix
@@ -788,7 +795,7 @@ Written by Philipp Meier <philipp@diemeiers.ch>
     parser.add_argument('-en', '--end-date',
                         help='''End date of the time period used for
                         simulation.''')
-    parser.add_argument('-dt', '--time-step', nargs='+',
+    parser.add_argument('-dt', '--time-step',
                         help='''Time step used for simulation.''')
     parser.add_argument('-tx', '--time-axis', nargs='+',
                         help='''Time axis for the modelling period (a list of

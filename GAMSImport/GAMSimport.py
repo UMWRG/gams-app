@@ -60,6 +60,13 @@ import gdxcc
 import sys
 import traceback
 
+import os
+import sys
+gamslibpath = '../lib'
+api_path = os.path.realpath(os.path.abspath(gamslibpath))
+if api_path not in sys.path:
+    sys.path.insert(0, api_path)
+
 from HydraGAMSlib import import_gms_data
 
 log = logging.getLogger(__name__)
