@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 a = Analysis(['GAMSimport.py'],
-             pathex=['F:\\work\\HYDRA\\svn\\HYDRA\\HydraPlugins\\GAMSplugin\\trunk'],
-             hiddenimports=[],
+             pathex=[],
+             hiddenimports=['..\\lib'],
              hookspath=None,
              runtime_hooks=None)
 pyz = PYZ(a.pure)
