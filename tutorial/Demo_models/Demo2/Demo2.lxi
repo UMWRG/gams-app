@@ -1,0 +1,229 @@
+B 2 C o m p i l a t i o n
+B 296 Include File Summary
+B 310 E x e c u t i o n
+I 311 dv
+B 319 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 320 MassBalance_nonstorage
+D 333 MassBalance_storage
+D 340 MinFlow
+D 351 MaxFlow
+D 362 MaxStor
+D 367 MinStor
+D 372 Demand
+D 379 Objective
+B 388 Column Listing      SOLVE Demo2 Using LP From line 262
+E 389 Q
+E 426 S
+E 435 delivery
+E 448 Z
+B 457 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 476 Solution Report     SOLVE Demo2 Using LP From line 262
+F 544 MassBalance_nonstorage
+F 552 MassBalance_storage
+F 558 MinFlow
+F 567 MaxFlow
+F 576 MaxStor
+F 582 MinStor
+F 588 Demand
+F 593 Objective
+G 594 Q
+G 603 S
+G 609 delivery
+G 616 Z
+B 629 E x e c u t i o n
+I 632 Z
+I 633 Obj
+I 638 storage
+I 646 S
+I 653 Q
+I 663 delivery
+I 668 dv
+B 675 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 676 MassBalance_nonstorage
+D 691 MassBalance_storage
+D 700 MinFlow
+D 711 MaxFlow
+D 722 MaxStor
+D 727 MinStor
+D 732 Demand
+D 743 Objective
+B 754 Column Listing      SOLVE Demo2 Using LP From line 262
+E 755 Q
+E 794 S
+E 804 delivery
+E 817 Z
+E 824 storage
+B 835 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 854 Solution Report     SOLVE Demo2 Using LP From line 262
+F 922 MassBalance_nonstorage
+F 930 MassBalance_storage
+F 936 MinFlow
+F 945 MaxFlow
+F 954 MaxStor
+F 960 MinStor
+F 966 Demand
+F 971 Objective
+G 972 Q
+G 981 S
+G 987 delivery
+G 994 Z
+G 1000 storage
+B 1014 E x e c u t i o n
+I 1017 Z
+I 1018 Obj
+I 1023 storage
+I 1031 S
+I 1038 Q
+I 1048 delivery
+I 1053 dv
+B 1060 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 1061 MassBalance_nonstorage
+D 1076 MassBalance_storage
+D 1083 MinFlow
+D 1094 MaxFlow
+D 1105 MaxStor
+D 1110 MinStor
+D 1115 Demand
+D 1126 Objective
+B 1135 Column Listing      SOLVE Demo2 Using LP From line 262
+E 1136 Q
+E 1175 S
+E 1185 delivery
+E 1198 Z
+E 1205 storage
+B 1215 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 1234 Solution Report     SOLVE Demo2 Using LP From line 262
+F 1302 MassBalance_nonstorage
+F 1310 MassBalance_storage
+F 1316 MinFlow
+F 1325 MaxFlow
+F 1334 MaxStor
+F 1340 MinStor
+F 1346 Demand
+F 1351 Objective
+G 1352 Q
+G 1361 S
+G 1367 delivery
+G 1374 Z
+G 1380 storage
+B 1394 E x e c u t i o n
+I 1397 Z
+I 1398 Obj
+I 1403 storage
+I 1411 S
+I 1418 Q
+I 1428 delivery
+I 1433 dv
+B 1440 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 1441 MassBalance_nonstorage
+D 1456 MassBalance_storage
+D 1463 MinFlow
+D 1474 MaxFlow
+D 1485 MaxStor
+D 1490 MinStor
+D 1495 Demand
+D 1506 Objective
+B 1517 Column Listing      SOLVE Demo2 Using LP From line 262
+E 1518 Q
+E 1558 S
+E 1568 delivery
+E 1581 Z
+E 1588 storage
+B 1598 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 1617 Solution Report     SOLVE Demo2 Using LP From line 262
+F 1685 MassBalance_nonstorage
+F 1693 MassBalance_storage
+F 1699 MinFlow
+F 1708 MaxFlow
+F 1717 MaxStor
+F 1723 MinStor
+F 1729 Demand
+F 1734 Objective
+G 1735 Q
+G 1744 S
+G 1750 delivery
+G 1757 Z
+G 1763 storage
+B 1777 E x e c u t i o n
+I 1780 Z
+I 1781 Obj
+I 1786 storage
+I 1794 S
+I 1801 Q
+I 1811 delivery
+I 1816 dv
+B 1823 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 1824 MassBalance_nonstorage
+D 1839 MassBalance_storage
+D 1848 MinFlow
+D 1859 MaxFlow
+D 1870 MaxStor
+D 1875 MinStor
+D 1880 Demand
+D 1891 Objective
+B 1902 Column Listing      SOLVE Demo2 Using LP From line 262
+E 1903 Q
+E 1940 S
+E 1950 delivery
+E 1963 Z
+E 1970 storage
+B 1981 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 2000 Solution Report     SOLVE Demo2 Using LP From line 262
+F 2068 MassBalance_nonstorage
+F 2076 MassBalance_storage
+F 2082 MinFlow
+F 2091 MaxFlow
+F 2100 MaxStor
+F 2106 MinStor
+F 2112 Demand
+F 2117 Objective
+G 2118 Q
+G 2127 S
+G 2133 delivery
+G 2140 Z
+G 2146 storage
+B 2160 E x e c u t i o n
+I 2163 Z
+I 2164 Obj
+I 2169 storage
+I 2177 S
+I 2184 Q
+I 2194 delivery
+I 2199 dv
+B 2206 Equation Listing    SOLVE Demo2 Using LP From line 262
+D 2207 MassBalance_nonstorage
+D 2222 MassBalance_storage
+D 2231 MinFlow
+D 2242 MaxFlow
+D 2253 MaxStor
+D 2258 MinStor
+D 2263 Demand
+D 2274 Objective
+B 2285 Column Listing      SOLVE Demo2 Using LP From line 262
+E 2286 Q
+E 2325 S
+E 2335 delivery
+E 2348 Z
+E 2355 storage
+B 2366 Model Statistics    SOLVE Demo2 Using LP From line 262
+B 2385 Solution Report     SOLVE Demo2 Using LP From line 262
+F 2453 MassBalance_nonstorage
+F 2461 MassBalance_storage
+F 2467 MinFlow
+F 2476 MaxFlow
+F 2485 MaxStor
+F 2491 MinStor
+F 2497 Demand
+F 2502 Objective
+G 2503 Q
+G 2512 S
+G 2518 delivery
+G 2525 Z
+G 2531 storage
+B 2545 E x e c u t i o n
+I 2548 Z
+I 2549 Obj
+I 2555 storage
+I 2563 S
+I 2570 Q
+I 2587 delivery

@@ -1,0 +1,330 @@
+GAMS Rev 227  x86_64/MS Windows                         11/06/14 12:36:58 Page 1
+Demo2.gms
+C o m p i l a t i o n
+
+
+   2   
+   3  * version: time-step by time-step
+   4   
+   5   option limrow=10000;
+   6   option limcol=10000;
+   7   
+   8  ** ----------------------------------------------------------------------
+   9  **  Loading Data: sets, parameters and tables
+  10  ** ----------------------------------------------------------------------
+  11   
+INCLUDE    C:\My Manchester\Watersys\Demo1\dataset 1.txt
+  13  * Network topology defenition
+  14   
+  15  SETS
+  16  i vector of all nodes /
+  17  J1
+  18  Urb1
+  19  Ag1
+  20  EndPt
+  21  J2
+  22  /
+  23   
+  24  Alias(i,j)
+  25   
+  26  * Node types
+  27   
+  28  SETS
+  29   
+  30  jn(i) /
+  31  J1
+  32  J2
+  33  EndPt
+  34  /
+  35   
+  36   
+  37  ag(i) /
+  38  Ag1
+  39  /
+  40   
+  41  ur(i) /
+  42  Urb1
+  43  /
+  44   
+  45  * Node groups
+  46   
+  47  SETS
+  48  ns_nodes(i) non-storage nodes where mass balance constraint should be sati
+      sfied /
+  49  J1
+  50  J2
+  51  Urb1
+  52  Ag1
+  53  /
+  54   
+  55  SETS
+  56  dem_nodes(i) demand nodes /
+  57  Ag1
+  58  Urb1
+  59  /
+  60   
+  61  SETS
+  62  links(i,j) vector of all links /
+  63  J1.J2
+  64  J1.Ag1
+  65  J2.Urb1
+  66  J2.EndPt
+  67  /
+  68   
+  69  * Connectivity matrix
+  70   
+  71  Table Connect(i,j)
+  72          J2        Urb1        Ag1          EndPt        J1
+  73  J2      0         1           0              1          0
+  74  Urb1    0         0           0              0          0
+  75  Ag1     0         0           0              0          0
+  76  EndPt   0         0           0              0          0
+  77  J1      1         0           1              0          0
+  78   
+  79   
+  80  * Nodes data
+  81   
+  82   
+  83  * Consumption coefficient
+  84   
+  85  Parameter cc(i);
+  86     cc("Ag1")=1;
+  87     cc("Urb1")=1;
+  88   
+  89  parameter cost(i,j) /
+  90  J1.J2           15
+  91  J1.Ag1          20
+  92  J2.Urb1         1
+  93  J2.EndPt        10
+  94  /;
+  95   
+  96  parameter inflow (i) /
+  97  J1              300
+  98  /;
+  99   
+ 100   
+ 101  parameter flowmultiplier(i,j) /
+ 102  J1.J2                        1
+ 103  J1.Ag1                       1
+ 104  J2.Urb1                      0.95
+ 105  J2.EndPt                     1
+ 106  /;
+ 107   
+ 108  parameter lower(i,j) /
+ 109  J1.J2                         10
+ 110  J1.Ag1                        25
+ 111  J2.Urb1                       20
+ 112  J2.EndPt                      10
+ 113  /;
+ 114   
+ 115  parameter upper(i,j) /
+ 116  J1.J2                         310
+ 117  J1.Ag1                        220
+ 118  J2.Urb1                       220
+ 119  J2.EndPt                      220
+ 120  /;
+ 121   
+ 122  ** ----------------------------------------------------------------------
+ 123  **  Model variables and equations
+ 124  ** ----------------------------------------------------------------------
+ 125   
+ 126  VARIABLES
+ 127  Q(i,j,t) flow in each link in each period
+****        $120
+**** LINE     19 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 128  S(i,t) storage volume in storage nodes
+ 129  delivery (i) water delivered to demand node i in each period
+ 130  Z objective function
+ 131  Obj (t);
+ 132  ;
+ 133   
+ 134  POSITIVE VARIABLES
+ 135  Q
+ 136  S
+ 137  ;
+ 138   
+ 139  positive variable  storage(i,t) an interim variable for saving the value o
+      f the storage at the end of each time-step;
+ 140   
+ 141  EQUATIONS
+ 142  MassBalance_nonstorage(ns_nodes)
+ 143  MassBalance_storage(s_nodes)
+****                            $120
+**** LINE     35 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 144  MinFlow(i,j,t)
+ 145  MaxFlow(i,j,t)
+ 146  MaxStor(s_nodes,t)
+ 147  MinStor(s_nodes,t)
+ 148  Demand(dem_nodes)
+ 149  Objective
+ 150  ;
+ 151   
+ 152  * introducing a dummy variable to empty (reset) the time-step in each loop
+ 153   
+ 155  set dv(t) / /;
+ 156   
+ 157  * Objective function for time step by time step formulation
+ 158   
+ 159  Objective ..
+ 160      Z =E=sum(t$dv(t),SUM((i,j)$links(i,j), Q(i,j,t) * cost(i,j,t)));
+****                                                                  $148
+**** LINE     52 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 161   
+ 162  *Calculating water delivery for each demand node at each time step
+ 163   
+ 164  Demand(dem_nodes)..
+ 165           delivery(dem_nodes) =E= sum(t$dv(t),SUM(j$links(j,dem_nodes), Q(j
+      ,dem_nodes,t)
+ 166           * flowmultiplier(j,dem_nodes,t)));
+****                                         $148
+**** LINE     58 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 167   
+ 168  * Mass balance constrait for non-storage nodes:
+ 169   
+ 170  MassBalance_nonstorage(ns_nodes) ..
+ 171      sum(t$dv(t),inflow(ns_nodes,t)+SUM(j$links(j,ns_nodes), Q(j,ns_nodes,t
+****                                   $148                                     
+      )* flowmultiplier(j,ns_nodes,t))
+                                    $148
+**** LINE     63 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 172      - SUM(j$links(ns_nodes,j), Q(ns_nodes,j,t))
+ 173      - cc(ns_nodes)$dem_nodes(ns_nodes) * delivery(ns_nodes))
+ 174      =E= 0;
+ 175   
+ 176  * Mass balance constraint for storage nodes:
+ 177   
+ 178  MassBalance_storage(s_nodes)..
+ 179           sum(t$dv(t),inflow(s_nodes,t)+SUM(j$links(j,s_nodes), Q(j,s_nodes
+****                                     $171,148                 $171          
+      ,t)* flowmultiplier(j,s_nodes,t))
+                                   $171,148
+**** LINE     71 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 180           - SUM(j$links(s_nodes,j), Q(s_nodes,j,t))
+****                                $171
+**** LINE     72 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 181           -S(s_nodes,t)
+****                     $171
+**** LINE     73 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 182           +storage(s_nodes,t-1)$(ord(t) GT 1)
+****                           $171
+**** LINE     74 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 183           + initStor(s_nodes,t)$(ord(t) EQ 1))
+****                    $140
+**** LINE     75 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 184           =E= 0;
+ 185   
+ 186  * Lower and upper bound of possible flow in links
+ 187   
+ 188  MinFlow(i,j,t)$(links(i,j) and dv(t))..
+ 189      Q(i,j,t) =G= lower(i,j,t);
+****                              $148
+**** LINE     81 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 190   
+ 191  MaxFlow(i,j,t)$(links(i,j) and dv(t))..
+ 192      Q(i,j,t) =L= upper(i,j,t);
+****                              $148
+**** LINE     84 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 193   
+ 194  * Lower and upper bound of Storage volume at storage nodes
+ 195   
+ 196  MaxStor(s_nodes,t)$dv(t)..
+ 197      S(s_nodes,t) =L= storageupper(s_nodes,t);
+****               $171               $140
+**** LINE     89 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 198   
+ 199  MinStor(s_nodes,t)$dv(t)..
+ 200      S(s_nodes,t) =G= storagelower(s_nodes,t);
+****               $171               $140
+**** LINE     92 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 201   
+ 202  ** ----------------------------------------------------------------------
+ 203  **  Model declaration and solve statements
+ 204  ** ----------------------------------------------------------------------
+ 205   
+ 206  MODEL Demo2 /ALL/;
+ 207   
+ 208  loop (tsteps,
+****             $120,340
+**** LINE    100 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 209              dv(tsteps)=t(tsteps);
+****                       $171
+**** LINE    101 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 210              display dv;
+ 211              SOLVE Demo2 USING LP MINIMIZING Z;
+****                                              $257
+**** LINE    103 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 212              storage.fx(i,tsteps)=S.l(i,tsteps) ;
+****                                 $171$141      $171
+**** LINE    104 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 213              Obj.l(tsteps)=Z.l;
+****                          $171$141
+**** LINE    105 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 214              DISPLAY  Z.l, Obj.l,storage.l,S.l, Q.l;
+****                                                   $141
+**** LINE    106 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 215              dv(tsteps)=no;
+****                       $171
+**** LINE    107 INPUT       C:\My Manchester\Watersys\Demo2\Demo2.gms
+ 216        );
+ 217   
+ 218  *Generating results output
+ 219   
+ 220  execute_unload "Results.gdx" ,
+ 221      Q,
+ 222      S,
+ 223      MassBalance_storage,
+ 224      MassBalance_nonstorage,
+ 225      MinFlow,
+ 226      MaxFlow,
+ 227      MinStor,
+ 228      MaxStor,
+ 229      Z,
+ 230      cost,
+ 231      storage,
+ 232      inflow;
+GAMS Rev 227  x86_64/MS Windows                         11/06/14 12:36:58 Page 2
+Demo2.gms
+Error Messages
+
+
+120  Unknown identifier entered as set
+140  Unknown symbol
+141  Symbol neither initialized nor assigned
+        A wild shot: You may have spurious commas in the explanatory
+        text of a declaration. Check symbol reference list.
+148  Dimension different - The symbol is referenced with more/less
+        indices as declared
+171  Domain violation for set
+257  Solve statement not checked because of previous errors
+340  A label/element with the same name exist. You may have forgotten
+        to quote a label/element reference. For example,
+        set i / a,b,c /; parameter x(i); x('a') = 10;
+
+**** 32 ERROR(S)   0 WARNING(S)
+GAMS Rev 227  x86_64/MS Windows                         11/06/14 12:36:58 Page 3
+Demo2.gms
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  C:\My Manchester\Watersys\Demo2\Demo2.
+                                          gms
+     2       12 INCLUDE        1      12  .C:\My Manchester\Watersys\Demo1\datas
+                                           et 1.txt
+
+
+COMPILATION TIME     =        0.094 SECONDS      3 Mb  WEX227-227 May  8, 2008
+
+
+USER: Julien Harou                                   S111125:0840AN-WIN
+      University College London, Dep. of Civil, Environmental & GDC9389
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\My Manchester\Watersys\Demo2\Demo2.gms
+Output     C:\My Manchester\Watersys\Demo1\Demo2.lst
+
+**** USER ERROR(S) ENCOUNTERED
