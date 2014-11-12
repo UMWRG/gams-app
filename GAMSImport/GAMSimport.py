@@ -60,9 +60,17 @@ import gdxcc
 import sys
 import traceback
 
+import os
+import sys
+gamslibpath = '../lib'
+api_path = os.path.realpath(os.path.abspath(gamslibpath))
+if api_path not in sys.path:
+    sys.path.insert(0, api_path)
+
 from HydraGAMSlib import import_gms_data
 
 log = logging.getLogger(__name__)
+
 
 class GDXvariable(object):
 
@@ -95,6 +103,8 @@ class GAMSimport(object):
         self.gdx_variables = dict()
         self.units = dict()
         self.gdx_ts_vars = dict()
+        self.network_id = None
+        self.scenario_id = None
         self.network = None
         self.res_scenario = None
         self.attrs = dict()
@@ -104,22 +114,34 @@ class GAMSimport(object):
         self.connection = JsonConnection(url)
         if session_id is not None:
             log.info("Using existing session %s", session_id)
-            self.connection.session_id=session_id
+            self.connection.session_id = session_id
         else:
             self.connection.login()
 
-    def load_network(self, network_id, scenario_id):
+    def load_network(self, network_id=None, scenario_id=None):
         """Load network and scenario from the server.
         """
+        # Use the network id specified by the user, if it is None, fall back to
+        # the network id read from the gms file
+        try:
+            network_id = int(network_id)
+        except (TypeError, ValueError):
+            network_id = self.network_id
         if network_id is None:
             raise HydraPluginError("No network specified.")
+
+        try:
+            scenario_id = int(scenario_id)
+        except (TypeError, ValueError):
+            scenario_id = self.scenario_id
         if scenario_id is None:
             raise HydraPluginError("No scenario specified.")
 
-        self.network = self.connection.call('get_network', {'network_id':int(network_id),
-                                                            'include_data': 'Y',
-                                                            'scenario_ids': [int(scenario_id)],
-                                                            'template_id':None})
+        self.network = self.connection.call('get_network',
+                                            {'network_id': int(network_id),
+                                             'include_data': 'Y',
+                                             'scenario_ids': [int(scenario_id)],
+                                             'template_id': None})
         self.res_scenario = self.network.scenarios[0].resourcescenarios
         attrslist = self.connection.call('get_attributes', {})
         for attr in attrslist:
@@ -163,6 +185,29 @@ class GAMSimport(object):
         gms_file = os.path.abspath(gms_file)
         gms_data = import_gms_data(gms_file)
         self.gms_data = gms_data.split('\n')
+        self.network_id, self.scenario_id = self.get_ids_from_gms()
+
+    def get_ids_from_gms(self):
+        """Read the network and scenario ids from the GMS file. This function
+        should be called when the user doesn't supply a network and/or a
+        scenario id.
+        """
+        # Get the very first line containing 'Network-ID' and 'Scenario-ID'
+        networkline = next((x for x in self.gms_data if 'Network-ID' in x),
+                           None)
+        scenarioline = next((x for x in self.gms_data if 'Scenario-ID' in x),
+                            None)
+        if networkline is not None:
+            network_id = int(networkline.split(':')[1])
+        else:
+            network_id = None
+
+        if scenarioline is not None:
+            scenario_id = int(scenarioline.split(':')[1])
+        else:
+            scenario_id = None
+
+        return network_id, scenario_id
 
     def parse_time_index(self):
         """Read the time index of the GAMS model used. This only works for
@@ -444,8 +489,8 @@ if __name__ == '__main__':
 
     try:
         gdximport = GAMSimport(url=args.server_url, session_id=args.session_id)
-        gdximport.load_network(args.network, args.scenario)
         gdximport.load_gams_file(args.gms_file)
+        gdximport.load_network(args.network, args.scenario)
         gdximport.parse_time_index()
         gdximport.open_gdx_file(args.gdx_file)
         gdximport.read_gdx_data()
