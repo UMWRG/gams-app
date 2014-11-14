@@ -1,0 +1,446 @@
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 1
+Demo1.gms
+C o m p i l a t i o n
+
+
+   2   
+   3  * version: no time-step
+   4   
+   5   option limrow=10000;
+   6   option limcol=10000;
+   7   
+   8  ** ----------------------------------------------------------------------
+   9  **  Loading Data: sets, parameters and tables
+  10  ** ----------------------------------------------------------------------
+  11   
+INCLUDE    C:\My Manchester\Watersys\Demo1\dataset 1.txt
+  13  * Network topology defenition
+  14   
+  15  SETS
+  16  i vector of all nodes /
+  17  J1
+  18  Urb1
+  19  Ag1
+  20  EndPt
+  21  J2
+  22  /
+  23   
+  24  Alias(i,j)
+  25   
+  26  * Node types
+  27   
+  28  SETS
+  29   
+  30  jn(i) /
+  31  J1
+  32  J2
+  33  EndPt
+  34  /
+  35   
+  36   
+  37  ag(i) /
+  38  Ag1
+  39  /
+  40   
+  41  ur(i) /
+  42  Urb1
+  43  /
+  44   
+  45  * Node groups
+  46   
+  47  SETS
+  48  ns_nodes(i) non-storage nodes where mass balance constraint should be sati
+      sfied /
+  49  J1
+  50  J2
+  51  Urb1
+  52  Ag1
+  53  /
+  54   
+  55   
+  56   
+  57  SETS
+  58  dem_nodes(i) demand nodes /
+  59  Ag1
+  60  Urb1
+  61  /
+  62   
+  63  SETS
+  64  links(i,j) vector of all links /
+  65  J1.J2
+  66  J1.Ag1
+  67  J2.Urb1
+  68  J2.EndPt
+  69  /
+  70   
+  71  * Connectivity matrix
+  72   
+  73  Table Connect(i,j)
+  74          J2        Urb1        Ag1          EndPt        J1
+  75  J2      0         1           0              1          0
+  76  Urb1    0         0           0              0          0
+  77  Ag1     0         0           0              0          0
+  78  EndPt   0         0           0              0          0
+  79  J1      1         0           1              0          0
+  80   
+  81   
+  82  * Nodes data
+  83   
+  84   
+  85  * Consumption coefficient
+  86   
+  87  Parameter cc(i);
+  88     cc("Ag1")=1;
+  89     cc("Urb1")=1;
+  90   
+  91  parameter cost(i,j) /
+  92  J1.J2           15
+  93  J1.Ag1          20
+  94  J2.Urb1         1
+  95  J2.EndPt        10
+  96  /;
+  97   
+  98  parameter inflow (i) /
+  99  J1              300
+ 100  /;
+ 101   
+ 102   
+ 103  parameter flowmultiplier(i,j) /
+ 104  J1.J2                        1
+ 105  J1.Ag1                       1
+ 106  J2.Urb1                      0.95
+ 107  J2.EndPt                     1
+ 108  /;
+ 109   
+ 110  parameter lower(i,j) /
+ 111  J1.J2                         10
+ 112  J1.Ag1                        25
+ 113  J2.Urb1                       20
+ 114  J2.EndPt                      10
+ 115  /;
+ 116   
+ 117  parameter upper(i,j) /
+ 118  J1.J2                         310
+ 119  J1.Ag1                        220
+ 120  J2.Urb1                       220
+ 121  J2.EndPt                      220
+ 122  /;
+ 123   
+ 124  ** ----------------------------------------------------------------------
+ 125  **  Model variables and equations
+ 126  ** ----------------------------------------------------------------------
+ 127   
+ 128  VARIABLES
+ 129  Q(i,j) flow in each link in each period
+ 130  delivery (i) water delivered to demand node i in each period
+ 131  Z objective function
+ 132  ;
+ 133   
+ 134  POSITIVE VARIABLES
+ 135  Q
+ 136  ;
+ 137   
+ 138  EQUATIONS
+ 139  MassBalance_nonstorage(ns_nodes)
+ 140  MinFlow(i,j)
+ 141  MaxFlow(i,j)
+ 142  Demand(dem_nodes)
+ 143  Objective
+ 144  ;
+ 145   
+ 146  * Objective function for time step by time step formulation
+ 147   
+ 148  Objective ..
+ 149      Z =E= SUM((i,j)$links(i,j), Q(i,j) * cost(i,j))
+ 150  ;
+ 151   
+ 152  *Calculating water delivery for each demand node at each time step
+ 153   
+ 154  Demand(dem_nodes)..
+ 155           delivery(dem_nodes) =E= SUM(j$links(j,dem_nodes), flowmultiplier(
+      j,dem_nodes)*Q(j,dem_nodes));
+ 156   
+ 157  * Mass balance constrait for non-storage nodes
+ 158   
+ 159  MassBalance_nonstorage(ns_nodes) ..
+ 160      inflow(ns_nodes)+
+ 161      SUM(j$links(j,ns_nodes), Q(j,ns_nodes)* flowmultiplier(j,ns_nodes))
+ 162      - SUM(j$links(ns_nodes,j), Q(ns_nodes,j))
+ 163      - cc(ns_nodes)$dem_nodes(ns_nodes) * delivery(ns_nodes)
+ 164      =E= 0;
+ 165   
+ 166  * Lower and upper bound of possible flow in links
+ 167   
+ 168  MinFlow(i,j)$links(i,j) ..
+ 169      Q(i,j) =G= lower(i,j);
+ 170   
+ 171  MaxFlow(i,j)$links(i,j) ..
+ 172      Q(i,j) =L= upper(i,j);
+ 173   
+ 174  ** ----------------------------------------------------------------------
+ 175  **  Model declaration and solve statements
+ 176  ** ----------------------------------------------------------------------
+ 177   
+ 178  MODEL Demo1 /ALL/;
+ 179   
+ 180  SOLVE Demo1 USING LP MINIMIZING Z;
+ 181   
+ 182  execute_unload "Results.gdx" ,
+ 183      Q,
+ 184      MassBalance_nonstorage,
+ 185      MinFlow,
+ 186      MaxFlow,
+ 187      Z
+ 188      cost;
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 2
+Demo1.gms
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  C:\My Manchester\Watersys\Demo1\Demo1.
+                                          gms
+     2       12 INCLUDE        1      12  .C:\My Manchester\Watersys\Demo1\datas
+                                           et 1.txt
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 Mb  WEX227-227 May  8, 2008
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 3
+Demo1.gms
+Equation Listing    SOLVE Demo1 Using LP From line 180
+
+
+---- MassBalance_nonstorage  =E=  
+
+MassBalance_nonstorage(J1)..  - Q(J1,Ag1) - Q(J1,J2) =E= -300 ;
+     
+      (LHS = 0, INFES = 300 ****)
+     
+MassBalance_nonstorage(Urb1)..  0.95*Q(J2,Urb1) - delivery(Urb1) =E= 0 ;
+     
+      (LHS = 0)
+     
+MassBalance_nonstorage(Ag1)..  Q(J1,Ag1) - delivery(Ag1) =E= 0 ; (LHS = 0)
+     
+MassBalance_nonstorage(J2)..  Q(J1,J2) - Q(J2,Urb1) - Q(J2,EndPt) =E= 0 ;
+     
+      (LHS = 0)
+     
+
+---- MinFlow  =G=  
+
+MinFlow(J1,Ag1)..  Q(J1,Ag1) =G= 25 ; (LHS = 0, INFES = 25 ****)
+     
+MinFlow(J1,J2)..  Q(J1,J2) =G= 10 ; (LHS = 0, INFES = 10 ****)
+     
+MinFlow(J2,Urb1)..  Q(J2,Urb1) =G= 20 ; (LHS = 0, INFES = 20 ****)
+     
+MinFlow(J2,EndPt)..  Q(J2,EndPt) =G= 10 ; (LHS = 0, INFES = 10 ****)
+     
+
+---- MaxFlow  =L=  
+
+MaxFlow(J1,Ag1)..  Q(J1,Ag1) =L= 220 ; (LHS = 0)
+     
+MaxFlow(J1,J2)..  Q(J1,J2) =L= 310 ; (LHS = 0)
+     
+MaxFlow(J2,Urb1)..  Q(J2,Urb1) =L= 220 ; (LHS = 0)
+     
+MaxFlow(J2,EndPt)..  Q(J2,EndPt) =L= 220 ; (LHS = 0)
+     
+
+---- Demand  =E=  
+
+Demand(Urb1)..  - 0.95*Q(J2,Urb1) + delivery(Urb1) =E= 0 ; (LHS = 0)
+     
+Demand(Ag1)..  - Q(J1,Ag1) + delivery(Ag1) =E= 0 ; (LHS = 0)
+     
+
+---- Objective  =E=  
+
+Objective..  - 20*Q(J1,Ag1) - 15*Q(J1,J2) - Q(J2,Urb1) - 10*Q(J2,EndPt) + Z =E= 
+     0 ; (LHS = 0)
+     
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 4
+Demo1.gms
+Column Listing      SOLVE Demo1 Using LP From line 180
+
+
+---- Q  flow in each link in each period
+
+Q(J1,Ag1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       MassBalance_nonstorage(J1)
+        1       MassBalance_nonstorage(Ag1)
+        1       MinFlow(J1,Ag1)
+        1       MaxFlow(J1,Ag1)
+       -1       Demand(Ag1)
+      -20       Objective
+
+Q(J1,J2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       MassBalance_nonstorage(J1)
+        1       MassBalance_nonstorage(J2)
+        1       MinFlow(J1,J2)
+        1       MaxFlow(J1,J2)
+      -15       Objective
+
+Q(J2,Urb1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.95    MassBalance_nonstorage(Urb1)
+       -1       MassBalance_nonstorage(J2)
+        1       MinFlow(J2,Urb1)
+        1       MaxFlow(J2,Urb1)
+       -0.95    Demand(Urb1)
+       -1       Objective
+
+Q(J2,EndPt)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       MassBalance_nonstorage(J2)
+        1       MinFlow(J2,EndPt)
+        1       MaxFlow(J2,EndPt)
+      -10       Objective
+
+
+---- delivery  water delivered to demand node i in each period
+
+delivery(Urb1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       MassBalance_nonstorage(Urb1)
+        1       Demand(Urb1)
+
+delivery(Ag1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       MassBalance_nonstorage(Ag1)
+        1       Demand(Ag1)
+
+
+---- Z  objective function
+
+Z
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       Objective
+
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 5
+Demo1.gms
+Model Statistics    SOLVE Demo1 Using LP From line 180
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           5     SINGLE EQUATIONS           15
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES            7
+NON ZERO ELEMENTS            26
+
+
+GENERATION TIME      =        0.031 SECONDS      4 Mb  WEX227-227 May  8, 2008
+
+
+EXECUTION TIME       =        0.031 SECONDS      4 Mb  WEX227-227 May  8, 2008
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 6
+Demo1.gms
+Solution Report     SOLVE Demo1 Using LP From line 180
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   Demo1               OBJECTIVE  Z
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  180
+
+**** SOLVER STATUS     1 NORMAL COMPLETION         
+**** MODEL STATUS      1 OPTIMAL                   
+**** OBJECTIVE VALUE             5170.0000
+
+ RESOURCE USAGE, LIMIT          0.008      1000.000
+ ITERATION COUNT, LIMIT         1         10000
+
+ILOG CPLEX       May  1, 2008 22.7.2 WEX 4792.4799 WEI x86_64/MS Windows
+Cplex 11.0.1, GAMS Link 34 
+
+Optimal solution found.
+Objective :        5170.000000
+
+
+---- EQU MassBalance_nonstorage  
+
+        LOWER     LEVEL     UPPER    MARGINAL
+
+J1    -300.000  -300.000  -300.000   -20.000      
+Urb1      .         .         .         EPS       
+Ag1       .         .         .         EPS       
+J2        .         .         .       -5.000      
+
+---- EQU MinFlow  
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+J1.Ag1      25.000    70.000     +INF       .         
+J1.J2       10.000   230.000     +INF       .         
+J2.Urb1     20.000   220.000     +INF       .         
+J2.EndPt    10.000    10.000     +INF      5.000      
+
+---- EQU MaxFlow  
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+J1.Ag1       -INF     70.000   220.000      .         
+J1.J2        -INF    230.000   310.000      .         
+J2.Urb1      -INF    220.000   220.000    -4.000      
+J2.EndPt     -INF     10.000   220.000      .         
+
+---- EQU Demand  
+
+        LOWER     LEVEL     UPPER    MARGINAL
+
+Urb1      .         .         .         .         
+Ag1       .         .         .         .         
+
+                       LOWER     LEVEL     UPPER    MARGINAL
+
+---- EQU Objective       .         .         .        1.000      
+
+---- VAR Q  flow in each link in each period
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+J1.Ag1        .       70.000     +INF       .         
+J1.J2         .      230.000     +INF       .         
+J2.Urb1       .      220.000     +INF       .         
+J2.EndPt      .       10.000     +INF       .         
+
+---- VAR delivery  water delivered to demand node i in each period
+
+        LOWER     LEVEL     UPPER    MARGINAL
+
+Urb1     -INF    209.000     +INF       .         
+Ag1      -INF     70.000     +INF       .         
+
+                       LOWER     LEVEL     UPPER    MARGINAL
+
+---- VAR Z              -INF   5170.000     +INF       .         
+
+  Z  objective function
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS Rev 227  x86_64/MS Windows                         11/05/14 12:54:44 Page 7
+Demo1.gms
+E x e c u t i o n
+
+
+EXECUTION TIME       =        0.000 SECONDS      3 Mb  WEX227-227 May  8, 2008
+
+
+USER: Julien Harou                                   S111125:0840AN-WIN
+      University College London, Dep. of Civil, Environmental & GDC9389
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\My Manchester\Watersys\Demo1\Demo1.gms
+Output     C:\My Manchester\Watersys\Demo1\Demo1.lst

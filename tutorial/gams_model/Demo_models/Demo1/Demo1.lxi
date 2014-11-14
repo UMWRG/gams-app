@@ -1,0 +1,23 @@
+B 2 C o m p i l a t i o n
+B 196 Include File Summary
+B 210 Equation Listing    SOLVE Demo1 Using LP From line 180
+D 211 MassBalance_nonstorage
+D 229 MinFlow
+D 240 MaxFlow
+D 251 Demand
+D 258 Objective
+B 266 Column Listing      SOLVE Demo1 Using LP From line 180
+E 267 Q
+E 304 delivery
+E 317 Z
+B 326 Model Statistics    SOLVE Demo1 Using LP From line 180
+B 342 Solution Report     SOLVE Demo1 Using LP From line 180
+F 369 MassBalance_nonstorage
+F 378 MinFlow
+F 387 MaxFlow
+F 396 Demand
+F 401 Objective
+G 402 Q
+G 411 delivery
+G 418 Z
+B 431 E x e c u t i o n
