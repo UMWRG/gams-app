@@ -591,7 +591,11 @@ class GAMSexport(object):
                                                         {'dataset_id':attr.dataset_id,
                                                          'timestamps' : soap_time})
 
+                            if json_data.data is None:
+                                raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+
                             data = parse_array(json_data.data)[0]
+
                             if data is None:
                                 continue
 
