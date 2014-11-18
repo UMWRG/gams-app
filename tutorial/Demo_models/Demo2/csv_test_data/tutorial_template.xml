@@ -30,11 +30,6 @@
     <type>NODE</type>
     <name>demand</name>
     <attribute>
-      <name>delivery</name>
-      <dimension>Volumetric flow rate</dimension>
-      <is_var>Y</is_var>
-    </attribute>
-    <attribute>
       <name>consumption_coeff</name>
       <dimension>Dimensionless</dimension>
       <is_var>N</is_var>

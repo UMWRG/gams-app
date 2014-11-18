@@ -1,4 +1,4 @@
-$TITLE    Demo2.gms
+$TITLE    Demo2.gmdataset 1s
 
 * version: time-step by time-step
 
@@ -9,9 +9,9 @@ $TITLE    Demo2.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "dataset 1.txt";
+$        include "demo2.txt";
 
-** ----------------------------------------------------------------------
+** -------------------------t ---------------------------------------------
 **  Model variables and equations
 ** ----------------------------------------------------------------------
 
@@ -31,13 +31,13 @@ S
 positive variable  storage(i,t) an interim variable for saving the value of the storage at the end of each time-step;
 
 EQUATIONS
-MassBalance_nonstorage(ns_nodes)
-MassBalance_storage(s_nodes)
+MassBalance_nonstorage(non_storage_nodes)
+MassBalance_storage(storage_nodes)
 MinFlow(i,j,t)
 MaxFlow(i,j,t)
-MaxStor(s_nodes,t)
-MinStor(s_nodes,t)
-Demand(dem_nodes)
+MaxStor(storage_nodes,t)
+MinStor(storage_nodes,t)
+DemandEQ(demand_nodes)
 Objective
 ;
 
@@ -49,52 +49,52 @@ set dv(t) / /;
 * Objective function for time step by time step formulation
 
 Objective ..
-    Z =E=sum(t$dv(t),SUM((i,j)$links(i,j), Q(i,j,t) * cost(i,j,t)));
+    Z =E=sum(t$dv(t),SUM((i,j)$links(i,j), Q(i,j,t) * link_timeseries_data(t,i,j,"cost")));
 
 *Calculating water delivery for each demand node at each time step
 
-Demand(dem_nodes)..
-         delivery(dem_nodes) =E= sum(t$dv(t),SUM(j$links(j,dem_nodes), Q(j,dem_nodes,t)
-         * flowmultiplier(j,dem_nodes,t)));
+DemandEQ(demand_nodes)..
+         delivery(demand_nodes) =E= sum(t$dv(t),SUM(j$links(j,demand_nodes), Q(j,demand_nodes,t)
+         * link_timeseries_data(t,j, demand_nodes,"flow_multiplier")));
 
 * Mass balance constrait for non-storage nodes:
 
-MassBalance_nonstorage(ns_nodes) ..
-    sum(t$dv(t),inflow(ns_nodes,t)+SUM(j$links(j,ns_nodes), Q(j,ns_nodes,t)* flowmultiplier(j,ns_nodes,t))
-    - SUM(j$links(ns_nodes,j), Q(ns_nodes,j,t))
-    - cc(ns_nodes)$dem_nodes(ns_nodes) * delivery(ns_nodes))
+MassBalance_nonstorage(non_storage_nodes) ..
+    sum(t$dv(t),surface_reservoir_timeseries_data(t,non_storage_nodes,"inflow")+SUM(j$links(j,non_storage_nodes), Q(j,non_storage_nodes,t)* link_timeseries_data(t, j,non_storage_nodes,"flow_multiplier"))
+    - SUM(j$links(non_storage_nodes,j), Q(non_storage_nodes,j,t))
+    - demand_scalar_data(non_storage_nodes, "consumption_coefficient")$demand_nodes(non_storage_nodes) * delivery(non_storage_nodes))
     =E= 0;
 
 * Mass balance constraint for storage nodes:
 
-MassBalance_storage(s_nodes)..
-         sum(t$dv(t),inflow(s_nodes,t)+SUM(j$links(j,s_nodes), Q(j,s_nodes,t)* flowmultiplier(j,s_nodes,t))
-         - SUM(j$links(s_nodes,j), Q(s_nodes,j,t))
-         -S(s_nodes,t)
-         +storage(s_nodes,t-1)$(ord(t) GT 1)
-         + initStor(s_nodes,t)$(ord(t) EQ 1))
+MassBalance_storage(storage_nodes)..
+         sum(t$dv(t),surface_reservoir_timeseries_data(t,storage_nodes,"inflow")+SUM(j$links(j,storage_nodes), Q(j,storage_nodes,t)* link_timeseries_data(t, j,storage_nodes,"flow_multiplier"))
+         - SUM(j$links(storage_nodes,j), Q(storage_nodes,j,t))
+         -S(storage_nodes,t)
+         +storage(storage_nodes,t-1)$(ord(t) GT 1)
+         + surface_reservoir_scalar_data(storage_nodes,"initial_storage")$(ord(t) EQ 1))
          =E= 0;
 
 * Lower and upper bound of possible flow in links
 
 MinFlow(i,j,t)$(links(i,j) and dv(t))..
-    Q(i,j,t) =G= lower(i,j,t);
+    Q(i,j,t) =G= link_timeseries_data(t,i,j,"min_flow");
 
 MaxFlow(i,j,t)$(links(i,j) and dv(t))..
-    Q(i,j,t) =L= upper(i,j,t);
+    Q(i,j,t) =L= link_timeseries_data(t,i,j,"max_flow");
 
 * Lower and upper bound of Storage volume at storage nodes
 
-MaxStor(s_nodes,t)$dv(t)..
-    S(s_nodes,t) =L= storageupper(s_nodes,t);
+MaxStor(storage_nodes,t)$dv(t)..
+    S(storage_nodes,t) =L= surface_reservoir_timeseries_data(t,storage_nodes,"storageupper");
 
-MinStor(s_nodes,t)$dv(t)..
-    S(s_nodes,t) =G= storagelower(s_nodes,t);
+MinStor(storage_nodes,t)$dv(t)..
+    S(storage_nodes,t) =G= surface_reservoir_timeseries_data(t,storage_nodes,"storagelower");
 
 ** ----------------------------------------------------------------------
 **  Model declaration and solve statements
 ** ----------------------------------------------------------------------
-
+alias (t,tsteps);
 MODEL Demo2 /ALL/;
 
 loop (tsteps,
@@ -120,7 +120,6 @@ execute_unload "Results.gdx" ,
     MaxStor,
     Z,
     Obj,
-    cost,
+    link_timeseries_data,
     storage,
-    delivery,
-    inflow;
+    delivery;

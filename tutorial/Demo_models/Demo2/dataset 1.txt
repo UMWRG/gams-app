@@ -15,39 +15,39 @@ Alias(i,j)
 
 SETS
 
-jn(i) /
+junction(i) /
 J1
 EndPt
 /
 
-sr(i) /
+surface_reservoir(i) /
 SR1
 /
 
-ag(i) /
+agricultural(i) /
 Ag1
 /
 
-ur(i) /
+urban(i) /
 Urb1
 /
 
 * Node groups
 
 SETS
-ns_nodes(i) non-storage nodes where mass balance constraint should be satisfied /
+non_storage_nodes(i) non-storage nodes where mass balance constraint should be satisfied /
 J1
 Urb1
 Ag1
 /
 
 SETS
-s_nodes(i) storage nodes where storage mass balance constraint should be satisfied /
+storage_nodes(i) storage nodes where storage mass balance constraint should be satisfied /
 SR1
 /
 
 SETS
-dem_nodes(i) demand nodes /
+demand_nodes(i) demand nodes /
 Ag1
 Urb1
 /
@@ -94,7 +94,7 @@ Parameter timestamp(t) ;
 * Nodes data
 
 
-Table initStor (s_nodes,t)
+Table initial_storage (storage_nodes,t)
                1
 SR1            450
 
@@ -107,9 +107,9 @@ SR1              300     320    320    330    310    310
 
 * Consumption coefficient
 
-Parameter cc(i);
-   cc("Ag1")=1;
-   cc("Urb1")=1;
+Parameter consumption_coefficient(i);
+   consumption_coefficient("Ag1")=1;
+   consumption_coefficient("Urb1")=1;
 
 
 Table cost(i,j,t)
@@ -121,7 +121,7 @@ J1.Urb1         1    10   7     2      3      5
 J1.EndPt        10   10   10    10     10     10  
 
 
-Table flowmultiplier(i,j,t)
+Table flow_multiplier(i,j,t)
 
                              1     2     3    4    5    6
 SR1.J1                       1     0.9   1    0.95 1    1
@@ -130,7 +130,7 @@ J1.Urb1                      0.95  0.85  0.9  0.85 0.9  1
 J1.EndPt                     1     1     1    1    1    1
 
 
-Table lower(i,j,t)
+Table min_flow(i,j,t)
 
                               1     2     3    4     5    6 
 SR1.J1                        10    10    10   10    10   10
@@ -139,7 +139,7 @@ J1.Urb1                       20    10    25   20    20   20
 J1.EndPt                      10    30    30   30    30   30
 
 
-Table upper(i,j,t)
+Table max_flow(i,j,t)
 
                               1     2     3     4     5     6
 SR1.J1                        310   300   300   300   310   300
@@ -148,12 +148,12 @@ J1.Urb1                       220   250   240   230   240   250
 J1.EndPt                      200   200   200   200   200   200
 
 
-Table storagelower(s_nodes,t)
+Table storagelower(storage_nodes,t)
 
                               1      2      3      4      5      6 
 SR1                           10     10     10     10     10     10
 
-Table storageupper(s_nodes,t)
+Table storageupper(storage_nodes,t)
 
                               1      2      3      4      5      6
 SR1                           500    500    500    500    500    500

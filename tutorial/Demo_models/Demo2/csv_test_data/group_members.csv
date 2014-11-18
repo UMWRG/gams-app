@@ -1,6 +1,9 @@
 Name       , Type , Member
 Units      ,      ,
-storage    , Node , SR1
-no_storage , Node , J1
-no_storage , Node , Urb1
-no_storage , Node , Ag1
+storage_nodes    , Node , SR1
+non_storage_nodes , Node , J1
+non_storage_nodes , Node , Urb1
+non_storage_nodes , Node , Ag1
+demand_nodes      , Node, Ag1
+demand_nodes      , Node, Urb1
+
