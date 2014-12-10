@@ -58,14 +58,6 @@
             <argtype>string</argtype>
             <help>Full path to the GAMS model (*.gms) used for the simulation.</help>
         </arg>
-		<arg>
-            <name>gams-model</name>
-            <switch>-W</switch>
-            <multiple>N</multiple>
-            <allownew>N</allownew>
-            <argtype>string</argtype>
-            <help>Working directory for GAMS</help>
-        </arg>
     </mandatory_args>
    <non_mandatory_args>
         <arg>
@@ -75,6 +67,14 @@
             <allownew>N</allownew>
             <argtype>string</argtype>
             <help>File path of the GAMS installation (the folder containing gams.exe or equivalent). This is only necessary if gams is installed in a non-standard location.</help>
+        </arg>
+       <arg>
+            <name>gams-working-directory</name>
+            <switch>-W</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>Working directory for GAMS, needed at auto mode</help>
         </arg>
 		<arg>
            <name>group-nodes-by</name>

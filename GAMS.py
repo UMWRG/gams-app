@@ -34,17 +34,12 @@
         switch: -o
         Filename of the output file.
 
-        name>: gdx-file
-        switch: -f
-        GDX file containing GAMS results
 
         name: gams-model
         switch: -m
         Full path to the GAMS model (*.gms) used for the simulation.
 
-        name: gams-model
-        switch: -W
-        Working directory for GAMS
+
 
     non_mandatory_args
     ==================
@@ -52,6 +47,14 @@
         switch: -G
         File path of the GAMS installation (the folder containing gams.exe or equivalent).
         This is only necessary if gams is installed in a non-standard location. (e.g. c:\gams)
+
+         name>: gdx-file
+        switch: -f
+        GDX file containing GAMS results (needs to import data only interface)
+
+        name: gams-working-directory
+        switch: -W
+        Full path to the GAMS working directory nneds only in auto mode
 
         name: group-nodes-by
         switch: -gn
