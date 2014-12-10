@@ -85,6 +85,8 @@ def create_arr_index(dim):
 def import_gms_data(filename):
     """Read whole .gms file and expand all $ include statements found.
     """
+    """Read whole .gms file and expand all $ include statements found.
+    """
     basepath = os.path.dirname(filename)
     gms_data = ''
     with open(filename) as f:
@@ -95,10 +97,54 @@ def import_gms_data(filename):
             sline = line.strip()
             if len(sline) > 0 and sline[0] == '$':
                 lineparts = sline.split()
+                #lineparts2 = sline.split("\"")
+
                 if len(lineparts) > 2 and \
                         lineparts[1] == 'include':
-                    line = import_gms_data(os.path.join(basepath, lineparts[2]))
+                    ff=sline
+                    ff=ff.replace('$','')
+                    ff=ff.replace('"','')
+                    ff=ff.replace(';','')
+                    ff=ff.replace('include','')
+                    ff=ff.strip()
+                 ##   for ll in lineparts:
+                     ##    print ll
+                     ####    if(ll.__contains__('include')|ll.__contains__('$')):
+                        ##     continue
+
+                    ##     ff=ff+ll
+
+                    #line = import_gms_data(os.path.join(basepath, lineparts[2]))
+                    line = import_gms_data(os.path.join(basepath, ff))
                 elif len(lineparts) == 2 and lineparts[0] == '$include':
                     line = import_gms_data(os.path.join(basepath, lineparts[1]))
             gms_data += line
     return gms_data
+
+
+def get_gams_path():
+    if os.name == 'nt':
+        base = 'C://GAMS/'
+        #Try looking in the default location.
+        if os.path.exists(base):
+            wintypes = [f for f in os.listdir(base) if f.find('win') >= 0]
+            if len(wintypes) > 0:
+                gams_win_dir = base + wintypes[0] + '/'
+                gams_versions = [v for v in os.listdir(gams_win_dir)]
+                #Attempt to find the highest version by sorting the version
+                #directories and picking the last one
+                gams_versions.sort()
+                if len(gams_versions) > 0:
+                    gams_path = gams_win_dir + gams_versions[-1]
+    else:
+        base = '/opt/gams/'
+        #Try looking in the default location.
+        if os.path.exists(base):
+            linuxtypes = [f for f in os.listdir(base) if f.find('linux') >= 0]
+            linuxtypes.sort()
+            #Attempt to find the highest version by sorting the version
+            #directories and picking the last one
+            if len(linuxtypes) > 0:
+                gams_path = base + linuxtypes[-1]
+
+    return gams_path
