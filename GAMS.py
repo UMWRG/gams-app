@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 '''
     plugin_name: GAMS Plugin
         - Export a network from Hydra to a gams input text file.
@@ -11,9 +8,9 @@
 	==============
 
         name: option
-        switch: -sh
+        switch: -sh, value s not case sensitive 
         option to set the plugin function, the options are:
-         A: Auto, export, run then import (default)
+		 no witch option or A: Auto, export, run then import 
          E: export only
          I: Import only
 
@@ -52,10 +49,6 @@
         switch: -f
         GDX file containing GAMS results (needs to import data only interface)
 
-        name: gams-working-directory
-        switch: -W
-        Full path to the GAMS working directory nneds only in auto mode
-
         name: group-nodes-by
         switch: -gn
         Group nodes by this attribute(s).
@@ -82,7 +75,7 @@
 
          Auto (default, no -sh switch is required)
 
-        -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\\temp\\demo_2.dat"   -m "c:\temp
+        -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"   -m "c:\temp
         \Demo2.gms"  -W "c:\temp"
 
 
@@ -90,7 +83,7 @@
         -sh i  -t 4 -s 4 -f "c:\temp\Results.gdx" -m "c:\temp\Demo2.gms"
 
         Exporter
-        -sh e -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\\temp\\demo_2.dat"
+        -sh e -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
 
 
 
@@ -232,7 +225,7 @@ def run_gams_model():
         model.add_job(args.gms_file)
         model.run()
         log.info("Running GAMS model finsihed")
-        # if result file is not specified, it locks at it automatically at GAMS WD
+        # if result file is not provided, it locks for it automatically at GAMS WD
         if(args.gdx_file==None):
             log.info("Extract result file name.....")
             files_list=get_files_list(args.working_directory, '.gdx')
@@ -256,13 +249,8 @@ def read_results(network):
     try:
         gdximport = GAMSimport()
         gdximport.set_network(network)
-        gdximport.load_gams_file(args.gms_file)
-        gdximport.parse_time_index()
-        gdximport.open_gdx_file(args.gdx_file)
-        gdximport.read_gdx_data()
-        gdximport.parse_variables()
-        gdximport.assign_attr_data()
-        gdximport.save()
+        get_res(gdximport)
+
     except HydraPluginError, e:
           errors = [e.message]
           err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
@@ -272,18 +260,23 @@ def import_results():
      try:
         gdximport = GAMSimport()
         gdximport.load_network(args.network, args.scenario)
-        gdximport.load_gams_file(args.gms_file)
-        gdximport.load_network(args.network, args.scenario)
-        gdximport.parse_time_index()
-        gdximport.open_gdx_file(args.gdx_file)
-        gdximport.read_gdx_data()
-        gdximport.parse_variables()
-        gdximport.assign_attr_data()
-        gdximport.save()
+        get_res(gdximport)
+
      except HydraPluginError, e:
           errors = [e.message]
           err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
           print err
+
+def get_res(gdximport):
+    gdximport.load_gams_file(args.gms_file)
+    gdximport.load_network(args.network, args.scenario)
+    gdximport.parse_time_index()
+    gdximport.open_gdx_file(args.gdx_file)
+    gdximport.read_gdx_data()
+    gdximport.parse_variables()
+    gdximport.assign_attr_data()
+    gdximport.save()
+
 
 if __name__ == '__main__':
     parser = commandline_parser()
