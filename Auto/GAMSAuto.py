@@ -1,5 +1,8 @@
+# (c) Copyright 2014, University of Manchester
+
 '''
-    plugin_name: GAMS Plugin
+
+plugin_name: GAMS Plugin
         - Export a network from Hydra to a gams input text file.
 	    - Rum GAMS.
 	    - Import a gdx results file into Hydra.
@@ -11,10 +14,6 @@ mandatory_args
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
---switch               -sh    function   option to set the plugin function, the
-                                         options are no witch option or A: Auto,
-                                         export, run then import, E: export only,
-                                         I: Import only
 --network              -t     NETWORK    ID of the network where results will
                                          be imported to. Ideally this coincides
                                          with the network exported to GAMS.
@@ -78,26 +77,19 @@ Option                 Short  Parameter  Description
 ====================== ======= ========== ======================================
 
 
-Examples:
+Example:
 =========
-
-         Auto (default, no -sh switch is required) or -sh a
 
         -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"  -m "c:\temp
         \Demo2.gms"
 
-        Importer
-        -sh i  -t 4 -s 4 -f "c:\temp\Results.gdx" -m "c:\temp\Demo2.gms"
-
-        Exporter
-        -sh e -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
 '''
 import sys
 import os
 import time
 from datetime import datetime
 
-gamslibpath = 'lib'
+gamslibpath = '..\lib'
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -137,6 +129,7 @@ def export_network():
                               args.output,
                               link_export_flag,
                               url=args.server_url)
+        exporter.steps=steps
 
         if args.template_id is not None:
             exporter.template_id = int(args.template_id)
@@ -153,22 +146,25 @@ def export_network():
         else:
             raise HydraPluginError('Time axis not specified.')
         exporter.export_data()
-
+        return exporter
     except HydraPluginError, e:
           errors = [e.message]
           err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
           print err
           sys.exit(0)
-    return exporter
 
 def run_gams_model():
     try:
         log.info("Running GAMS model .....")
         cur_time=datetime.now()
+        write_output(8, steps)
         working_directory=os.path.dirname(args.gms_file)
         model = GamsModel(args.gams_path, working_directory)
+        write_output(9, steps)
         model.add_job(args.gms_file)
+        write_output(10, steps)
         model.run()
+        write_output(11, steps)
         log.info("Running GAMS model finsihed")
         # if result file is not provided, it looks for it automatically at GAMS WD
         if(args.gdx_file==None):
@@ -192,73 +188,42 @@ def run_gams_model():
 
 def read_results(network):
     try:
+        write_output(12, steps)
         gdximport = GAMSimport()
         gdximport.set_network(network)
-        get_result(gdximport)
+        write_output(13, steps)
+        gdximport.load_gams_file(args.gms_file)
+        write_output(14, steps)
+        gdximport.load_network(args.network, args.scenario)
+        write_output(15, steps)
+        gdximport.parse_time_index()
+        write_output(16, steps)
+        gdximport.open_gdx_file(args.gdx_file)
+        write_output(17, steps)
+        gdximport.read_gdx_data()
+        write_output(18, steps)
+        gdximport.parse_variables()
+        write_output(19, steps)
+        gdximport.assign_attr_data()
+        write_output(20, steps)
+        gdximport.save()
 
     except HydraPluginError, e:
           errors = [e.message]
           err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
           print err
 
-def import_results():
-     try:
-        gdximport = GAMSimport()
-        gdximport.load_network(args.network, args.scenario)
-        get_result(gdximport)
-
-     except HydraPluginError, e:
-          errors = [e.message]
-          err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
-          print err
-
-def get_result(gdximport):
-    '''
-       Load gams file, result file  and extract the required data from it, then save them to database
-    '''
-    gdximport.load_gams_file(args.gms_file)
-    gdximport.load_network(args.network, args.scenario)
-    gdximport.parse_time_index()
-    gdximport.open_gdx_file(args.gdx_file)
-    gdximport.read_gdx_data()
-    gdximport.parse_variables()
-    gdximport.assign_attr_data()
-    gdximport.save()
-
 if __name__ == '__main__':
+    steps=21
     parser = commandline_parser()
     args = parser.parse_args()
-    #if switch is not provided, the default is auto is applied
-    if(args.switch==None):
-        args.switch='A'
-    else:
-        #chech the switch vrs the 3 defined modes (E, I, and A)
-        if(args.switch.upper()!='I' and args.switch.upper()!='E' and args.switch.upper()!='A'):
-            errors = ["Unknow swithc: -sh "+args.switch]
-            err = PluginLib.create_xml_response('GAMS', args.network, [args.scenario], errors = errors)
-            print err
-            exit(0)
-        else:
-            args.switch=args.switch.upper()
     link_export_flag = 'nn'
     if args.link_name is True:
          link_export_flag = 'l'
-    # run exporter if the mode is auto or export only
-    if(args.switch=='A' or args.switch=='E'):
-        exporter=export_network()
-        #if the mode is E, it exits
-        if(args.switch=='E'):
-             message="Run successfully"
-             print PluginLib.create_xml_response('GAMS Exporter', args.network, [args.scenario], message=message)
-             exit(0)
-        else:
-            run_gams_model()
+    exporter=export_network()
+    run_gams_model()
     #if the mode is Auto, it will get the network from the exporter
-    if(args.switch=='A'):
-        read_results(exporter.net)
-    #if the mode is I, then network need to be loaded from database
-    else:
-        import_results()
+    read_results(exporter.net)
     message="Run successfully"
     print PluginLib.create_xml_response('GAMS', args.network, [args.scenario], message=message)
 

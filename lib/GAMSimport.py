@@ -110,6 +110,7 @@ class GAMSimport(object):
         self.attrs = dict()
         self.time_axis = dict()
         self.gms_data = []
+        self.steps=10
 
         self.connection = JsonConnection(url)
         if session_id is not None:
@@ -119,7 +120,8 @@ class GAMSimport(object):
             self.connection.login()
 
     def load_network(self, network_id=None, scenario_id=None):
-        """Load network and scenario from the server.
+        """
+         Load network and scenario from the server.
         """
         # Use the network id specified by the user, if it is None, fall back to
         # the network id read from the gms file

@@ -18,10 +18,11 @@ import os
 
 from HydraLib.PluginLib import HydraResource
 from HydraLib.PluginLib import HydraNetwork
+import argparse as ap
+
 
 
 class GAMSnetwork(HydraNetwork):
-
     def gams_names_for_links(self, linkformat=None):
         """Add a string to each link that can be used directly in GAMS code in
         order to define a link."""
@@ -47,7 +48,8 @@ def convert_date_to_timeindex(date):
 
 
 def arr_to_matrix(arr, dim):
-    """Reshape a multidimensional array to a 2 dimensional matrix.
+    """
+    Reshape a multidimensional array to a 2 dimensional matrix.
     """
     tmp_arr = []
     for n in range(len(dim) - 2):
@@ -83,7 +85,8 @@ def create_arr_index(dim):
 
 
 def import_gms_data(filename):
-    """Read whole .gms file and expand all $ include statements found.
+    """
+    Read whole .gms file and expand all $ include statements found.
     """
     """Read whole .gms file and expand all $ include statements found.
     """
@@ -121,6 +124,61 @@ def import_gms_data(filename):
             gms_data += line
     return gms_data
 
+def commandline_parser():
+    parser = ap.ArgumentParser(
+        description="""Run a GAMS model using data exported from Hydra.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-G', '--gams-path',
+                        help='Path of the GAMS installation.')
+    parser.add_argument('-sh', '--switch',
+                        help='option to set the plugin function, the options are: A: Auto, export, run then import (default), E: export only. I: Import only')
+    parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+    parser.add_argument('-tp', '--template-id',
+                        help='''ID of the template to be used.''')
+    parser.add_argument('-m', '--gms-file',
+                        help='''Full path to the GAMS model (*.gms) used for
+                        the simulation.''')
+    parser.add_argument('-o', '--output',
+                        help='''Output file containing exported data''')
+    parser.add_argument('-nn', '--node-node', action='store_true',
+                        help="""(Default) Export links as 'from_name .
+                        end_name'.""")
+    parser.add_argument('-ln', '--link-name', action='store_true',
+                        help="""Export links as link name only. If two nodes
+                        can be connected by more than one link, you should
+                        choose this option.""")
+    parser.add_argument('-st', '--start-date', nargs='+',
+                        help='''Start date of the time period used for
+                        simulation.''')
+    parser.add_argument('-en', '--end-date', nargs='+',
+                        help='''End date of the time period used for
+                        simulation.''')
+    parser.add_argument('-dt', '--time-step', nargs='+',
+                        help='''Time step used for simulation.''')
+    parser.add_argument('-tx', '--time-axis', nargs='+',
+                        help='''Time axis for the modelling period (a list of
+                        comma separated time stamps).''')
+    parser.add_argument('-f', '--gdx-file',
+                        help='GDX file containing GAMS results.')
+    parser.add_argument('-e', '--export_only', action='store_true',
+                        help='''Export data to file, don't run the model''')
+    # Optional arguments
+    #if(parser.export_only==False):
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+    return parser
+
+#print progress to stdout
+def write_output(step, total):
+    message = "Progress %s/%s"%(step, total)
+    print message
 
 def get_gams_path():
     if os.name == 'nt':

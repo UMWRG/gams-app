@@ -268,6 +268,7 @@ from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
 from HydraGAMSlib import arr_to_matrix
 from HydraGAMSlib import convert_date_to_timeindex
+from HydraGAMSlib import write_output
 
 import sys
 import traceback
@@ -287,6 +288,7 @@ class GAMSexport(object):
 
         self.filename = filename
         self.time_index = []
+        self.steps=7
 
         self.connection = JsonConnection(url)
         if session_id is not None:
@@ -330,84 +332,125 @@ class GAMSexport(object):
     def export_network(self):
         self.output += '* Network definition\n\n'
         log.info("Exporting nodes")
+        write_output(2, self.steps)
         self.export_nodes()
         log.info("Exporting node groups")
+        write_output(3, self.steps)
         self.export_node_groups()
         log.info("Exporting links")
+        write_output(4, self.steps)
         self.export_links()
         log.info("Exporting link groups")
+        write_output(5, self.steps)
         self.export_link_groups()
         log.info("Creating connectivity matrix")
+        write_output(6, self.steps)
         self.create_connectivity_matrix()
         log.info("Matrix created")
 
     def export_nodes(self):
-        self.output += 'SETS\n\n'
+        content=[]
+        #self.output += 'SETS\n\n'
+        content.append('SETS\n\n')
         # Write all nodes ...
-        self.output += 'i vector of all nodes /\n'
+        #self.output += 'i vector of all nodes /\n'
+        content.append('i vector of all nodes /\n')
         for node in self.network.nodes:
-            self.output += node.name + '\n'
-        self.output += '    /\n\n'
+            content.append(node.name + '\n')
+            #self.output += node.name + '\n'
+        content.append('    /\n\n')
+        #self.output += '    /\n\n'
         # ... and create an alias for the index i called j:
+        content.append('Alias(i,j)\n\n')
         self.output += 'Alias(i,j)\n\n'
         # After an 'Alias; command another 'SETS' command is needed
-        self.output += '* Node types\n\n'
-        self.output += 'SETS\n\n'
+        content.append('* Node types\n\n')
+        #self.output += '* Node types\n\n'
+        content.append('SETS\n\n')
+        #self.output += 'SETS\n\n'
         # Group nodes by type
         for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.output += object_type + '(i) /\n'
+            content.append(object_type + '(i) /\n')
+            #self.output += object_type + '(i) /\n'
             for node in self.network.get_node(node_type=object_type):
-                self.output += node.name + '\n'
-            self.output += '/\n\n'
+                content.append( node.name + '\n')
+                #self.output += node.name + '\n'
+            content.append('/\n\n')
+            self.output = self.output + "".join(content)
+            #self.output += '/\n\n'
 
     def export_node_groups(self):
         "Export node groups if there are any."
         node_groups = []
-        group_strings = []
+        group_strings2 = []
+        group_strings1 = []
         for group in self.network.groups:
             group_nodes = self.network.get_node(group=group.ID)
             if len(group_nodes) > 0:
                 node_groups.append(group)
-                gstring = ''
-                gstring += group.name + '(i) /\n'
+                #gstring = ''
+                #gstring += group.name + '(i) /\n'
+                group_strings2.append(group.name + '(i) /\n')
                 for node in group_nodes:
-                    gstring += node.name + '\n'
-                gstring += '/\n\n'
-                group_strings.append(gstring)
+                    #gstring += node.name + '\n'
+                    group_strings2.append( node.name + '\n')
+                #gstring += '/\n\n'
+                group_strings2.append('/\n\n')
+                #group_strings.append(gstring)
 
         if len(node_groups) > 0:
+            group_strings1.append('* Node groups\n\n')
+            group_strings1.append('node_groups vector of all node groups /\n')
             self.output += '* Node groups\n\n'
             self.output += 'node_groups vector of all node groups /\n'
             for group in node_groups:
+                group_strings1.append(group.name + '\n')
                 self.output += group.name + '\n'
             self.output += '/\n\n'
-            for gstring in group_strings:
-                self.output += gstring
+            group_strings1.append( '/\n\n')
+            #for gstring in group_strings:
+             #   self.output += gstring
+            self.output = self.output + "".join(group_strings1)+"".join(group_strings2)
+
 
     def export_links(self):
-        self.output += 'SETS\n\n'
+        contents=[]
+        contents.append('SETS\n\n')
+        #self.output += 'SETS\n\n'
         # Write all links ...
         if self.links_as_name:
-            self.output += 'links vector of all links /\n'
+            contents.append('links vector of all links /\n')
+            #self.output += 'links vector of all links /\n'
         else:
-            self.output += 'links(i,j) vector of all links /\n'
+            contents.append('links(i,j) vector of all links /\n')
+            #self.output += 'links(i,j) vector of all links /\n'
         for link in self.network.links:
             if self.links_as_name:
-                self.output += link.name + '\n'
+                contents.append( link.name + '\n')
+                #self.output += link.name + '\n'
             else:
-                self.output += link.gams_name + '\n'
-        self.output += '    /\n\n'
+                contents.append(link.gams_name + '\n')
+                #self.output += link.gams_name + '\n'
+        #self.output += '    /\n\n'
+        contents.append('    /\n\n')
         # Group links by type
-        self.output += '* Link types\n\n'
+        #self.output += '* Link types\n\n'
+        contents.append( '* Link types\n\n')
         for object_type in self.network.get_link_types(template_id=self.template_id):
+            contents.append(object_type)
             self.output += object_type
             if self.links_as_name:
-                self.output += ' /\n'
+                contents.append(' /\n')
+                #self.output += ' /\n'
             else:
-                self.output += '(i,j) /\n'
+                #self.output += '(i,j) /\n'
+                contents.append('(i,j) /\n')
             for link in self.network.get_link(link_type=object_type):
-                self.output += link.gams_name + '\n'
-            self.output += '/\n\n'
+                contents.append(link.gams_name + '\n')
+                #self.output += link.gams_name + '\n'
+            #self.output += '/\n\n'
+            contents.append('/\n\n')
+            self.output = self.output + "".join(contents)
 
     def export_link_groups(self):
         "Export link groups if there are any."
@@ -434,28 +477,35 @@ class GAMSexport(object):
                 self.output += lstring
 
     def create_connectivity_matrix(self):
-        self.output += '* Connectivity matrix.\n'
-        self.output += 'Table Connect(i,j)\n          '
+        contents=[]
+        contents.append('* Connectivity matrix.\n')
+        contents.append('Table Connect(i,j)\n          ')
+        #self.output += '* Connectivity matrix.\n'
+        #self.output += 'Table Connect(i,j)\n          '
         node_names = [node.name for node in self.network.nodes]
         for name in node_names:
-            self.output += '%10s' % name
-        self.output += '\n'
+            contents.append('%10s' % name)
+            #self.output += '%10s' % name
+        #self.output += '\n'
+        contents.append('\n')
         conn = [[0 for node in node_names] for node in node_names]
         for link in self.network.links:
             conn[node_names.index(link.from_node)]\
                 [node_names.index(link.to_node)] = 1
 
         connlen = len(conn)
-        rows = []
+        #rows = []
         for i in range(connlen):
-            rows.append('%10s' % node_names[i])
+            contents.append('%10s' % node_names[i])
+            #rows.append('%10s' % node_names[i])
             txt = []
             for j in range(connlen):
                 txt.append('%10s' % conn[i][j])
             x = "".join(txt)
-            rows.append("%s%s"%(x, '\n\n'))
+            contents.append("%s%s"%(x, '\n\n'))
+            #rows.append("%s%s"%(x, '\n\n'))
 
-        self.output = self.output + "".join(rows)
+        self.output = self.output + "".join(contents)
 
     def export_data(self):
         log.info("Exporting data")

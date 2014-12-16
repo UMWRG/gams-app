@@ -1,0 +1,64 @@
+<plugin_info>
+    <plugin_name>GAMS Import Plugin</plugin_name>
+    <plugin_dir>GAMS.py</plugin_dir>
+    <plugin_description>
+        Import a gdx results file into Hydra.
+	</plugin_description>
+	<smallicon>icon.gif</smallicon>
+    <largeicon>icon.gif</largeicon>
+    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
+	<mandatory_args>
+        <arg>
+            <name>network</name>
+            <switch>-t</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>ID of the network where results will be imported to. This coincides with the network exported to GAMS..</help>
+        </arg>
+        <arg>
+            <name>scenario</name>
+            <switch>-s</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help> ID of the underlying scenario used for the most recent simulation run.</help>
+        </arg>
+		<arg>
+            <name>template</name>
+            <switch>-tp</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
+        </arg>
+		<arg>
+            <name>gdx-file</name>
+            <switch>-f</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>file</argtype>
+            <help>GDX file containing GAMS results, required only at import mode</help>
+        </arg>
+        <arg>
+            <name>gams-model</name>
+            <switch>-m</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>file</argtype>
+            <help>Full path to the GAMS model (*.gms) used for the simulation.</help>
+        </arg>
+    </mandatory_args>
+   <non_mandatory_args>
+        <arg>
+            <name>gams-path</name>
+            <switch>-G</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>folder</argtype>
+            <help>File path of the GAMS installation (the folder containing gams.exe or equivalent). This is only necessary if gams is installed in a non-standard location.</help>
+        </arg>
+    </non_mandatory_args>
+    <switches>
+    </switches>
+ </plugin_info>
