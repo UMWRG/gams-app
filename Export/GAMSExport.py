@@ -139,5 +139,10 @@ if __name__ == '__main__':
           errors = [e.message]
           err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
           print err
+    except Exception, e:
+         errors = [e.message]
+         err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+         print err
+
 
 

@@ -214,17 +214,22 @@ def read_results(network):
           print err
 
 if __name__ == '__main__':
-    steps=21
-    parser = commandline_parser()
-    args = parser.parse_args()
-    link_export_flag = 'nn'
-    if args.link_name is True:
-         link_export_flag = 'l'
-    exporter=export_network()
-    run_gams_model()
-    #if the mode is Auto, it will get the network from the exporter
-    read_results(exporter.net)
-    message="Run successfully"
-    print PluginLib.create_xml_response('GAMS', args.network, [args.scenario], message=message)
+    try:
+        steps=21
+        parser = commandline_parser()
+        args = parser.parse_args()
+        link_export_flag = 'nn'
+        if args.link_name is True:
+             link_export_flag = 'l'
+        exporter=export_network()
+        run_gams_model()
+        #if the mode is Auto, it will get the network from the exporter
+        read_results(exporter.net)
+        message="Run successfully"
+        print PluginLib.create_xml_response('GAMS', args.network, [args.scenario], message=message)
+    except Exception, e:
+         errors = [e.message]
+         err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
+         print err
 
 
