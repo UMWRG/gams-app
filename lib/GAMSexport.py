@@ -259,10 +259,12 @@ from HydraLib.dateutil import guess_timefmt, date_to_string
 
 import os
 import sys
+'''
 gamslibpath = '../lib'
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
+'''
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
@@ -863,52 +865,3 @@ Written by Philipp Meier <philipp@diemeiers.ch>
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
     return parser
-
-
-if __name__ == '__main__':
-    parser = commandline_parser()
-    args = parser.parse_args()
-    try:
-        link_export_flag = 'nn'
-        if args.link_name is True:
-            link_export_flag = 'l'
-
-        template_id = None
-        if args.template_id is not None:
-            template_id = int(args.template_id)
-
-        exporter = GAMSexport(int(args.network),
-                              int(args.scenario),
-                              template_id,
-                              args.output,
-                              link_export_flag,
-                              url=args.server_url,
-                              session_id=args.session_id)
-
-        exporter.export_network()
-
-        log.info("Network exported")
-
-        if args.start_date is not None and args.end_date is not None \
-                and args.time_step is not None:
-            exporter.write_time_index(start_time=args.start_date,
-                                      end_time=args.end_date,
-                                      time_step=args.time_step)
-        elif args.time_axis is not None:
-            exporter.write_time_index(time_axis=args.time_axis)
-        else:
-            raise HydraPluginError('Time axis not specified.')
-
-        exporter.export_data()
-
-        exporter.write_file()
-    except HydraPluginError, e:
-        errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-        print err
-    except Exception, e:
-        traceback.print_exc(file=sys.stdout)
-        errors = [e]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-        print err
-

@@ -51,9 +51,10 @@ import argparse
 
 from operator import mul
 
+'''
 if "./python" not in sys.path:
    sys.path.append("./python")
-
+'''
 
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.dateutil import ordinal_to_timestamp, date_to_string
@@ -512,27 +513,3 @@ def set_gams_path():
         if os.environ['PYTHONPATH'].find(gams_python_api_path) < 0:
             os.environ['PYTHONPATH'] = "%s;%s"%(os.environ['PYTHONPATH'], gams_python_api_path)
             sys.path.append(gams_python_api_path)
-
-if __name__ == '__main__':
-    parser = commandline_parser()
-    args = parser.parse_args()
-    try:
-        gdximport = GAMSimport(url=args.server_url, session_id=args.session_id)
-        gdximport.load_gams_file(args.gms_file)
-        gdximport.load_network(args.network, args.scenario)
-        gdximport.parse_time_index()
-        gdximport.open_gdx_file(args.gdx_file)
-        gdximport.read_gdx_data()
-        gdximport.parse_variables()
-        gdximport.assign_attr_data()
-        gdximport.save()
-
-    except HydraPluginError, e:
-        errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-        print err
-    except Exception, e:
-        traceback.print_exc(file=sys.stdout)
-        errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-        print err
