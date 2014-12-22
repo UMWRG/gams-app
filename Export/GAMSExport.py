@@ -75,11 +75,9 @@ Examples:
 '''
 import sys
 import os
-import time
-from datetime import datetime
 
-gamslibpath = '..\lib'
-api_path = os.path.realpath(os.path.abspath(gamslibpath))
+gamslibpath = os.path.join('..', 'lib')
+api_path = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
 
@@ -90,8 +88,6 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSexport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_progress
-
 
 import logging
 log = logging.getLogger(__name__)
