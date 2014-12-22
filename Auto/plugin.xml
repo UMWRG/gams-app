@@ -1,6 +1,6 @@
 <plugin_info>
-    <plugin_name>GAMS Plugin</plugin_name>
-    <plugin_dir>GAMS.py</plugin_dir>
+    <plugin_name>GAMS Automatic run Plugin</plugin_name>
+    <plugin_dir>GAMS\Auto</plugin_dir>
     <plugin_description>User has the option to:
         - Export a network from Hydra to a gams input text file.
         - Import a gdx results file into Hydra.

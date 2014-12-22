@@ -176,7 +176,7 @@ def commandline_parser():
     return parser
 
 #print progress to stdout
-def write_output(step, total):
+def write_progress(step, total):
     message = "Progress %s/%s"%(step, total)
     print message
 

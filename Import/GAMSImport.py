@@ -1,6 +1,7 @@
 # (c) Copyright 2014, University of Manchester
 '''
-	    - Import a gdx results file into Hydra.
+ plugin_name: Import GAMS
+	          Import a gdx results file into Hydra.
 
 mandatory_args
 ==============
@@ -50,36 +51,32 @@ if api_path not in sys.path:
 
 ##########################
 from HydraLib.HydraException import HydraPluginError
-from GAMSexport import GAMSexport
-from GAMSimport import GAMSimport
+from Import import GAMSimport
 from HydraLib import PluginLib
-from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_output
-from RunGamsModel import GamsModel
+from HydraGAMSlib import write_progress
+
 
 import logging
 log = logging.getLogger(__name__)
 
 def import_results():
         gdximport = GAMSimport()
-        write_output(1, gdximport.steps)
+        write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
-        write_output(2, gdximport.steps)
+        write_progress(2, gdximport.steps)
         gdximport.load_gams_file(args.gms_file)
-        write_output(3, gdximport.steps)
-        gdximport.load_network(args.network, args.scenario)
-        write_output(4, gdximport.steps)
+        write_progress(3, gdximport.steps)
         gdximport.parse_time_index()
-        write_output(5, gdximport.steps)
+        write_progress(4, gdximport.steps)
         gdximport.open_gdx_file(args.gdx_file)
-        write_output(6, gdximport.steps)
+        write_progress(5, gdximport.steps)
         gdximport.read_gdx_data()
-        write_output(7, gdximport.steps)
+        write_progress(6, gdximport.steps)
         gdximport.parse_variables()
-        write_output(8, gdximport.steps)
+        write_progress(7, gdximport.steps)
         gdximport.assign_attr_data()
-        write_output(9, gdximport.steps)
+        write_progress(8, gdximport.steps)
         gdximport.save()
 
 if __name__ == '__main__':

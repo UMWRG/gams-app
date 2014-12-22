@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>GAMS Import Plugin</plugin_name>
-    <plugin_dir>GAMS.py</plugin_dir>
+    <plugin_dir>GAMS\Import</plugin_dir>
     <plugin_description>
         Import a gdx results file into Hydra.
 	</plugin_description>

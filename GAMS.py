@@ -1,5 +1,5 @@
 '''
-    plugin_name: GAMS Plugin
+    plugin_name: GAMS One
         - Export a network from Hydra to a gams input text file.
 	    - Rum GAMS.
 	    - Import a gdx results file into Hydra.
@@ -106,12 +106,12 @@ if api_path not in sys.path:
 
 from HydraLib.HydraException import HydraPluginError
 
-from GAMSexport import GAMSexport
-from GAMSimport import GAMSimport
+from Export import GAMSexport
+from Import import GAMSimport
 from HydraLib import PluginLib
 from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_output
+from HydraGAMSlib import write_progress
 from RunGamsModel import GamsModel
 
 import logging
