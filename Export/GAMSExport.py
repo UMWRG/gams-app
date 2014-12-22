@@ -15,7 +15,7 @@ Option                 Short  Parameter  Description
                                          be imported to. Ideally this coincides
                                          with the network exported to GAMS.
 --scenario            -s     SCENARIO    ID of the underlying scenario used for
---template-id         -tp  TEMPLATE      ID of the template used for exporting
+--template-id         -tp    TEMPLATE    ID of the template used for exporting
                                          resources. Attributes that don't
                                          belong to this template are ignored.
 --output              -o    OUTPUT       Filename of the output file.
