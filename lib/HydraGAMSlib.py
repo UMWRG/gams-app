@@ -175,11 +175,6 @@ def commandline_parser():
                         plug-in connects.''')
     return parser
 
-#print progress to stdout
-def write_progress(step, total):
-    message = "Progress %s/%s"%(step, total)
-    print message
-
 def get_gams_path():
     if os.name == 'nt':
         base = 'C://GAMS/'

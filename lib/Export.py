@@ -270,7 +270,7 @@ from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
 from HydraGAMSlib import arr_to_matrix
 from HydraGAMSlib import convert_date_to_timeindex
-from HydraGAMSlib import write_progress
+from HydraLib.PluginLib import write_progress
 
 import sys
 import traceback
@@ -287,6 +287,17 @@ class GAMSexport(object):
                  link_export_flag,
                  session_id=None,
                  url=None):
+
+        if args.network is None:
+            raise HydraPluginError("No network specified!")
+        else:
+            network_id = int(network_id)
+
+        if args.scenario is None:
+            raise HydraPluginError("No Scenario specified!")
+        else:
+            scenario_id = int(scenario_id)
+
 
         self.filename = filename
         self.time_index = []

@@ -1,9 +1,10 @@
 # -*- mode: python -*-
 a = Analysis(['GAMSImport.py'],
-             pathex=[],
+             pathex=['..\\lib\\'],
              hiddenimports=['..\\lib\\'],
              hookspath=None,
-             runtime_hooks=None)
+             runtime_hooks=None,
+             excludes=['_tkinter'])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,

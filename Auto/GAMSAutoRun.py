@@ -102,7 +102,7 @@ from Import import GAMSimport
 from HydraLib import PluginLib
 from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_progress
+from HydraLib.PluginLib import write_progress
 from RunGamsModel import GamsModel
 
 import logging
@@ -122,8 +122,8 @@ def get_files_list(directory, ext):
 def export_network():
     try:
         template_id = None
-        exporter = GAMSexport(int(args.network),
-                              int(args.scenario),
+        exporter = GAMSexport(args.network,
+                              args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
                               link_export_flag,

@@ -1,0 +1,122 @@
+<plugin_info>
+    <plugin_name>GAMS Automatic run Plugin</plugin_name>
+    <plugin_dir>GAMS\Auto</plugin_dir>
+    <plugin_description>User has the option to:
+        - Export a network from Hydra to a gams input text file.
+        - Import a gdx results file into Hydra.
+        - or accept the defualt, i.e. automatically export input data file, Rum GAMS. then import  results file into Hydra.
+	</plugin_description>
+	<smallicon>icon.gif</smallicon>
+    <largeicon>icon.gif</largeicon>
+    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
+	<mandatory_args>
+        <arg>
+            <name>network</name>
+            <switch>-t</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>ID of the network where results will be imported to. This coincides with the network exported to GAMS..</help>
+        </arg>
+        <arg>
+            <name>scenario</name>
+            <switch>-s</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help> ID of the underlying scenario used for the most recent simulation run.</help>
+        </arg>
+		<arg>
+            <name>template</name>
+            <switch>-tp</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
+        </arg>
+		<arg>
+            <name>output</name>
+            <switch>-o</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>file</argtype>
+            <help>Filename of the output file.</help>
+        </arg>
+		<arg>
+            <name>gdx-file</name>
+            <switch>-f</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>file</argtype>
+            <help>GDX file containing GAMS results, required only at import mode</help>
+        </arg>
+        <arg>
+            <name>gams-model</name>
+            <switch>-m</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>file</argtype>
+            <help>Full path to the GAMS model (*.gms) used for the simulation.</help>
+        </arg>
+    </mandatory_args>
+   <non_mandatory_args>
+        <arg>
+            <name>gams-path</name>
+            <switch>-G</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>folder</argtype>
+            <help>File path of the GAMS installation (the folder containing gams.exe or equivalent). This is only necessary if gams is installed in a non-standard location.</help>
+        </arg>
+		<arg>
+           <name>group-nodes-by</name>
+           <switch>-gn</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Group nodes by this attribute(s).</help>
+        </arg>
+       <arg>
+           <name>group-links-by</name>
+           <switch>-gl</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Group links by this attribute(s).</help>
+        </arg>
+        <arg>
+           <name>start-date</name>
+           <switch>-st</switch>
+           <multiple>N</multiple>
+            <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Start date of the time period used for simulation.</help>
+        </arg>
+         <arg>
+           <name>end-date</name>
+           <switch>-en</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>End date of the time period used for simulation.</help>
+        </arg>
+         <arg>
+           <name>time-step</name>
+           <switch>-dt</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
+        </arg>
+         <arg>
+           <name>time-axis</name>
+           <switch>-tx</switch>
+           <multiple>N</multiple>
+            <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Time axis for the modelling period (a list of comma separated time stamps).</help>
+        </arg>
+    </non_mandatory_args>
+    <switches>
+    </switches>
+ </plugin_info>

@@ -90,7 +90,7 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSexport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_progress
+from HydraLib.PluginLib import write_progress
 
 
 import logging
@@ -98,8 +98,9 @@ log = logging.getLogger(__name__)
 
 def export_network():
         template_id = None
-        exporter = GAMSexport(int(args.network),
-                              int(args.scenario),
+        
+        exporter = GAMSexport(args.network,
+                              args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
                               link_export_flag,
@@ -132,13 +133,15 @@ if __name__ == '__main__':
         message="Run successfully"
         print PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
-          errors = [e.message]
-          err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-          print err
+        errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        print err
     except Exception, e:
-         errors = [e.message]
-         err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-         print err
+        #import traceback
+        #traceback.print_exc(file=sys.stdout)
+        errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        print err
 
 
 

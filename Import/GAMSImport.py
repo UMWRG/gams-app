@@ -54,7 +54,7 @@ from HydraLib.HydraException import HydraPluginError
 from Import import GAMSimport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_progress
+from HydraLib.PluginLib import write_progress
 
 import logging
 log = logging.getLogger(__name__)
