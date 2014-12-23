@@ -288,12 +288,12 @@ class GAMSexport(object):
                  session_id=None,
                  url=None):
 
-        if args.network is None:
+        if network_id is None:
             raise HydraPluginError("No network specified!")
         else:
             network_id = int(network_id)
 
-        if args.scenario is None:
+        if scenario_id is None:
             raise HydraPluginError("No Scenario specified!")
         else:
             scenario_id = int(scenario_id)
