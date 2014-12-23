@@ -89,8 +89,8 @@ from HydraLib.HydraException import HydraPluginError
 
 from Export import GAMSexport
 from HydraLib import PluginLib
-from HydraGAMSlib import commandline_parser
 from HydraLib.PluginLib import write_progress
+from HydraGAMSlib import commandline_parser_Export
 
 
 import logging
@@ -124,7 +124,7 @@ def export_network():
 
 if __name__ == '__main__':
     try:
-        parser = commandline_parser()
+        parser = commandline_parser_Export()
         args = parser.parse_args()
         link_export_flag = 'nn'
         if args.link_name is True:

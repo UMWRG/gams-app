@@ -53,8 +53,12 @@ if api_path not in sys.path:
 from HydraLib.HydraException import HydraPluginError
 from Import import GAMSimport
 from HydraLib import PluginLib
-from HydraGAMSlib import commandline_parser
+
 from HydraLib.PluginLib import write_progress
+
+from HydraGAMSlib import commandline_parser_Import
+
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -80,11 +84,8 @@ def import_results():
 
 if __name__ == '__main__':
     try:
-        parser = commandline_parser()
+        parser = commandline_parser_Import()
         args = parser.parse_args()
-        link_export_flag = 'nn'
-        if args.link_name is True:
-             link_export_flag = 'l'
         import_results()
         message="Run successfully"
         print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)

@@ -126,7 +126,7 @@ def import_gms_data(filename):
 
 def commandline_parser():
     parser = ap.ArgumentParser(
-        description="""Run a GAMS model using data exported from Hydra.
+        description=""" Export a network from Hydra to a gams input text file, Rum GAMS. and finally Import a gdx results file into Hydra.
                     (c) Copyright 2014, Univeristy of Manchester.
         """, epilog="For more information, web site will available soon",
         formatter_class=ap.RawDescriptionHelpFormatter)
@@ -166,8 +166,79 @@ def commandline_parser():
                         comma separated time stamps).''')
     parser.add_argument('-f', '--gdx-file',
                         help='GDX file containing GAMS results.')
-    parser.add_argument('-e', '--export_only', action='store_true',
-                        help='''Export data to file, don't run the model''')
+
+    # Optional arguments
+    #if(parser.export_only==False):
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+    return parser
+
+
+def commandline_parser_Export():
+    parser = ap.ArgumentParser(
+        description="""Export a network from Hydra to a gams input text file.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+    parser.add_argument('-tp', '--template-id',
+                        help='''ID of the template to be used.''')
+
+    parser.add_argument('-o', '--output',
+                        help='''Output file containing exported data''')
+    parser.add_argument('-nn', '--node-node', action='store_true',
+                        help="""(Default) Export links as 'from_name .
+                        end_name'.""")
+    parser.add_argument('-ln', '--link-name', action='store_true',
+                        help="""Export links as link name only. If two nodes
+                        can be connected by more than one link, you should
+                        choose this option.""")
+    parser.add_argument('-st', '--start-date', nargs='+',
+                        help='''Start date of the time period used for
+                        simulation.''')
+    parser.add_argument('-en', '--end-date', nargs='+',
+                        help='''End date of the time period used for
+                        simulation.''')
+    parser.add_argument('-dt', '--time-step', nargs='+',
+                        help='''Time step used for simulation.''')
+    parser.add_argument('-tx', '--time-axis', nargs='+',
+                        help='''Time axis for the modelling period (a list of
+                        comma separated time stamps).''')
+
+    # Optional arguments
+    #if(parser.export_only==False):
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+    return parser
+
+
+def commandline_parser_Import():
+    parser = ap.ArgumentParser(
+        description="""Import a gdx results file into Hydra.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-G', '--gams-path',
+                        help='Path of the GAMS installation.')
+
+    parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+
+    parser.add_argument('-m', '--gms-file',
+                        help='''Full path to the GAMS model (*.gms) used for
+                        the simulation.''')
+    parser.add_argument('-f', '--gdx-file',
+                        help='GDX file containing GAMS results.')
+
     # Optional arguments
     #if(parser.export_only==False):
     parser.add_argument('-u', '--server-url',
