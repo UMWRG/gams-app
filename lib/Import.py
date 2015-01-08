@@ -1,3 +1,4 @@
+# (c) Copyright 2015, University of Manchester
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """A Hydra plug-in to import results from a GAMS model run. All results need to

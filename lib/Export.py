@@ -1,3 +1,4 @@
+# (c) Copyright 2015, University of Manchester
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """A Hydra plug-in to export a network and a scenario to a set of files, which
@@ -280,7 +281,7 @@ class GAMSexport(object):
                  url=None):
 
         if network_id is None:
-            raise HydraPluginError("No network specified!")
+            raise HydraPluginError("No Network specified!")
         else:
             network_id = int(network_id)
 
@@ -290,7 +291,7 @@ class GAMSexport(object):
             scenario_id = int(scenario_id)
 
         if filename is None:
-            raise HydraPluginError("No output file name specified!")
+            raise HydraPluginError("No Output file name specified!")
 
 
         self.filename = filename

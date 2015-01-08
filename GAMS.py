@@ -1,3 +1,4 @@
+# (c) Copyright 2015, University of Manchester
 '''
     plugin_name: GAMS One
         - Export a network from Hydra to a gams input text file.

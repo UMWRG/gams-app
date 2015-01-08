@@ -1,3 +1,4 @@
+# (c) Copyright 2015, University of Manchester
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """A set of classes to facilitate import and export from and to GAMS.
@@ -36,7 +37,6 @@ class GAMSnetwork(HydraNetwork):
 
 
 class GAMSlink(HydraResource):
-
     gams_name = None
     from_node = None
     to_node = None

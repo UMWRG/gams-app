@@ -1,4 +1,5 @@
-__author__ = 'Gust'
+__author__ = 'K. Mohamed'
+# (c) Copyright 2015, University of Manchester
 
 import os
 import sys
