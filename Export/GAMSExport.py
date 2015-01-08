@@ -75,10 +75,10 @@ Examples:
 '''
 import sys
 import os
-import time
+
 from datetime import datetime
 
-gamslibpath = '..\lib'
+gamslibpath = os.path.join('..', 'lib')
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -121,11 +121,13 @@ def export_network():
         else:
             raise HydraPluginError('Time axis not specified.')
         exporter.export_data()
+        exporter.write_file()
 
 if __name__ == '__main__':
     try:
         parser = commandline_parser_Export()
         args = parser.parse_args()
+
         link_export_flag = 'nn'
         if args.link_name is True:
             link_export_flag = 'l'

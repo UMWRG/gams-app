@@ -88,7 +88,7 @@ import os
 import time
 from datetime import datetime
 
-gamslibpath = '..\lib'
+gamslibpath=os.path.join('..', 'lib')
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -135,6 +135,7 @@ def export_network():
 
         exporter.export_network()
 
+
         if args.start_date is not None and args.end_date is not None \
                 and args.time_step is not None:
             exporter.write_time_index(start_time=args.start_date,
@@ -145,6 +146,7 @@ def export_network():
         else:
             raise HydraPluginError('Time axis not specified.')
         exporter.export_data()
+        exporter.write_file()
         return exporter
     except HydraPluginError, e:
           errors = [e.message]

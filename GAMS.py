@@ -111,7 +111,7 @@ from Import import GAMSimport
 from HydraLib import PluginLib
 from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import commandline_parser
-from HydraGAMSlib import write_progress
+from HydraLib.PluginLib import write_progress
 from RunGamsModel import GamsModel
 
 import logging
@@ -153,6 +153,7 @@ def export_network():
         else:
             raise HydraPluginError('Time axis not specified.')
         exporter.export_data()
+        exporter.write_file()
 
     except HydraPluginError, e:
           errors = [e.message]

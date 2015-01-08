@@ -9,7 +9,7 @@ class GamsModel(object):
         if(gamspath==None):
             gamspath=get_gams_path()
         real_path = os.path.realpath(os.path.abspath(gamspath))
-        api_path = real_path + '/apifiles/Python/api/'
+        api_path = os.path.join(real_path,'apifiles','Python','api')
         if api_path not in sys.path:
             sys.path.insert(0, api_path)
         from gams import  workspace

@@ -51,10 +51,6 @@ import argparse
 
 from operator import mul
 
-'''
-if "./python" not in sys.path:
-   sys.path.append("./python")
-'''
 
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.dateutil import ordinal_to_timestamp, date_to_string
@@ -468,6 +464,7 @@ class GAMSimport(object):
 
     def create_descriptor(self, value):
         descriptor = dict(desc_val = value)
+        return descriptor
         return descriptor
 
     def save(self):
