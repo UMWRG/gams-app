@@ -131,7 +131,11 @@ def check_args(args):
     except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified')
 
-    if  os.path.exists(os.path.dirname(args.output))==False:
+    output = os.path.dirname(args.output)
+    if output == '':
+        output = '.'
+
+    if  os.path.exists(output)==False:
         raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
 if __name__ == '__main__':
