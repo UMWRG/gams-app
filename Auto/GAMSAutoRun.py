@@ -143,7 +143,6 @@ def get_input_file_name(gams_model):
     gamsfile.close()
     return inputfilename
 
-
 def export_network():
     template_id = None
     exporter = GAMSexport(args.network,
@@ -238,13 +237,11 @@ def check_args(args):
     if args.gms_file is None:
         raise HydraPluginError('Gams file is not specifed')
     elif os.path.isfile(args.gms_file)==False:
-        raise HydraPluginError('Gams file: '+args.gms_file+', is not exist')
-
+        raise HydraPluginError('Gams file: '+args.gms_file+', is not existed')
     elif args.output==None:
         args.output=get_input_file_name(args.gms_file)
         if args.output is None:
             raise HydraPluginError('No output file specified')
-
     elif os.path.exists(os.path.dirname(args.output))==False:
             raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
