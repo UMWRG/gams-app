@@ -38,8 +38,6 @@ Examples:
 import sys
 import os
 
-from datetime import datetime
-
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
 api_path = os.path.realpath(gamslibpath)
@@ -55,8 +53,6 @@ from HydraLib.PluginLib import write_progress
 
 from HydraGAMSlib import commandline_parser_Import
 
-
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -64,18 +60,25 @@ def import_results(args):
         gdximport = GAMSimport()
         write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
+
         write_progress(2, gdximport.steps)
         gdximport.load_gams_file(args.gms_file)
+       
         write_progress(3, gdximport.steps)
         gdximport.parse_time_index()
+        
         write_progress(4, gdximport.steps)
         gdximport.open_gdx_file(args.gdx_file)
+        
         write_progress(5, gdximport.steps)
         gdximport.read_gdx_data()
+        
         write_progress(6, gdximport.steps)
         gdximport.parse_variables()
+        
         write_progress(7, gdximport.steps)
         gdximport.assign_attr_data()
+        
         write_progress(8, gdximport.steps)
         gdximport.save()
 
@@ -94,7 +97,7 @@ if __name__ == '__main__':
         parser = commandline_parser_Import()
         args = parser.parse_args()
 
-        if os.environ.get('LD_LIBRARY_PATH') is None:
+        if os.environ.get('LD_LIBRARY_PATH') in ('', None):
             log.info("Setting LD_LIBRARY_PATH")
             set_gams_path()
             sysargs = [sys.executable]

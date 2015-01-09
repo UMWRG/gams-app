@@ -427,9 +427,6 @@ class GAMSimport(object):
 
     def create_timeseries(self, index, data):
         timeseries = {'ts_values': []}
-        print self.time_axis
-        print index
-        print data
         for i, idx in enumerate(index):
             timeseries['ts_values'].append({'ts_time':
                                             self.time_axis[int(idx)],
@@ -487,7 +484,7 @@ def set_gams_path():
     if gams_path is not None:
         gams_path = os.path.abspath(gams_path)
         os.environ['LD_LIBRARY_PATH'] = gams_path
-        gams_python_api_path = "%s\\apifiles\\Python\\api\\"%gams_path
+        gams_python_api_path = os.path.join(gams_path, 'apifiles', 'Python', 'api')
         if os.environ['PYTHONPATH'].find(gams_python_api_path) < 0:
             os.environ['PYTHONPATH'] = "%s;%s"%(os.environ['PYTHONPATH'], gams_python_api_path)
             sys.path.append(gams_python_api_path)

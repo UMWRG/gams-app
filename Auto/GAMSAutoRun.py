@@ -230,12 +230,12 @@ if __name__ == '__main__':
         print PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
         import traceback
-        traceback.print_exc(file=sys.stdout)
+        traceback.print_exc(file=sys.stderr)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         print err
     except Exception as e:
         import traceback
-        traceback.print_exc(file=sys.stdout)
+        traceback.print_exc(file=sys.stderr)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         print err
 

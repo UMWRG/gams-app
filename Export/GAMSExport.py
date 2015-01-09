@@ -76,8 +76,6 @@ Examples:
 import sys
 import os
 
-from datetime import datetime
-
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
 api_path = os.path.realpath(gamslibpath)
@@ -90,7 +88,6 @@ from HydraLib.HydraException import HydraPluginError
 
 from Export import GAMSexport
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress
 from HydraGAMSlib import commandline_parser_Export
 
 
@@ -148,16 +145,22 @@ if __name__ == '__main__':
             link_export_flag = 'l'
         exporter=export_network()
         message="Run successfully"
-        print PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], message=message)
+        print PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
         errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
         print err
     except Exception, e:
         #import traceback
         #traceback.print_exc(file=sys.stdout)
-        errors = [e.strerror]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        errors = []
+        if e.message == '':
+            if hasattr(e, 'strerror'):
+                errors = [e.strerror]
+        else:
+            errors = [e.message]
+        errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
         print err
 
 
