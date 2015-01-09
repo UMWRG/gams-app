@@ -16,6 +16,7 @@ API docs
 """
 
 import os
+import sys
 
 from HydraLib.PluginLib import HydraResource
 from HydraLib.PluginLib import HydraNetwork
@@ -247,28 +248,48 @@ def commandline_parser_Import():
     return parser
 
 def get_gams_path():
-    if os.name == 'nt':
-        base = 'C://GAMS/'
-        #Try looking in the default location.
-        if os.path.exists(base):
-            wintypes = [f for f in os.listdir(base) if f.find('win') >= 0]
-            if len(wintypes) > 0:
-                gams_win_dir = base + wintypes[0] + '/'
-                gams_versions = [v for v in os.listdir(gams_win_dir)]
+    cmd_args = sys.argv
+
+
+    for i, arg in enumerate(sys.argv):
+        if arg in ['-G', '--gams-path']:
+            gams_path = cmd_args[i + 1]
+
+    gams_path = None
+    gams_python_api_path = None
+    if gams_path is None:
+        if os.name == 'nt':
+            base = 'C://GAMS/'
+            #Try looking in the default location.
+            if os.path.exists(base):
+                wintypes = [f for f in os.listdir(base) if f.find('win') >= 0]
+                if len(wintypes) > 0:
+                    gams_win_dir = base + wintypes[0] + '/'
+                    gams_versions = [v for v in os.listdir(gams_win_dir)]
+                    #Attempt to find the highest version by sorting the version
+                    #directories and picking the last one
+                    gams_versions.sort()
+                    if len(gams_versions) > 0:
+                        if float(gams_versions[-1]) < 23.8:
+                                raise HydraPluginError("Only GAMS versions of 23.8 and above are supported automatically."
+                                            " Please download the newest GAMS from (http://www.gams.com/download/) or "
+                                            " specify the folder containing gams API using --gams-path")
+                        else:   
+                            gams_path = gams_win_dir + gams_versions[-1]
+        else:
+            base = '/opt/gams/'
+            #Try looking in the default location.
+            if os.path.exists(base):
+                linuxtypes = [f for f in os.listdir(base) if f.find('linux') >= 0]
+                linuxtypes.sort()
                 #Attempt to find the highest version by sorting the version
                 #directories and picking the last one
-                gams_versions.sort()
-                if len(gams_versions) > 0:
-                    gams_path = gams_win_dir + gams_versions[-1]
-    else:
-        base = '/opt/gams/'
-        #Try looking in the default location.
-        if os.path.exists(base):
-            linuxtypes = [f for f in os.listdir(base) if f.find('linux') >= 0]
-            linuxtypes.sort()
-            #Attempt to find the highest version by sorting the version
-            #directories and picking the last one
-            if len(linuxtypes) > 0:
-                gams_path = base + linuxtypes[-1]
+                if len(linuxtypes) > 0:
+                    gams_path = base + linuxtypes[-1]
 
-    return gams_path
+        if gams_path is not None:
+            return gams_path
+        else:  
+            raise HydraPluginError("Unable to find GAMS installation. Please specify folder containing gams executable.")
+    else:
+        return gams_path

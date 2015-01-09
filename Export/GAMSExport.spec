@@ -3,7 +3,8 @@ a = Analysis(['GAMSExport.py'],
              pathex=['..\\lib'],
              hiddenimports=[],
              hookspath=None,
-             runtime_hooks=None)
+             runtime_hooks=None,
+             excludes=['_tkinter', 'IPython', 'win32ui', 'cPickle', 'win32com', 'sqlalchemy', 'sqlite3', 'pyexpat'])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,

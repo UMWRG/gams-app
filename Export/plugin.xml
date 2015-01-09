@@ -1,13 +1,10 @@
 <plugin_info>
-    <plugin_name>GAMS  Export Plugin</plugin_name>
-    <plugin_dir>GAMS\export</plugin_dir>
-    <plugin_description>User has the option to:
-        - Export a network from Hydra to a gams input text file.
-        - Import a gdx results file into Hydra.
-        - or accept the defualt, i.e. automatically export input data file, Rum GAMS. then import  results file into Hydra.
+    <plugin_name>GAMS Export Plugin</plugin_name>
+    <plugin_dir>GAMSExport.exe</plugin_dir>
+    <plugin_description>Export a network from Hydra to a gams input text file.
 	</plugin_description>
-	<smallicon>icon.gif</smallicon>
-    <largeicon>icon.gif</largeicon>
+	<smallicon>gams_icon16.png</smallicon>
+    <largeicon>gams_icon32.png</largeicon>
     <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<mandatory_args>
         <arg>
@@ -27,14 +24,6 @@
             <help> ID of the underlying scenario used for the most recent simulation run.</help>
         </arg>
 		<arg>
-            <name>template</name>
-            <switch>-tp</switch>
-            <multiple>N</multiple>
-            <allownew>N</allownew>
-            <argtype>string</argtype>
-            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
-        </arg>
-		<arg>
             <name>output</name>
             <switch>-o</switch>
             <multiple>N</multiple>
@@ -42,24 +31,16 @@
             <argtype>file</argtype>
             <help>Filename of the output file.</help>
         </arg>
-		<arg>
-            <name>gdx-file</name>
-            <switch>-f</switch>
-            <multiple>N</multiple>
-            <allownew>N</allownew>
-            <argtype>file</argtype>
-            <help>GDX file containing GAMS results, required only at import mode</help>
-        </arg>
-        <arg>
-            <name>gams-model</name>
-            <switch>-m</switch>
-            <multiple>N</multiple>
-            <allownew>N</allownew>
-            <argtype>file</argtype>
-            <help>Full path to the GAMS model (*.gms) used for the simulation.</help>
-        </arg>
     </mandatory_args>
    <non_mandatory_args>
+   		<arg>
+            <name>template</name>
+            <switch>-tp</switch>
+            <multiple>N</multiple>
+            <allownew>N</allownew>
+            <argtype>string</argtype>
+            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
+        </arg>
         <arg>
             <name>gams-path</name>
             <switch>-G</switch>
@@ -114,7 +95,7 @@
            <multiple>N</multiple>
             <allownew>N</allownew>
            <argtype>string</argtype>
-           <help>Time axis for the modelling period (a list of comma separated time stamps).</help>
+           <help>Time axis for the modelling period (a list of comma separated time stamps). Either the time axis or a start-time, end-time, time-step combination MUST be specified.</help>
         </arg>
     </non_mandatory_args>
     <switches>

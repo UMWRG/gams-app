@@ -76,11 +76,9 @@ Examples:
 import sys
 import os
 
-from datetime import datetime
-
-scriptpath= os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(scriptpath,"..", 'lib')
-api_path = os.path.realpath(os.path.abspath(gamslibpath))
+pythondir = os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(pythondir, '..', 'lib')
+api_path = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
 
@@ -90,7 +88,6 @@ from HydraLib.HydraException import HydraPluginError
 
 from Export import GAMSexport
 from HydraLib import PluginLib
-from HydraLib.PluginLib import write_progress
 from HydraGAMSlib import commandline_parser_Export
 
 
@@ -110,6 +107,7 @@ def export_network():
             exporter.template_id = int(args.template_id)
 
         exporter.export_network()
+
 
         if args.start_date is not None and args.end_date is not None \
                 and args.time_step is not None:
@@ -133,7 +131,11 @@ def check_args(args):
     except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified')
 
-    if  os.path.exists(os.path.dirname(args.output))==False:
+    output = os.path.dirname(args.output)
+    if output == '':
+        output = '.'
+
+    if  os.path.exists(output)==False:
         raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
 if __name__ == '__main__':
@@ -147,16 +149,21 @@ if __name__ == '__main__':
             link_export_flag = 'l'
         exporter=export_network()
         message="Run successfully"
-        print PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], message=message)
+        print PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
         errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
         print err
     except Exception, e:
         #import traceback
         #traceback.print_exc(file=sys.stdout)
-        errors = [e.strerror]
-        err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
+        errors = []
+        if e.message == '':
+            if hasattr(e, 'strerror'):
+                errors = [e.strerror]
+        else:
+            errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
         print err
 
 
