@@ -1,11 +1,11 @@
 <plugin_info>
     <plugin_name>GAMS Import Plugin</plugin_name>
-    <plugin_dir>GAMS\Import</plugin_dir>
+    <plugin_dir>GAMSImport.exe</plugin_dir>
     <plugin_description>
         Import a gdx results file into Hydra.
 	</plugin_description>
-	<smallicon>icon.gif</smallicon>
-    <largeicon>icon.gif</largeicon>
+	<smallicon>gams_icon16.png</smallicon>
+    <largeicon>gams_icon32.png</largeicon>
     <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<mandatory_args>
         <arg>
@@ -23,14 +23,6 @@
             <allownew>N</allownew>
             <argtype>string</argtype>
             <help> ID of the underlying scenario used for the most recent simulation run.</help>
-        </arg>
-		<arg>
-            <name>template</name>
-            <switch>-tp</switch>
-            <multiple>N</multiple>
-            <allownew>N</allownew>
-            <argtype>string</argtype>
-            <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
         </arg>
 		<arg>
             <name>gdx-file</name>

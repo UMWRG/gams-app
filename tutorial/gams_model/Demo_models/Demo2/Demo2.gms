@@ -9,18 +9,18 @@ $TITLE    Demo2.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "dataset 1.txt";
+$        include "test.txt";
 
 ** ----------------------------------------------------------------------
 **  Model variables and equations
 ** ----------------------------------------------------------------------
 
 VARIABLES
-Q(i,j,t) flow in each link in each period
-S(i,t) storage volume in storage nodes
-delivery (i) water delivered to demand node i in each period
-Z objective function
-Obj (t);
+Q(i,j,t) flow in each link in each period [1e6 m^3 mon^-1]
+S(i,t) storage volume in storage nodes [1e6 m^3]
+delivery (i) water delivered to demand node i in each period [1e6 m^3 mon^-1]
+Z objective function [-]
+Obj (t) [-];
 ;
 
 POSITIVE VARIABLES

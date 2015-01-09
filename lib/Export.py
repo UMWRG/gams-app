@@ -258,7 +258,6 @@ from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
 from HydraLib.dateutil import guess_timefmt, date_to_string
 
-
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
 from HydraGAMSlib import arr_to_matrix

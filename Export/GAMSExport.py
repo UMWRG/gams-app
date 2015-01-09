@@ -78,9 +78,9 @@ import os
 
 from datetime import datetime
 
-scriptpath= os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(scriptpath,"..", 'lib')
-api_path = os.path.realpath(os.path.abspath(gamslibpath))
+pythondir = os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(pythondir, '..', 'lib')
+api_path = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
 
@@ -110,6 +110,7 @@ def export_network():
             exporter.template_id = int(args.template_id)
 
         exporter.export_network()
+
 
         if args.start_date is not None and args.end_date is not None \
                 and args.time_step is not None:

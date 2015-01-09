@@ -14,9 +14,6 @@ Option                 Short  Parameter  Description
                                          be imported to. Ideally this coincides
                                          with the network exported to GAMS.
 --scenario            -s     SCENARIO    ID of the underlying scenario used for
---template-id         -tp  TEMPLATE      ID of the template used for exporting
-                                         resources. Attributes that don't
-                                         belong to this template are ignored.
 --gams-model          -m     GMS_FILE    Full path to the GAMS model (*.gms)
                                          used for the simulation.
 --gdx-file            -f     GDX_FILE   GDX file containing GAMS results
@@ -43,15 +40,15 @@ import os
 
 from datetime import datetime
 
-scriptpath= os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(scriptpath,"..", 'lib')
-api_path = os.path.realpath(os.path.abspath(gamslibpath))
+pythondir = os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(pythondir, '..', 'lib')
+api_path = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
 ##########################
 
 from HydraLib.HydraException import HydraPluginError
-from Import import GAMSimport
+from Import import GAMSimport, set_gams_path
 from HydraLib import PluginLib
 
 from HydraLib.PluginLib import write_progress
@@ -63,7 +60,7 @@ from HydraGAMSlib import commandline_parser_Import
 import logging
 log = logging.getLogger(__name__)
 
-def import_results():
+def import_results(args):
         gdximport = GAMSimport()
         write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
@@ -96,18 +93,36 @@ if __name__ == '__main__':
     try:
         parser = commandline_parser_Import()
         args = parser.parse_args()
-        check_args(args)
-        import_results()
-        message="Run successfully"
-        print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)
+
+        if os.environ.get('LD_LIBRARY_PATH') is None:
+            log.info("Setting LD_LIBRARY_PATH")
+            set_gams_path()
+            sysargs = [sys.executable]
+            if sys.argv[0] == sys.executable:
+                sysargs = sys.argv
+            else:
+                sysargs.extend(sys.argv)
+
+            os.execv(sys.executable, sysargs)
+        else:
+
+            import_results(args)
+            message="Run successfully"
+            print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)
+
     except HydraPluginError, e:
-          errors = [e.message]
-          err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
-          print err
+        errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], errors = errors)
+        print err
     except Exception, e:
-         errors = [e.strerror]
-         err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
-         print err
+        errors = []
+        if e.message == '':
+            if hasattr(e, 'strerror'):
+                errors = [e.strerror]
+        else:
+            errors = [e.message]
+        err = PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], errors = errors)
+        print err
 
 
 

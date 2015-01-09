@@ -44,7 +44,15 @@ API docs
 ~~~~~~~~
 """
 
+#!/usr/bin/env python
+"""Wrapper script that sets the necessary environment variables for GAMSimport.
+"""
+
 import os
+import sys
+import subprocess
+from HydraLib import PluginLib
+
 import re
 import sys
 import logging
@@ -90,7 +98,6 @@ class GDXvariable(object):
 class GAMSimport(object):
 
     def __init__(self, url=None, session_id=None):
-        set_gams_path()
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
@@ -263,7 +270,7 @@ class GAMSimport(object):
                 self.units.update({varname:
                                 re.search(r'\[(.*?)\]', line).group(1)})
             else:
-                error_message="Units are missing, unit need to be added in square brackets at variable part of gams file"
+                error_message="Units are missing, units need to be added in square brackets where the variables are specified in the .gms file, ex: v1(i, t) my variable [m^3]"
                 raise HydraPluginError(error_message)
                 #: "+ args.gms_file)
             if 't' in params:
@@ -420,6 +427,9 @@ class GAMSimport(object):
 
     def create_timeseries(self, index, data):
         timeseries = {'ts_values': []}
+        print self.time_axis
+        print index
+        print data
         for i, idx in enumerate(index):
             timeseries['ts_values'].append({'ts_time':
                                             self.time_axis[int(idx)],

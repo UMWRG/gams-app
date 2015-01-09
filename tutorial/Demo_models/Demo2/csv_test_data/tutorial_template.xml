@@ -6,17 +6,22 @@
     <type>NODE</type>
     <name>surface_reservoir</name>
     <attribute>
-      <name>min_stor</name>
+      <name>inflow</name>
+      <dimension>Dimensionless</dimension>
+      <is_var>N</is_var>
+    </attribute>
+    <attribute>
+      <name>storagelower</name>
       <dimension>Volume</dimension>
       <is_var>N</is_var>
     </attribute>
     <attribute>
-      <name>max_stor</name>
+      <name>storageupper</name>
       <dimension>Volume</dimension>
       <is_var>N</is_var>
     </attribute>
     <attribute>
-      <name>init_stor</name>
+      <name>initial_storage</name>
       <dimension>Volume</dimension>
       <is_var>N</is_var>
     </attribute>
@@ -30,7 +35,7 @@
     <type>NODE</type>
     <name>demand</name>
     <attribute>
-      <name>consumption_coeff</name>
+      <name>consumption_coefficient</name>
       <dimension>Dimensionless</dimension>
       <is_var>N</is_var>
     </attribute>
@@ -48,7 +53,7 @@
       <is_var>N</is_var>
     </attribute>
     <attribute>
-      <name>flowmult</name>
+      <name>flow_multiplier</name>
       <dimension>Dimensionless</dimension>
       <is_var>N</is_var>
     </attribute>
