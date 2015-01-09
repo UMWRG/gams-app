@@ -216,11 +216,15 @@ def read_results(network):
           print err
 
 def check_args(args):
-    if args.network==None:
+    try:
+        int(args.network)
+    except (TypeError, ValueError):
         raise HydraPluginError('No network is specified')
-    elif args.scenario==None:
+    try:
+        int(args.scenario)
+    except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified')
-    elif os.path.exists(os.path.dirname(args.output))==False:
+    if os.path.exists(os.path.dirname(args.output))==False:
         raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
     elif args.gms_file is None:
         raise HydraPluginError('Gams file is not specifed')

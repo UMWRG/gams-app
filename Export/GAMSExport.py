@@ -99,7 +99,6 @@ log = logging.getLogger(__name__)
 
 def export_network():
         template_id = None
-        
         exporter = GAMSexport(args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
@@ -125,13 +124,17 @@ def export_network():
         exporter.write_file()
 
 def check_args(args):
-    if args.network==None:
+    try:
+        int(args.network)
+    except (TypeError, ValueError):
         raise HydraPluginError('No network is specified')
-    elif args.scenario==None:
+    try:
+        int(args.scenario)
+    except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified')
-    elif os.path.exists(os.path.dirname(args.output))==False:
-        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
+    if  os.path.exists(os.path.dirname(args.output))==False:
+        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
 if __name__ == '__main__':
     try:
