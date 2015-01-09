@@ -159,7 +159,6 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-        errors = [e.message]
         err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
         print err
 

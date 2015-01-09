@@ -154,6 +154,10 @@ def run_gams_model(args):
     cur_time=datetime.now()
     write_progress(8, steps)
     working_directory=os.path.dirname(args.gms_file)
+    
+    if working_directory == '':
+        working_directory = '.'
+
     model = GamsModel(args.gams_path, working_directory)
     write_progress(9, steps)
     model.add_job(os.path.basename(args.gms_file))
@@ -234,6 +238,13 @@ if __name__ == '__main__':
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         print err
     except Exception as e:
+        errors = []
+        if e.message == '':
+            if hasattr(e, 'strerror'):
+                errors = [e.strerror]
+        else:
+            errors = [e.message]
+
         import traceback
         traceback.print_exc(file=sys.stderr)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
