@@ -279,21 +279,8 @@ class GAMSexport(object):
                  link_export_flag,
                  session_id=None,
                  url=None):
-
-        if network_id is None:
-            raise HydraPluginError("No Network specified!")
-        else:
-            network_id = int(network_id)
-
-        if scenario_id is None:
-            raise HydraPluginError("No Scenario specified!")
-        else:
-            scenario_id = int(scenario_id)
-
-        if filename is None:
-            raise HydraPluginError("No Output file name specified!")
-
-
+        network_id = int(network_id)
+        scenario_id = int(scenario_id)
         self.filename = filename
         self.time_index = []
         self.steps=7
@@ -327,7 +314,7 @@ class GAMSexport(object):
         self.template_id = None
 
         self.output = """* Data exported from Hydra using GAMSplugin.
-* (c) Copyright 2013, 2014, University of Manchester
+* (c) Copyright 2015, University of Manchester
 *
 * %s: %s
 * Network-ID:  %s

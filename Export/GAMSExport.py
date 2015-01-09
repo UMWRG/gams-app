@@ -78,7 +78,8 @@ import os
 
 from datetime import datetime
 
-gamslibpath = os.path.join('..', 'lib')
+scriptpath= os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(scriptpath,"..", 'lib')
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -123,10 +124,20 @@ def export_network():
         exporter.export_data()
         exporter.write_file()
 
+def check_args(args):
+    if args.network==None:
+        raise HydraPluginError('No network is specified')
+    elif args.scenario==None:
+        raise HydraPluginError('No senario is specified')
+    elif os.path.exists(os.path.dirname(args.output))==False:
+        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
+
+
 if __name__ == '__main__':
     try:
         parser = commandline_parser_Export()
         args = parser.parse_args()
+        check_args(args)
 
         link_export_flag = 'nn'
         if args.link_name is True:
@@ -141,7 +152,7 @@ if __name__ == '__main__':
     except Exception, e:
         #import traceback
         #traceback.print_exc(file=sys.stdout)
-        errors = [e.message]
+        errors = [e.strerror]
         err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
         print err
 

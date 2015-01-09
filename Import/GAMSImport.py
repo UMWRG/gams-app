@@ -43,7 +43,8 @@ import os
 
 from datetime import datetime
 
-gamslibpath = os.path.join('..', 'lib')
+scriptpath= os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(scriptpath,"..", 'lib')
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -81,10 +82,21 @@ def import_results():
         write_progress(8, gdximport.steps)
         gdximport.save()
 
+def check_args(args):
+    if args.network==None:
+        raise HydraPluginError('No network is specified')
+    elif args.scenario==None:
+        raise HydraPluginError('No senario is specified')
+    elif args.gms_file is None:
+        raise HydraPluginError('Gams file is not specifed')
+    elif os.path.isfile(args.gms_file)==False:
+        raise HydraPluginError('Gams file: '+args.gms_file+', is not exist')
+
 if __name__ == '__main__':
     try:
         parser = commandline_parser_Import()
         args = parser.parse_args()
+        check_args(args)
         import_results()
         message="Run successfully"
         print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)
@@ -93,7 +105,7 @@ if __name__ == '__main__':
           err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
           print err
     except Exception, e:
-         errors = [e.message]
+         errors = [e.strerror]
          err = PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], errors = errors)
          print err
 

@@ -3,6 +3,7 @@ __author__ = 'K. Mohamed'
 
 import os
 import sys
+
 from HydraGAMSlib import get_gams_path
 
 class GamsModel(object):

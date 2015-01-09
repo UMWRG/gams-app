@@ -79,7 +79,7 @@ Option                 Short  Parameter  Description
 
 Example:
 =========
-        -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat" -m "c:\temp\Demo2.gms"
+        -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo2.dat" -m "c:\temp\Demo2.gms"
 
 
 '''
@@ -88,7 +88,8 @@ import os
 import time
 from datetime import datetime
 
-gamslibpath=os.path.join('..', 'lib')
+scriptpath= os.path.dirname(os.path.realpath(__file__))
+gamslibpath=os.path.join(scriptpath,'..', 'lib')
 api_path = os.path.realpath(os.path.abspath(gamslibpath))
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
@@ -162,7 +163,7 @@ def run_gams_model():
         working_directory=os.path.dirname(args.gms_file)
         model = GamsModel(args.gams_path, working_directory)
         write_progress(9, steps)
-        model.add_job(args.gms_file)
+        model.add_job(os.path.basename(args.gms_file))#args.gms_file)
         write_progress(10, steps)
         model.run()
         write_progress(11, steps)
@@ -214,11 +215,24 @@ def read_results(network):
           err = PluginLib.create_xml_response('GAMSimport', args.network, [args.scenario], errors = errors)
           print err
 
+def check_args(args):
+    if args.network==None:
+        raise HydraPluginError('No network is specified')
+    elif args.scenario==None:
+        raise HydraPluginError('No senario is specified')
+    elif os.path.exists(os.path.dirname(args.output))==False:
+        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
+    elif args.gms_file is None:
+        raise HydraPluginError('Gams file is not specifed')
+    elif os.path.isfile(args.gms_file)==False:
+        raise HydraPluginError('Gams file: '+args.gms_file+', is not exist')
+
 if __name__ == '__main__':
     try:
         steps=21
         parser = commandline_parser()
         args = parser.parse_args()
+        check_args(args)
         link_export_flag = 'nn'
         if args.link_name is True:
              link_export_flag = 'l'
