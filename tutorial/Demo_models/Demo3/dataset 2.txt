@@ -73,7 +73,7 @@ Urb1
 * Node groups
 
 SETS
-nsupply_nodes(i) non-storage nodes where mass balance constraint should be satisfied /
+ns_nodes(i) non-storage nodes where mass balance constraint should be satisfied /
 WWTP1
 Hp1
 J1
