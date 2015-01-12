@@ -94,7 +94,7 @@ from HydraGAMSlib import commandline_parser_Export
 import logging
 log = logging.getLogger(__name__)
 
-def export_network():
+def export_network(args):
         template_id = None
         exporter = GAMSexport(args.network,
                               args.scenario,
@@ -147,7 +147,7 @@ if __name__ == '__main__':
         link_export_flag = 'nn'
         if args.link_name is True:
             link_export_flag = 'l'
-        exporter=export_network()
+        exporter=export_network(args)
         message="Run successfully"
         print PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], message=message)
     except HydraPluginError, e:

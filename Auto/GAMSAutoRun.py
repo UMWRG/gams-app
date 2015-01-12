@@ -96,6 +96,7 @@ if api_path not in sys.path:
 
 ##########################
 
+
 from HydraLib.HydraException import HydraPluginError
 
 from Export import GAMSexport
@@ -119,6 +120,28 @@ def get_files_list(directory, ext):
             absolute_path = os.stat(os.path.join(directory,file_))
             files_list[file_]=time.ctime(absolute_path.st_mtime)
     return files_list
+
+def get_input_file_name(gams_model):
+    '''
+    return  output data file name if it is not provided by the user
+    '''
+    inputfilename=None
+    gamsfile=open(gams_model, "r")
+    for line in gamsfile:
+            sline = line.strip()
+            if len(sline) > 0 and sline[0] == '$':
+                lineparts = sline.split()
+                if lineparts[1] == 'include':
+                    name=sline
+                    name=name.replace('$','')
+                    name=name.replace('"','')
+                    name=name.replace(';','')
+                    name=name.replace('include','')
+                    name=name.strip()
+                    inputfilename=os.path.join(os.path.dirname(gams_model),name)
+                    break
+    gamsfile.close()
+    return inputfilename
 
 def export_network():
     template_id = None
@@ -210,12 +233,17 @@ def check_args(args):
         int(args.scenario)
     except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified')
-    if os.path.exists(os.path.dirname(args.output))==False:
-        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
-    elif args.gms_file is None:
+
+    if args.gms_file is None:
         raise HydraPluginError('Gams file is not specifed')
     elif os.path.isfile(args.gms_file)==False:
-        raise HydraPluginError('Gams file: '+args.gms_file+', is not exist')
+        raise HydraPluginError('Gams file: '+args.gms_file+', is not existed')
+    elif args.output==None:
+        args.output=get_input_file_name(args.gms_file)
+        if args.output is None:
+            raise HydraPluginError('No output file specified')
+    elif os.path.exists(os.path.dirname(args.output))==False:
+            raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
 
 if __name__ == '__main__':
     try:
