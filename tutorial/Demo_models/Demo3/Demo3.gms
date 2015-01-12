@@ -77,7 +77,7 @@ Objective ..
 MassBalance_nonstorage(ns_nodes)..
 
          SUM(t$dv(t),inflow(ns_nodes,t)+SUM(j$links(j,ns_nodes), Q(j,ns_nodes,t)
-         * link_timeseries_data(t, j, ns_nodes,"flow_multiplier")
+         * flowmultiplier(j,ns_nodes,t))
          - SUM(j$links(ns_nodes,j), Q(ns_nodes,j,t))
          - (alpha(ns_nodes)* D(ns_nodes,t)))
          =E= 0;
@@ -88,8 +88,8 @@ MassBalance_storage(supply_nodes)..
 
          SUM(t$dv(t),inflow(supply_nodes,t)
          + SUM(j$links(j,supply_nodes), Q(j,supply_nodes,t)
-         * link_timeseries_data(t, j, supply_nodes, "flow_multiplier")
-         - SUM(j$links(supply_nodes,j), Q(supply_nodes,j,t) )
+         * flowmultiplier(j,supply_nodes,t))
+         - SUM(j$links(supply_nodes,j), Q(supply_nodes,j,t))
          - S(supply_nodes,t)
          + storage(supply_nodes,t-1)$(ord(t) GT 1)
          + initStor(supply_nodes,t)$(ord(t) EQ 1))
