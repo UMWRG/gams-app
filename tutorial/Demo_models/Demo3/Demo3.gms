@@ -27,7 +27,7 @@ $TITLE    Demo3.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "/tmp/test.dat";
+$        include "dataset 1.txt";
 
 ** ----------------------------------------------------------------------
 **  Model variables and equations
