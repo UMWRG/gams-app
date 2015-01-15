@@ -27,7 +27,7 @@ $TITLE    Demo3.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "dataset 1.txt";
+$        include "hydra_generated_dataset.txt";
 
 ** ----------------------------------------------------------------------
 **  Model variables and equations
@@ -46,18 +46,18 @@ Q
 S
 alpha(i) target demand satisfaction ratio ;
 
-alpha.up(demand_nodes)=1;
+alpha.up(consumption)=1;
 
-positive variable  storage(supply_nodes,t) an interim variable for saving the value of the storage at the end of each time-step;
+positive variable  storage(supply,t) an interim variable for saving the value of the storage at the end of each time-step;
 positive variable  a(i,t) an interim variable for saving the value of the satisfaction ratio at the end of each time-step;
 
 EQUATIONS
-MassBalance_storage(supply_nodes)
-MassBalance_nonstorage(ns_nodes)
+MassBalance_storage(supply)
+MassBalance_nonstorage(non_storage)
 MinFlow(i,j,t)
 MaxFlow(i,j,t)
-MaxStor(supply_nodes,t)
-MinStor(supply_nodes,t)
+MaxStor(supply,t)
+MinStor(supply,t)
 Objective
 ;
 
@@ -70,56 +70,58 @@ set dv(t) / /;
 * Objective function for time step by time step formulation
 
 Objective ..
-    Z =E= sum(t$dv(t),SUM((demand_nodes), alpha(demand_nodes) * cost(demand_nodes,t)));
+    Z =E= sum(t$dv(t),SUM((consumption), alpha(consumption)
+          * consumption_timeseries_data(t, consumption, "cost")));
 
 * Mass balance constraint for non-storage nodes:
 
-MassBalance_nonstorage(ns_nodes)..
+MassBalance_nonstorage(non_storage)..
 
-         SUM(t$dv(t),inflow(ns_nodes,t)+SUM(j$links(j,ns_nodes), Q(j,ns_nodes,t)
-         * flowmultiplier(j,ns_nodes,t))
-         - SUM(j$links(ns_nodes,j), Q(ns_nodes,j,t))
-         - (alpha(ns_nodes)* D(ns_nodes,t)))
+         SUM(t$dv(t),supply_timeseries_data(t, non_storage, "inflow")
+         +SUM(j$links(j,non_storage), Q(j,non_storage,t)
+         * link_timeseries_data(t, j,non_storage, "flow_multiplier"))
+         - SUM(j$links(non_storage,j), Q(non_storage,j,t))
+         - (alpha(non_storage)* consumption_timeseries_data(t, non_storage, "demand")))
          =E= 0;
 
 * Mass balance constraint for storage nodes:
 
-MassBalance_storage(supply_nodes)..
+MassBalance_storage(supply)..
 
-         SUM(t$dv(t),inflow(supply_nodes,t)
-         + SUM(j$links(j,supply_nodes), Q(j,supply_nodes,t)
-         * flowmultiplier(j,supply_nodes,t))
-         - SUM(j$links(supply_nodes,j), Q(supply_nodes,j,t))
-         - S(supply_nodes,t)
-         + storage(supply_nodes,t-1)$(ord(t) GT 1)
-         + initStor(supply_nodes,t)$(ord(t) EQ 1))
+         SUM(t$dv(t),supply_timeseries_data(t, supply, "inflow")
+         + SUM(j$links(j,supply), Q(j,supply,t)
+         * link_timeseries_data(t, j, supply, "flow_multiplier"))
+         - SUM(j$links(supply,j), Q(supply,j,t))
+         - S(supply,t)
+         + storage(supply,t-1)$(ord(t) GT 1)
+         + supply_scalar_data(supply, "initial_storage")$(ord(t) EQ 1))
          =E= 0;
 
 * Lower and upper bound of possible flow in links
 
 MinFlow(i,j,t)$(links(i,j) and dv(t)) ..
-    Q(i,j,t) =G= lower(i,j,t);
+    Q(i,j,t) =G= link_timeseries_data(t, i,j,"min_flow");
 
 MaxFlow(i,j,t)$(links(i,j)  and dv(t))..
-    Q(i,j,t) =L= upper(i,j,t);
+    Q(i,j,t) =L= link_timeseries_data(t, i,j,"max_flow");
 
 * Lower and upper bound of Storage volume at storage nodes
-MaxStor(supply_nodes,t)$dv(t)..
-    S(supply_nodes,t) =L= storageupper(supply_nodes,t);
+MaxStor(supply,t)$dv(t)..
+    S(supply,t) =L= supply_timeseries_data(t, supply, "max_storage");
 
-MinStor(supply_nodes,t)$dv(t)..
-    S(supply_nodes,t) =G= storagelower(supply_nodes,t);
+MinStor(supply,t)$dv(t)..
+    S(supply,t) =G= supply_timeseries_data(t, supply, "min_storage");
 
 ** ----------------------------------------------------------------------
 **  Model declaration and solve statements
 ** ----------------------------------------------------------------------
-
+alias(t, tsteps)
 MODEL Demo3 /ALL/;
 
 loop (tsteps,
             dv(tsteps)=t(tsteps);
             SOLVE Demo3 USING LP MAXIMIZING Z;
-            storage.fx(supply_nodes,tsteps)=S.l(supply_nodes,tsteps) ;
+            storage.fx(supply,tsteps)=S.l(supply,tsteps) ;
             a.l(i,tsteps)=alpha.l(i);
             Obj.l(tsteps)=Z.l;
             DISPLAY  Z.l, Obj.l,storage.l,S.l, Q.l;

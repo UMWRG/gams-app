@@ -1,4 +1,4 @@
-Name        , From    , To    , Type , flowmultiplier,min_flow,max_flow, Q              , Description
+Name        , From    , To    , Type , flow_multiplier,min_flow,max_flow, Q              , Description
 Units       ,         ,       ,      , -                     , 1e6 m^3 mon^-1  , 1e6 m^3 mon^-1  , 1e6 m^3 mon^-1 ,
 SR2_SR4,SR2,SR4, link , TS/flowmult.csv , TS/min_flow.csv , TS/max_flow.csv , NULL           ,
 SR1_J1,SR1, J1    , link , TS/flowmult.csv , TS/min_flow.csv , TS/max_flow.csv , NULL           ,
