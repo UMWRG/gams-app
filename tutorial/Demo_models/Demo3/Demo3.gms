@@ -27,7 +27,7 @@ $TITLE    Demo3.gms
 **  Loading Data: sets, parameters and tables
 ** ----------------------------------------------------------------------
 
-$        include "/tmp/test.dat";
+$        include "dataset 1.txt";
 
 ** ----------------------------------------------------------------------
 **  Model variables and equations
@@ -53,11 +53,11 @@ positive variable  a(i,t) an interim variable for saving the value of the satisf
 
 EQUATIONS
 MassBalance_storage(supply_nodes)
+MassBalance_nonstorage(ns_nodes)
 MinFlow(i,j,t)
 MaxFlow(i,j,t)
 MaxStor(supply_nodes,t)
 MinStor(supply_nodes,t)
-Demand_satisfaction_ratio(i,t)
 Objective
 ;
 
@@ -72,15 +72,15 @@ set dv(t) / /;
 Objective ..
     Z =E= sum(t$dv(t),SUM((demand_nodes), alpha(demand_nodes) * cost(demand_nodes,t)));
 
+* Mass balance constraint for non-storage nodes:
 
-*Calculating demand satisfaction ratio for each demand node in each time period
+MassBalance_nonstorage(ns_nodes)..
 
-Demand_satisfaction_ratio(i,t)$(dv(t)and not supply_nodes(i))..
-         (alpha(i)* D(i,t))$demand_nodes(i)
-                                            =E= 
-                        SUM(j$links(j,i), Q(j,i,t)* 
-                        link_timeseries_data(t, i, j, "flow_multiplier")
-                        -SUM(j$links(i,j), Q(i,j,t));
+         SUM(t$dv(t),inflow(ns_nodes,t)+SUM(j$links(j,ns_nodes), Q(j,ns_nodes,t)
+         * flowmultiplier(j,ns_nodes,t))
+         - SUM(j$links(ns_nodes,j), Q(ns_nodes,j,t))
+         - (alpha(ns_nodes)* D(ns_nodes,t)))
+         =E= 0;
 
 * Mass balance constraint for storage nodes:
 
@@ -88,8 +88,8 @@ MassBalance_storage(supply_nodes)..
 
          SUM(t$dv(t),inflow(supply_nodes,t)
          + SUM(j$links(j,supply_nodes), Q(j,supply_nodes,t)
-         * link_timeseries_data(t, supply_nodes, j, "flow_multiplier")
-         - SUM(j$links(supply_nodes,j), Q(supply_nodes,j,t) )
+         * flowmultiplier(j,supply_nodes,t))
+         - SUM(j$links(supply_nodes,j), Q(supply_nodes,j,t))
          - S(supply_nodes,t)
          + storage(supply_nodes,t-1)$(ord(t) GT 1)
          + initStor(supply_nodes,t)$(ord(t) EQ 1))
@@ -118,7 +118,6 @@ MODEL Demo3 /ALL/;
 
 loop (tsteps,
             dv(tsteps)=t(tsteps);
-            display dv;
             SOLVE Demo3 USING LP MAXIMIZING Z;
             storage.fx(supply_nodes,tsteps)=S.l(supply_nodes,tsteps) ;
             a.l(i,tsteps)=alpha.l(i);

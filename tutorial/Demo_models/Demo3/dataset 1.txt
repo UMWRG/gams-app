@@ -87,7 +87,7 @@ Ag1
 /
 
 SETS
-s_nodes(i) storage nodes where storage mass balance constraint should be satisfied /
+supply_nodes(i) storage nodes where storage mass balance constraint should be satisfied /
 Desal1
 SR2
 SR3
@@ -98,7 +98,7 @@ GW2
 /
 
 SETS
-dem_nodes(i) demand nodes /
+demand_nodes(i) demand nodes /
 EndPt
 Urb2
 Urb1
@@ -203,7 +203,7 @@ alias (t,tsteps);
 
 *Initial storage level
 
-Table initStor (s_nodes,t)
+Table initStor (supply_nodes,t)
                1
 Desal1         10000
 SR1            150
@@ -214,10 +214,10 @@ GW1            600
 GW2            600
 
 Table inflow (i,t)
-                 1       2      3      4      5      6  
-SR1              100     120    120    130    110    110
-SR3              40      30     30     30     40     50
-Desal1           1000    1000   1000   1000   1000   1000
+                 1       2      3      4      5      6      7      8      9 
+SR1              100     120    120    130    110    110    100    120    120
+SR3              40      30     30     30     40     50     40     40     50
+Desal1           1000    1000   1000   1000   1000   1000   1000   1000   1000
 
 * Consumption coefficient
 
@@ -328,7 +328,7 @@ GW1 . Urb1       80         80         80         80         80         80      
 
 *Storage lower bound
 
-Table storagelower(s_nodes,t)
+Table storagelower(supply_nodes,t)
 
 
                               1      2      3      4      5      6     7     8     9
@@ -343,7 +343,7 @@ GW2                           300    300    300    300    300    300   300   300
 
 *Storage upper bound
 
-Table storageupper(s_nodes,t)
+Table storageupper(supply_nodes,t)
 
 
                               1      2      3      4      5      6      7      8      9
@@ -371,7 +371,7 @@ Ag1             27    27    27     27     27     29     29     29     28
 
 *Priority of each demand node
 
-Table cost(dem_nodes,t)
+Table cost(demand_nodes,t)
 
                 1     2     3      4      5      6      7      8      9
 EndPt           10    10    10     10     10     10     10     10     10
