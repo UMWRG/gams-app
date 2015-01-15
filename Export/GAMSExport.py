@@ -70,7 +70,8 @@ Option                 Short  Parameter  Description
 
 Examples:
 =========
-  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
+  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 
+                 2000-06-01 -o "c:\temp\demo_2.dat"
 
 '''
 import sys
@@ -136,9 +137,13 @@ def check_args(args):
         output = '.'
 
     if  os.path.exists(output)==False:
-        raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
+        raise HydraPluginError('output file directory: '+ 
+                               os.path.dirname(args.output)+
+                               ', is not exist')
 
 if __name__ == '__main__':
+    message = None
+    errors  = []
     try:
         parser = commandline_parser_Export()
         args = parser.parse_args()
@@ -149,11 +154,8 @@ if __name__ == '__main__':
             link_export_flag = 'l'
         exporter=export_network(args)
         message="Run successfully"
-        print PluginLib.create_xml_response('GAMSexport', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
         errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
-        print err
     except Exception, e:
         #import traceback
         #traceback.print_exc(file=sys.stdout)
@@ -163,8 +165,12 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-        err = PluginLib.create_xml_response('GAMSExport', args.network, [args.scenario], errors = errors)
-        print err
 
+    err = PluginLib.create_xml_response('GAMSExport',
+                                            args.network,
+                                            [args.scenario],
+                                            errors = errors,
+                                            message=message)
+    print err
 
 
