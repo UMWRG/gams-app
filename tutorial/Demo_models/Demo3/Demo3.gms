@@ -53,7 +53,7 @@ positive variable  a(i,t) an interim variable for saving the value of the satisf
 
 EQUATIONS
 MassBalance_storage(supply)
-MassBalance_nonstorage(non_storage)
+MassBalance_nonstorage(non_storage_nodes)
 MinFlow(i,j,t)
 MaxFlow(i,j,t)
 MaxStor(supply,t)
@@ -75,13 +75,13 @@ Objective ..
 
 * Mass balance constraint for non-storage nodes:
 
-MassBalance_nonstorage(non_storage)..
+MassBalance_nonstorage(non_storage_nodes)..
 
-         SUM(t$dv(t),supply_timeseries_data(t, non_storage, "inflow")
-         +SUM(j$links(j,non_storage), Q(j,non_storage,t)
-         * link_timeseries_data(t, j,non_storage, "flow_multiplier"))
-         - SUM(j$links(non_storage,j), Q(non_storage,j,t))
-         - (alpha(non_storage)* consumption_timeseries_data(t, non_storage, "demand")))
+         SUM(t$dv(t),supply_timeseries_data(t, non_storage_nodes, "inflow")
+         +SUM(j$links(j,non_storage_nodes), Q(j,non_storage_nodes,t)
+         * link_timeseries_data(t, j,non_storage_nodes, "flow_multiplier"))
+         - SUM(j$links(non_storage_nodes,j), Q(non_storage_nodes,j,t))
+         - (alpha(non_storage_nodes)* consumption_timeseries_data(t, non_storage_nodes, "demand")))
          =E= 0;
 
 * Mass balance constraint for storage nodes:
