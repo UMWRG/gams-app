@@ -5,7 +5,7 @@
     
     <resource>
         <type>NETWORK</type>
-        <name>tutorial_model</name>
+        <name>tutorial_network</name>
         <attribute>
             <name>Z</name>
             <dimension>Dimensionless</dimension>
@@ -46,7 +46,7 @@
   
     <resource>
         <type>NODE</type>
-        <name>consumption</name>
+        <name>non_storage</name>
         <attribute>
             <name>cost</name>
             <dimension>Monetary value</dimension>
@@ -57,11 +57,6 @@
             <dimension>Volume</dimension>
             <is_var>N</is_var>
         </attribute>
-    </resource>
-   
-    <resource>
-        <type>NODE</type>
-        <name>non_storage</name>
     </resource>
 
     <resource>
