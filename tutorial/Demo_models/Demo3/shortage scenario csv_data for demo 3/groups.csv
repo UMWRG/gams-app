@@ -1,5 +1,0 @@
-Name       , Type , Description
-Units      ,      ,
-s_nodes   , group, Nodes that feature a storage
-ns_nodes, group, Nodes that don't feature a storage
-dem_nodes, group, Nodes that feature a demand
