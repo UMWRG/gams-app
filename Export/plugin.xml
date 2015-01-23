@@ -12,7 +12,7 @@
             <switch>-t</switch>
             <multiple>N</multiple>
             <allownew>N</allownew>
-            <argtype>string</argtype>
+            <argtype>network</argtype>
             <help>ID of the network where results will be imported to. This coincides with the network exported to GAMS..</help>
         </arg>
         <arg>
@@ -20,7 +20,7 @@
             <switch>-s</switch>
             <multiple>N</multiple>
             <allownew>N</allownew>
-            <argtype>string</argtype>
+            <argtype>scenario</argtype>
             <help> ID of the underlying scenario used for the most recent simulation run.</help>
         </arg>
 		<arg>
@@ -38,7 +38,7 @@
             <switch>-tp</switch>
             <multiple>N</multiple>
             <allownew>N</allownew>
-            <argtype>string</argtype>
+            <argtype>template</argtype>
             <help>ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.</help>
         </arg>
         <arg>
