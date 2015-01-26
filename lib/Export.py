@@ -580,6 +580,7 @@ class GAMSexport(object):
                             attr_outputs.append(col_header)
             attr_outputs.append('\n')
 
+            #Identify the datasets that we need data for
             dataset_ids = []
             for attribute in attributes:
                 for resource in resources:
@@ -587,10 +588,13 @@ class GAMSexport(object):
                     if attr is not None and attr.dataset_id is not None:
                         dataset_ids.append(attr.dataset_id)
 
+            #We need to get the value at each time in the specified time axis,
+            #so we need to identify the relevant timestamps.
             soap_times = []
             for t, timestamp in enumerate(self.time_index):
                 soap_times.append(date_to_string(timestamp))
 
+            #Get all the necessary data for all the datasets we have.
             all_data = self.connection.call('get_multiple_vals_at_time',
                                         {'dataset_ids':dataset_ids,
                                          'timestamps' : soap_times})
