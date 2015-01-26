@@ -16,8 +16,6 @@
 **    along with the GAMS Plugin Demo Suite.  If not, see <http://www.gnu.org/licenses/>.
 **
 
-
-
 $TITLE    Demo1.gms
 
 * version: no time-step
@@ -46,41 +44,41 @@ Q
 ;
 
 EQUATIONS
-MassBalance_nonstorage(ns_nodes)
+MassBalance_nonstorage(non_storage_nodes)
 MinFlow(i,j)
 MaxFlow(i,j)
-Demand(dem_nodes)
+DemandDelivery(demand_nodes)
 Objective
 ;
 
 * Objective function
 
 Objective ..
-    Z =E= SUM((i,j)$links(i,j), Q(i,j) * cost(i,j))
+    Z =E= SUM((i,j)$links(i,j), Q(i,j) * link_scalar_data(i,j, 'cost'))
 ;
 
 *Calculating water delivery for each demand node at each time step
 
-Demand(dem_nodes)..
-         delivery(dem_nodes) =E= SUM(j$links(j,dem_nodes), flowmultiplier(j,dem_nodes)
-         *Q(j,dem_nodes));
+DemandDelivery(demand_nodes)..
+         delivery(demand_nodes) =E= SUM(j$links(j,demand_nodes), link_scalar_data(j,demand_nodes, "flow_multiplier")
+         *Q(j,demand_nodes));
 
 * Mass balance constrait for non-storage nodes
 
-MassBalance_nonstorage(ns_nodes) ..
-    inflow(ns_nodes)+
-    SUM(j$links(j,ns_nodes), Q(j,ns_nodes)* flowmultiplier(j,ns_nodes))
-    - SUM(j$links(ns_nodes,j), Q(ns_nodes,j))
-    - cc(ns_nodes)$dem_nodes(ns_nodes) * delivery(ns_nodes)
+MassBalance_nonstorage(non_storage_nodes) ..
+    junction_scalar_data(non_storage_nodes, 'inflow')+
+    SUM(j$links(j,non_storage_nodes), Q(j,non_storage_nodes)* link_scalar_data(j,non_storage_nodes, 'flow_multiplier'))
+    - SUM(j$links(non_storage_nodes,j), Q(non_storage_nodes,j))
+    - demand_scalar_data(non_storage_nodes, 'consumption_coefficient')$demand_nodes(non_storage_nodes) * delivery(non_storage_nodes)
     =E= 0;
 
 * Lower and upper bound of possible flow in links
 
 MinFlow(i,j)$links(i,j) ..
-    Q(i,j) =G= lower(i,j);
+    Q(i,j) =G= link_scalar_data(i,j, 'min_flow');
 
 MaxFlow(i,j)$links(i,j) ..
-    Q(i,j) =L= upper(i,j);
+    Q(i,j) =L= link_scalar_data(i,j, 'max_flow');
 
 ** ----------------------------------------------------------------------
 **  Model declaration and solve statements
@@ -98,4 +96,4 @@ execute_unload "Results.gdx" ,
     MinFlow,
     MaxFlow,
     Z
-    cost;
+    link_scalar_data;
