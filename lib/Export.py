@@ -247,12 +247,10 @@ API docs
 """
 
 import re
-import argparse as ap
 from datetime import datetime
 from datetime import timedelta
 from string import ascii_lowercase
 
-from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
@@ -264,7 +262,7 @@ from HydraGAMSlib import arr_to_matrix
 from HydraGAMSlib import convert_date_to_timeindex
 from HydraLib.PluginLib import write_progress
 
-import traceback
+import json
 
 import logging
 log = logging.getLogger(__name__)
@@ -582,26 +580,34 @@ class GAMSexport(object):
                             attr_outputs.append(col_header)
             attr_outputs.append('\n')
 
+            dataset_ids = []
+            for attribute in attributes:
+                for resource in resources:
+                    attr = resource.get_attribute(attr_name=attribute.name)
+                    if attr is not None and attr.dataset_id is not None:
+                        dataset_ids.append(attr.dataset_id)
+
+            soap_times = []
+            for t, timestamp in enumerate(self.time_index):
+                soap_times.append(date_to_string(timestamp))
+
+            all_data = self.connection.call('get_multiple_vals_at_time',
+                                        {'dataset_ids':dataset_ids,
+                                         'timestamps' : soap_times})
+
             for t, timestamp in enumerate(self.time_index):
                 attr_outputs.append('{0:<7}'.format(t))
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
-                            soap_time = [date_to_string(timestamp)]
-                            json_data = self.connection.call('get_val_at_time',
-                                                        {'dataset_id':attr.dataset_id,
-                                                         'timestamps' : soap_time})
-
-                            if json_data.data is None:
-                                raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
-
-                            data = parse_array(json_data.data)[0]
+                            soap_time = date_to_string(timestamp)
+                            data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
 
                             if data is None:
-                                continue
+                                raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
 
-                            data_str = ' %14f' % data
+                            data_str = ' %14f' % float(data)
                             attr_outputs.append(
                                 data_str.rjust(col_header_length[(attribute, resource)]))
                 attr_outputs.append('\n')

@@ -155,10 +155,10 @@ if __name__ == '__main__':
         exporter=export_network(args)
         message="Run successfully"
     except HydraPluginError, e:
+        log.exception(e)
         errors = [e.message]
     except Exception, e:
-        #import traceback
-        #traceback.print_exc(file=sys.stdout)
+        log.exception(e)
         errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):
