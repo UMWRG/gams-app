@@ -114,10 +114,12 @@ if __name__ == '__main__':
             print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)
 
     except HydraPluginError, e:
+        log.exception(e)
         errors = [e.message]
         err = PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], errors = errors)
         print err
     except Exception, e:
+        log.exception(e)
         errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):

@@ -47,7 +47,7 @@
             <switch>-G</switch>
             <multiple>N</multiple>
             <allownew>N</allownew>
-            <argtype>folder</argtype>
+            <argtype>file</argtype>
             <help>File path of the GAMS installation (the folder containing gams.exe or equivalent). This is only necessary if gams is installed in a non-standard location.</help>
         </arg>
     </non_mandatory_args>
