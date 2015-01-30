@@ -151,7 +151,7 @@ class GAMSimport(object):
                                              'scenario_ids': [int(scenario_id)],
                                              'template_id': None})
         self.res_scenario = self.network.scenarios[0].resourcescenarios
-        attrslist = self.connection.call('get_attributes', {})
+        attrslist = self.connection.call('get_all_attributes', {})
         for attr in attrslist:
             self.attrs.update({attr.id: attr.name})
 
@@ -162,7 +162,7 @@ class GAMSimport(object):
         """
         self.network =network
         self.res_scenario = self.network.scenarios[0].resourcescenarios
-        attrslist = self.connection.call('get_attributes', {})
+        attrslist = self.connection.call('get_all_attributes', {})
         for attr in attrslist:
             self.attrs.update({attr.id: attr.name})
 
