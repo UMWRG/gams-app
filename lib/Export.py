@@ -296,7 +296,7 @@ class GAMSexport(object):
         self.net=net
 
         log.info("Network retrieved")
-        attrs = self.connection.call('get_attributes', {})
+        attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
