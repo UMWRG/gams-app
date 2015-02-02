@@ -46,7 +46,7 @@ if api_path not in sys.path:
 ##########################
 
 from HydraLib.HydraException import HydraPluginError
-from Import import GAMSimport, set_gams_path
+from Import import GAMSImport, set_gams_path
 from HydraLib import PluginLib
 
 from HydraLib.PluginLib import write_progress
@@ -57,7 +57,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(args):
-        gdximport = GAMSimport()
+        gdximport = GAMSImport()
         write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
 

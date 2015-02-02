@@ -95,7 +95,7 @@ class GDXvariable(object):
         self.description = extinfo[3]
 
 
-class GAMSimport(object):
+class GAMSImport(object):
 
     def __init__(self, url=None, session_id=None):
         import gdxcc
