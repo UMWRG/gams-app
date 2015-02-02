@@ -99,8 +99,8 @@ if api_path not in sys.path:
 
 from HydraLib.HydraException import HydraPluginError
 
-from Export import GAMSexport
-from Import import GAMSimport
+from Export import GAMSExport
+from Import import GAMSImport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser
 from dateutil import parser
@@ -141,11 +141,12 @@ def get_input_file_name(gams_model):
                     inputfilename=os.path.join(os.path.dirname(gams_model),name)
                     break
     gamsfile.close()
+    log.info("Exporting data to: %s", inputfilename)
     return inputfilename
 
 def export_network():
     template_id = None
-    exporter = GAMSexport(args.network,
+    exporter = GAMSExport(args.network,
                           args.scenario,
                           template_id,#int(args.template_id),
                           args.output,
@@ -175,7 +176,6 @@ def export_network():
 def run_gams_model(args):
     log.info("Running GAMS model .....")
     cur_time=datetime.now().replace(microsecond=0)
-    log.critical(cur_time)
     write_progress(8, steps)
     working_directory=os.path.dirname(args.gms_file)
     
@@ -197,7 +197,6 @@ def run_gams_model(args):
             dt = parser.parse(files_list[file_])
             log.critical(dt)
             delta= (dt-cur_time).total_seconds()
-            log.critical("delta:%s",delta)
             if delta>=0:
                 args.gdx_file=os.path.join(working_directory, file_)
         if(args.gdx_file==None):
@@ -207,7 +206,7 @@ def run_gams_model(args):
 
 def read_results(network):
     write_progress(12, steps)
-    gdximport = GAMSimport()
+    gdximport = GAMSImport()
     gdximport.set_network(network)
     write_progress(13, steps)
     gdximport.load_gams_file(args.gms_file)

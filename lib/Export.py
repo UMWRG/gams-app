@@ -99,7 +99,7 @@ connected by a link, the list of link refers to the index of nodes::
     NodeB . NodeC
     /
 
-In addition to links, GAMSexport provides a connectivity matrx::
+In addition to links, GAMSExport provides a connectivity matrx::
 
     * Connectivity matrix.
     Table Connect(i,j)
@@ -267,7 +267,7 @@ import json
 import logging
 log = logging.getLogger(__name__)
 
-class GAMSexport(object):
+class GAMSExport(object):
 
     def __init__(self, network_id,
                  scenario_id,

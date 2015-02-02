@@ -87,7 +87,7 @@ if api_path not in sys.path:
 
 from HydraLib.HydraException import HydraPluginError
 
-from Export import GAMSexport
+from Export import GAMSExport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser_Export
 
@@ -97,7 +97,7 @@ log = logging.getLogger(__name__)
 
 def export_network(args):
         template_id = None
-        exporter = GAMSexport(args.network,
+        exporter = GAMSExport(args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
