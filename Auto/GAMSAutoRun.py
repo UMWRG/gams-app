@@ -102,8 +102,8 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSexport
 from Import import GAMSimport
 from HydraLib import PluginLib
-from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import commandline_parser
+from dateutil import parser
 from HydraLib.PluginLib import write_progress
 from RunGamsModel import GamsModel
 
@@ -174,7 +174,8 @@ def export_network():
 
 def run_gams_model(args):
     log.info("Running GAMS model .....")
-    cur_time=datetime.now()
+    cur_time=datetime.now().replace(microsecond=0)
+    log.critical(cur_time)
     write_progress(8, steps)
     working_directory=os.path.dirname(args.gms_file)
     
@@ -190,14 +191,15 @@ def run_gams_model(args):
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
     if(args.gdx_file==None):
-        log.info("Extract result file name.....")
+        log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
         for file_ in files_list:
-            from dateutil import parser
             dt = parser.parse(files_list[file_])
+            log.critical(dt)
             delta= (dt-cur_time).total_seconds()
-            if delta>0:
-                args.gdx_file=working_directory+"\\"+file_
+            log.critical("delta:%s",delta)
+            if delta>=0:
+                args.gdx_file=os.path.join(working_directory, file_)
         if(args.gdx_file==None):
               raise HydraPluginError('Result file is not provided/found.')
 
@@ -248,8 +250,8 @@ def check_args(args):
 if __name__ == '__main__':
     try:
         steps=21
-        parser = commandline_parser()
-        args = parser.parse_args()
+        cmd_parser = commandline_parser()
+        args = cmd_parser.parse_args()
         check_args(args)
         link_export_flag = 'nn'
         if args.link_name is True:
@@ -261,8 +263,7 @@ if __name__ == '__main__':
         message="Run successfully"
         print PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], message=message)
     except HydraPluginError, e:
-        import traceback
-        traceback.print_exc(file=sys.stderr)
+        log.exception(e)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         print err
     except Exception as e:
@@ -272,9 +273,7 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-
-        import traceback
-        traceback.print_exc(file=sys.stderr)
+        log.exception(e)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         print err
 
