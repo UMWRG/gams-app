@@ -23,6 +23,14 @@
             <argtype>scenario</argtype>
             <help> ID of the underlying scenario used for the most recent simulation run.</help>
         </arg>
+         <arg>
+           <name>time-axis</name>
+           <switch>-tx</switch>
+           <multiple>N</multiple>
+            <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Time axis for the modelling period (a list of comma separated time stamps). Either the time axis or a start-time, end-time, time-step combination MUST be specified.</help>
+        </arg>
 		<arg>
             <name>output</name>
             <switch>-o</switch>
@@ -70,18 +78,18 @@
            <switch>-st</switch>
            <multiple>N</multiple>
             <allownew>N</allownew>
-           <argtype>string</argtype>
-           <help>Start date of the time period used for simulation.</help>
+           <argtype>date</argtype>
+           <help>Start date of the time period used for simulation. Must be after 1900-01-01.</help>
         </arg>
          <arg>
            <name>end-date</name>
            <switch>-en</switch>
            <multiple>N</multiple>
            <allownew>N</allownew>
-           <argtype>string</argtype>
-           <help>End date of the time period used for simulation.</help>
+           <argtype>date</argtype>
+           <help>End date of the time period used for simulation. Must be after 1900-01-01.</help>
         </arg>
-         <arg>
+        <arg>
            <name>time-step</name>
            <switch>-dt</switch>
            <multiple>N</multiple>
@@ -89,13 +97,21 @@
            <argtype>string</argtype>
            <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
         </arg>
-         <arg>
-           <name>time-axis</name>
-           <switch>-tx</switch>
-           <multiple>N</multiple>
-            <allownew>N</allownew>
-           <argtype>string</argtype>
-           <help>Time axis for the modelling period (a list of comma separated time stamps). Either the time axis or a start-time, end-time, time-step combination MUST be specified.</help>
+        <arg>
+            <name>server_url</name>
+            <switch>-u</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Specify the URL of the server to which this
+                        plug-in connects.</help>
+        </arg>
+        <arg>
+            <name>session_id</name>
+            <switch>-c</switch>
+            <multiple>N</multiple>
+            <argtype>string</argtype>
+            <help>Specify the session ID for the connection. If not specified,
+            the plugin will try to connect based on the credentials it finds in config.</help>
         </arg>
     </non_mandatory_args>
     <switches>

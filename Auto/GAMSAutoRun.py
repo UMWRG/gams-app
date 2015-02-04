@@ -1,5 +1,20 @@
-# (c) Copyright 2015, University of Manchester
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
+#\
+# GAMSAutoRun is free software: you can redistribute it and/or modify\
+# it under the terms of the GNU General Public License as published by\
+# the Free Software Foundation, either version 3 of the License, or\
+# (at your option) any later version.\
+#\
+# GAMSAutoRun is distributed in the hope that it will be useful,\
+# but WITHOUT ANY WARRANTY; without even the implied warranty of\
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
+# GNU General Public License for more details.\
+# \
+# You should have received a copy of the GNU General Public License\
+# along with GAMSAutoRun.  If not, see <http://www.gnu.org/licenses/>\
+#
 '''
 
 plugin_name: GAMS
@@ -9,38 +24,46 @@ plugin_name: GAMS
 
 mandatory_args
 ==============
-
-
-====================== ====== ========== ======================================
+====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
-====================== ====== ========== ======================================
+====================== ====== ========== =========================================
 --network              -t     NETWORK    ID of the network where results will
                                          be imported to. Ideally this coincides
                                          with the network exported to GAMS.
 --scenario            -s     SCENARIO    ID of the underlying scenario used for
---template-id         -tp  TEMPLATE      ID of the template used for exporting
+--template-id         -tp    TEMPLATE    ID of the template used for exporting
                                          resources. Attributes that don't
                                          belong to this template are ignored.
---output              -o    OUTPUT       Filename of the output file.
+--output              -o     OUTPUT      Filename of the output file.
 --gams-model          -m     GMS_FILE    Full path to the GAMS model (*.gms)
                                          used for the simulation.
 
 
-non_mandatory_args
-==================
+Server-based arguments
+======================
 
-====================== ====== ========== ======================================
+====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
-====================== ====== ========== ======================================
+====================== ====== ========== =========================================
+``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
+                                           connect to.
+                                           Defaults to localhost.
+``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software
+                                           If left empty, the plugin will attempt 
+                                           to log in itself.
+
+====================== ====== ========== =========================================
+Option                 Short  Parameter  Description
+====================== ====== ========== =========================================
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
 
 **Optional arguments:**
 
-====================== ======= ========== ======================================
+====================== ======= ========== =========================================
 --group-nodes-by        -gn     GROUP_ATTR Group nodes by this attribute(s).
 --group_links-by        -gl     GROUP_ATTR Group links by this attribute(s).
-====================== ======= ========== ======================================
+====================== ======= ========== =========================================
 
 For Export function:
 ====================
@@ -151,7 +174,8 @@ def export_network():
                           template_id,#int(args.template_id),
                           args.output,
                           link_export_flag,
-                          url=args.server_url)
+                          url=args.server_url,
+                          session_id=args.session_id)
     exporter.steps=steps
 
     if args.template_id is not None:

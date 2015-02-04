@@ -1,13 +1,28 @@
-# (c) Copyright 2015, University of Manchester
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
+#\
+# GAMSExport is free software: you can redistribute it and/or modify\
+# it under the terms of the GNU General Public License as published by\
+# the Free Software Foundation, either version 3 of the License, or\
+# (at your option) any later version.\
+#\
+# GAMSExport is distributed in the hope that it will be useful,\
+# but WITHOUT ANY WARRANTY; without even the implied warranty of\
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
+# GNU General Public License for more details.\
+# \
+# You should have received a copy of the GNU General Public License\
+# along with GAMSExport.  If not, see <http://www.gnu.org/licenses/>\
+#
+
 
 '''
     plugin_name: GAMS Export
                  Export a network from Hydra to a gams input text file.
 
-mandatory_args
-==============
-
-
+Mandatory arguments
+===================
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
@@ -20,21 +35,35 @@ Option                 Short  Parameter  Description
                                          belong to this template are ignored.
 --output              -o    OUTPUT       Filename of the output file.
 
-non_mandatory_args
-==================
+Server-based arguments
+======================
 
+====================== ====== ========== =========================================
+Option                 Short  Parameter  Description
+====================== ====== ========== =========================================
+``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
+                                           connect to.
+                                           Defaults to localhost.
+``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software
+                                           If left empty, the plugin will attempt 
+                                           to log in itself.
+
+Manually specifying the gams installation
+=========================================
+                                           
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
 
-**Optional arguments:**
+Optional Grouping arguments
+===========================
 
-====================== ======= ========== ======================================
+====================== ======= =========== ======================================
 --group-nodes-by        -gn     GROUP_ATTR Group nodes by this attribute(s).
 --group_links-by        -gl     GROUP_ATTR Group links by this attribute(s).
-====================== ======= ========== ======================================
+====================== ======= =========== ======================================
 
 Specifying the time axis
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +131,8 @@ def export_network(args):
                               template_id,#int(args.template_id),
                               args.output,
                               link_export_flag,
-                              url=args.server_url)
+                              url=args.server_url,
+                              session_id=args.session_id)
 
         if args.template_id is not None:
             exporter.template_id = int(args.template_id)

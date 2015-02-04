@@ -1,10 +1,28 @@
-# (c) Copyright 2015, University of Manchester
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
+#\
+# GAMSImport is free software: you can redistribute it and/or modify\
+# it under the terms of the GNU General Public License as published by\
+# the Free Software Foundation, either version 3 of the License, or\
+# (at your option) any later version.\
+#\
+# GAMSImport is distributed in the hope that it will be useful,\
+# but WITHOUT ANY WARRANTY; without even the implied warranty of\
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
+# GNU General Public License for more details.\
+# \
+# You should have received a copy of the GNU General Public License\
+# along with GAMSImport.  If not, see <http://www.gnu.org/licenses/>\
+#
+
+
 '''
  plugin_name: Import GAMS
 	          Import a gdx results file into Hydra.
 
-mandatory_args
-==============
+Mandatory Arguments
+===================
 
 
 ====================== ====== ========== ======================================
@@ -18,9 +36,21 @@ Option                 Short  Parameter  Description
                                          used for the simulation.
 --gdx-file            -f     GDX_FILE   GDX file containing GAMS results
 
+Server-based arguments
+======================
 
-non_mandatory_args
-==================
+====================== ====== ========== =========================================
+Option                 Short  Parameter  Description
+====================== ====== ========== =========================================
+``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
+                                           connect to.
+                                           Defaults to localhost.
+``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software 
+                                           If left empty, the plugin will attempt 
+                                           to log in itself.
+
+Manually specifying the gams path
+=================================
 
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
@@ -57,7 +87,7 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(args):
-        gdximport = GAMSImport()
+        gdximport = GAMSImport(args.server_url, args.session_id)
         write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
 

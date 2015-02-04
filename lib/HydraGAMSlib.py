@@ -1,6 +1,21 @@
-# (c) Copyright 2015, University of Manchester
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
+#\
+# HydraGAMSLib is free software: you can redistribute it and/or modify\
+# it under the terms of the GNU General Public License as published by\
+# the Free Software Foundation, either version 3 of the License, or\
+# (at your option) any later version.\
+#\
+# HydraGAMSLib is distributed in the hope that it will be useful,\
+# but WITHOUT ANY WARRANTY; without even the implied warranty of\
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
+# GNU General Public License for more details.\
+# \
+# You should have received a copy of the GNU General Public License\
+# along with HydraGAMSLib.  If not, see <http://www.gnu.org/licenses/>\
+#
+
 """A set of classes to facilitate import and export from and to GAMS.
 
 Basics
@@ -173,6 +188,9 @@ def commandline_parser():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
     return parser
 
 
@@ -216,6 +234,9 @@ def commandline_parser_Export():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
     return parser
 
 
@@ -245,6 +266,9 @@ def commandline_parser_Import():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
     return parser
 
 def get_gams_path():
