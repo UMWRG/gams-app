@@ -112,6 +112,7 @@ class GDXvariable(object):
 class GAMSImport(object):
 
     def __init__(self, session_id=None, url=None):
+        set_gams_path()
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()

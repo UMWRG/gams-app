@@ -174,12 +174,9 @@ def export_network():
                           template_id,#int(args.template_id),
                           args.output,
                           link_export_flag,
-<<<<<<< Updated upstream
-                          url=args.server_url,
-                          session_id=args.session_id)
-=======
-                          session_id=args.session_id,url=args.server_url)
->>>>>>> Stashed changes
+                          session_id=args.session_id,
+                          url=args.server_url)
+
     exporter.steps=steps
     if args.template_id is not None:
         exporter.template_id = int(args.template_id)
