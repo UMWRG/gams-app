@@ -174,16 +174,16 @@ def export_network():
                           template_id,#int(args.template_id),
                           args.output,
                           link_export_flag,
+<<<<<<< Updated upstream
                           url=args.server_url,
                           session_id=args.session_id)
+=======
+                          session_id=args.session_id,url=args.server_url)
+>>>>>>> Stashed changes
     exporter.steps=steps
-
     if args.template_id is not None:
         exporter.template_id = int(args.template_id)
-
     exporter.export_network()
-
-
     if args.start_date is not None and args.end_date is not None \
             and args.time_step is not None:
         exporter.write_time_index(start_time=args.start_date,
@@ -230,7 +230,7 @@ def run_gams_model(args):
 
 def read_results(network):
     write_progress(12, steps)
-    gdximport = GAMSImport()
+    gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
     gdximport.set_network(network)
     write_progress(13, steps)
     gdximport.load_gams_file(args.gms_file)

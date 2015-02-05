@@ -87,7 +87,11 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(args):
+<<<<<<< Updated upstream
         gdximport = GAMSImport(args.server_url, args.session_id)
+=======
+        gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
+>>>>>>> Stashed changes
         write_progress(1, gdximport.steps)
         gdximport.load_network(args.network, args.scenario)
 

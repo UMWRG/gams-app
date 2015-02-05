@@ -111,7 +111,7 @@ class GDXvariable(object):
 
 class GAMSImport(object):
 
-    def __init__(self, url=None, session_id=None):
+    def __init__(self, session_id=None, url=None):
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
@@ -131,6 +131,8 @@ class GAMSImport(object):
         self.time_axis = dict()
         self.gms_data = []
         self.steps=10
+
+
 
         self.connection = JsonConnection(url)
         if session_id is not None:

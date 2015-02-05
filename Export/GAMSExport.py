@@ -126,13 +126,21 @@ log = logging.getLogger(__name__)
 
 def export_network(args):
         template_id = None
+
+        log.info(args.server_url)
+        log.info(args.session_id)
         exporter = GAMSExport(args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
                               link_export_flag,
+<<<<<<< Updated upstream
                               url=args.server_url,
                               session_id=args.session_id)
+=======
+                              session_id=args.session_id,
+                              url=args.server_url)
+>>>>>>> Stashed changes
 
         if args.template_id is not None:
             exporter.template_id = int(args.template_id)

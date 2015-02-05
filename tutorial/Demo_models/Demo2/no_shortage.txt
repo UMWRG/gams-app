@@ -1,9 +1,9 @@
 * Data exported from Hydra using GAMSplugin.
-* (c) Copyright 2013, 2014, University of Manchester
+* (c) Copyright 2015, University of Manchester
 *
 * GAMS App tutorial: 
-* Network-ID:  3
-* Scenario-ID: 3
+* Network-ID:  2
+* Scenario-ID: 2
 *******************************************************************************
 
 * Network definition

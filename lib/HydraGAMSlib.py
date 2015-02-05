@@ -188,6 +188,10 @@ def commandline_parser():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
@@ -234,6 +238,10 @@ def commandline_parser_Export():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
@@ -266,9 +274,17 @@ def commandline_parser_Import():
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
+<<<<<<< Updated upstream
     parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
+=======
+
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
+
+>>>>>>> Stashed changes
     return parser
 
 def get_gams_path():
