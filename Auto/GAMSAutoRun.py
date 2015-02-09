@@ -169,7 +169,7 @@ def get_input_file_name(gams_model):
 
 def export_network():
     template_id = None
-    exporter = GAMSExport(args.network,
+    exporter = GAMSExport(steps, args.network,
                           args.scenario,
                           template_id,#int(args.template_id),
                           args.output,
@@ -197,18 +197,18 @@ def export_network():
 def run_gams_model(args):
     log.info("Running GAMS model .....")
     cur_time=datetime.now().replace(microsecond=0)
-    write_progress(8, steps)
+    write_progress(10, steps)
     working_directory=os.path.dirname(args.gms_file)
     
     if working_directory == '':
         working_directory = '.'
 
     model = GamsModel(args.gams_path, working_directory)
-    write_progress(9, steps)
-    model.add_job(os.path.basename(args.gms_file))
-    write_progress(10, steps)
-    model.run()
     write_progress(11, steps)
+    model.add_job(os.path.basename(args.gms_file))
+    write_progress(12, steps)
+    model.run()
+    write_progress(13, steps)
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
     if(args.gdx_file==None):
@@ -226,25 +226,25 @@ def run_gams_model(args):
 
 
 def read_results(network):
-    write_progress(12, steps)
     gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
     gdximport.set_network(network)
-    write_progress(13, steps)
-    gdximport.load_gams_file(args.gms_file)
-    write_progress(14, steps)
-    gdximport.load_network(args.network, args.scenario)
     write_progress(15, steps)
-    gdximport.parse_time_index()
+    gdximport.load_gams_file(args.gms_file)
     write_progress(16, steps)
-    gdximport.open_gdx_file(args.gdx_file)
+    gdximport.load_network(args.network, args.scenario)
     write_progress(17, steps)
-    gdximport.read_gdx_data()
+    gdximport.parse_time_index()
     write_progress(18, steps)
-    gdximport.parse_variables()
+    gdximport.open_gdx_file(args.gdx_file)
     write_progress(19, steps)
-    gdximport.assign_attr_data()
+    gdximport.read_gdx_data()
     write_progress(20, steps)
+    gdximport.parse_variables()
+    write_progress(21, steps)
+    gdximport.assign_attr_data()
+    write_progress(22, steps)
     gdximport.save()
+
 
 def check_args(args):
     try:
@@ -269,7 +269,7 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
-        steps=21
+        steps=22
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
         check_args(args)

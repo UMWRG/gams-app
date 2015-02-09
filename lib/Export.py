@@ -283,7 +283,7 @@ log = logging.getLogger(__name__)
 
 class GAMSExport(object):
 
-    def __init__(self, network_id,
+    def __init__(self, steps, network_id,
                  scenario_id,
                  template_id,
                  filename,
@@ -294,8 +294,8 @@ class GAMSExport(object):
         scenario_id = int(scenario_id)
         self.filename = filename
         self.time_index = []
-        self.steps=7
-
+        self.steps=steps
+        write_progress(1, steps)
         self.connection = JsonConnection(url)
         if session_id is not None:
             log.info("Using existing session %s", session_id)
@@ -303,12 +303,13 @@ class GAMSExport(object):
         else:
             self.connection.login()
 
+        write_progress(2, steps)
+
         net = self.connection.call('get_network', {'network_id':network_id,
                                                    'include_data': 'Y',
                                                    'template_id':template_id,
                                                    'scenario_ids':[scenario_id]})
         self.net=net
-
         log.info("Network retrieved")
         attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
@@ -323,7 +324,6 @@ class GAMSExport(object):
         self.network.gams_names_for_links(linkformat=link_export_flag)
         log.info("Names for links retrieved")
         self.template_id = None
-
         self.output = """* Data exported from Hydra using GAMSplugin.
 * (c) Copyright 2015, University of Manchester
 *
@@ -338,20 +338,21 @@ class GAMSExport(object):
     def export_network(self):
         self.output += '* Network definition\n\n'
         log.info("Exporting nodes")
-        write_progress(2, self.steps)
+        write_progress(3, self.steps)
         self.export_nodes()
         log.info("Exporting node groups")
-        write_progress(3, self.steps)
+        write_progress(4, self.steps)
         self.export_node_groups()
         log.info("Exporting links")
-        write_progress(4, self.steps)
+        write_progress(5, self.steps)
         self.export_links()
         log.info("Exporting link groups")
-        write_progress(5, self.steps)
+        write_progress(6, self.steps)
         self.export_link_groups()
         log.info("Creating connectivity matrix")
-        write_progress(6, self.steps)
+        write_progress(7, self.steps)
         self.create_connectivity_matrix()
+        write_progress(8, self.steps)
         log.info("Matrix created")
 
     def export_nodes(self):
@@ -760,8 +761,10 @@ class GAMSExport(object):
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
+        write_progress(9, self.steps)
         with open(self.filename, 'w') as f:
             f.write(self.output)
+
 
 
 def translate_attr_name(name):

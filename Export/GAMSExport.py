@@ -119,7 +119,7 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSExport
 from HydraLib import PluginLib
 from HydraGAMSlib import commandline_parser_Export
-
+from HydraLib.PluginLib import write_progress
 
 import logging
 log = logging.getLogger(__name__)
@@ -129,7 +129,7 @@ def export_network(args):
 
         log.info(args.server_url)
         log.info(args.session_id)
-        exporter = GAMSExport(args.network,
+        exporter = GAMSExport(9, args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
@@ -176,6 +176,7 @@ def check_args(args):
                                ', is not exist')
 
 if __name__ == '__main__':
+    write_progress(1, 9)
     message = None
     errors  = []
     try:

@@ -88,6 +88,8 @@ from HydraGAMSlib import import_gms_data
 
 from HydraGAMSlib import get_gams_path
 
+from HydraLib.PluginLib import write_progress
+
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +113,7 @@ class GDXvariable(object):
 
 class GAMSImport(object):
 
-    def __init__(self, session_id=None, url=None):
+    def __init__(self,  session_id=None, url=None):
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
@@ -130,8 +132,6 @@ class GAMSImport(object):
         self.attrs = dict()
         self.time_axis = dict()
         self.gms_data = []
-        self.steps=10
-
 
 
         self.connection = JsonConnection(url)

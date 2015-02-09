@@ -87,31 +87,34 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(args):
-
+        write_progress(1, steps)
         gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
-        write_progress(1, gdximport.steps)
+        write_progress(2, steps)
         gdximport.load_network(args.network, args.scenario)
 
-        write_progress(2, gdximport.steps)
+        write_progress(3, steps)
         gdximport.load_gams_file(args.gms_file)
        
-        write_progress(3, gdximport.steps)
+        write_progress(4, steps)
         gdximport.parse_time_index()
         
-        write_progress(4, gdximport.steps)
+        write_progress(5, steps)
         gdximport.open_gdx_file(args.gdx_file)
         
-        write_progress(5, gdximport.steps)
+        write_progress(6, steps)
         gdximport.read_gdx_data()
         
-        write_progress(6, gdximport.steps)
+        write_progress(7, steps)
         gdximport.parse_variables()
         
-        write_progress(7, gdximport.steps)
+        write_progress(8, steps)
         gdximport.assign_attr_data()
         
-        write_progress(8, gdximport.steps)
+        write_progress(9, steps)
         gdximport.save()
+
+
+
 
 def check_args(args):
     if args.network==None:
@@ -125,6 +128,7 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
+        steps=9
         parser = commandline_parser_Import()
         args = parser.parse_args()
 
