@@ -129,7 +129,7 @@ def export_network(args):
 
         log.info(args.server_url)
         log.info(args.session_id)
-        exporter = GAMSExport(8, args.network,
+        exporter = GAMSExport(steps, args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
@@ -176,9 +176,10 @@ def check_args(args):
                                ', is not exist')
 
 if __name__ == '__main__':
-    write_progress(1, 9)
+
     message = None
     errors  = []
+    steps=8
     try:
         parser = commandline_parser_Export()
         args = parser.parse_args()
