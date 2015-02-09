@@ -129,7 +129,7 @@ def export_network(args):
 
         log.info(args.server_url)
         log.info(args.session_id)
-        exporter = GAMSExport(9, args.network,
+        exporter = GAMSExport(8, args.network,
                               args.scenario,
                               template_id,#int(args.template_id),
                               args.output,
