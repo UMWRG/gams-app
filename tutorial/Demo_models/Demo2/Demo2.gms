@@ -37,6 +37,7 @@ VARIABLES
 Q(i,j,t) flow in each link in each period [1e6 m^3 mon^-1]
 S(i,t) storage volume in storage nodes [1e6 m^3]
 delivery (i) water delivered to demand node i in each period [1e6 m^3 mon^-1]
+delivered_water (i,t) an interim variable for saving the value of the water delivery to each demand node at the end of each time-step [1e6 m^3 mon^-1]
 Z objective function [-]
 Obj (t) [-];
 ;
@@ -126,6 +127,7 @@ loop (tsteps,
             SOLVE Demo2 USING LP MINIMIZING Z;
             storage.fx(i,tsteps)=S.l(i,tsteps) ;
             Obj.l(tsteps)=Z.l;
+			delivered_water.l(dem_nodes,tsteps)=delivery.l(dem_nodes);
             DISPLAY  Z.l, Obj.l,storage.l,S.l, Q.l,delivery.l;
             dv(tsteps)=no;
       );
@@ -145,4 +147,5 @@ execute_unload "Results.gdx" ,
     Obj,
     link_timeseries_data,
     storage,
-    delivery;
+    delivery,
+	delivered_water;
