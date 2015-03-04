@@ -127,7 +127,7 @@ loop (tsteps,
             SOLVE Demo2 USING LP MINIMIZING Z;
             storage.fx(i,tsteps)=S.l(i,tsteps) ;
             Obj.l(tsteps)=Z.l;
-			delivered_water.l(dem_nodes,tsteps)=delivery.l(dem_nodes);
+			delivered_water.l(demand_nodes,tsteps)=delivery.l(demand_nodes);
             DISPLAY  Z.l, Obj.l,storage.l,S.l, Q.l,delivery.l;
             dv(tsteps)=no;
       );
