@@ -63,6 +63,10 @@ Option                 Short  Parameter  Description
 ====================== ======= ========== =========================================
 --group-nodes-by        -gn     GROUP_ATTR Group nodes by this attribute(s).
 --group_links-by        -gl     GROUP_ATTR Group links by this attribute(s).
+''--export_type''      ''-et''             set export data based on types or based on
+                                           attributes only, default is export data by
+                                           attributes if false.
+
 ====================== ======= ========== =========================================
 
 For Export function:
@@ -190,7 +194,10 @@ def export_network():
         exporter.write_time_index(time_axis=args.time_axis)
     else:
         raise HydraPluginError('Time axis not specified.')
-    exporter.export_data()
+    if(args.export_type is None or args.export_type.lower()=='false'):
+        exporter.export_data_no_types()
+    else:
+        exporter.export_data()
     exporter.write_file()
     return exporter
 

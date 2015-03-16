@@ -183,6 +183,9 @@ def commandline_parser():
     parser.add_argument('-f', '--gdx-file',
                         help='GDX file containing GAMS results.')
 
+    parser.add_argument('-et', '--export_type',
+                        help='''set export data based on types or based on attributes only, default is export data by attributes if false.''')
+
     # Optional arguments
     #if(parser.export_only==False):
     parser.add_argument('-u', '--server-url',
@@ -229,6 +232,8 @@ def commandline_parser_Export():
     parser.add_argument('-tx', '--time-axis', nargs='+',
                         help='''Time axis for the modelling period (a list of
                         comma separated time stamps).''')
+    parser.add_argument('-et', '--export_type',
+                        help='''set export data based on types or based on attributes only, default is export data by attributes if false.''')
 
     # Optional arguments
     #if(parser.export_only==False):

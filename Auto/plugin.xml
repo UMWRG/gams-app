@@ -41,6 +41,14 @@
         </arg>
     </mandatory_args>
    <non_mandatory_args>
+       <arg>
+           <name>export-by-type</name>
+           <switch>-et</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>export data by types(s).</help>
+        </arg>
    		<arg>
             <name>template</name>
             <switch>-tp</switch>

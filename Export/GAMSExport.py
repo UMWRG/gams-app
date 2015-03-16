@@ -137,7 +137,6 @@ def export_network(args):
                               session_id=args.session_id,
                               url=args.server_url)
 
-
         if args.template_id is not None:
             exporter.template_id = int(args.template_id)
 
@@ -153,7 +152,14 @@ def export_network(args):
             exporter.write_time_index(time_axis=args.time_axis)
         else:
             raise HydraPluginError('Time axis not specified.')
-        exporter.export_data()
+
+        if(args.export_type is None or args.export_type.lower()=='false'):
+            exporter.export_data_no_types()
+        else:
+            exporter.export_data()
+
+
+
         exporter.write_file()
 
 def check_args(args):

@@ -46,6 +46,10 @@ Option                 Short   Parameter  Description
 ====================== ======= ========== ======================================
 ``--group-nodes-by``   ``-gn`` GROUP_ATTR Group nodes by this attribute(s).
 ``--group_links-by``   ``-gl`` GROUP_ATTR Group links by this attribute(s).
+''--export_type''      ''-et''             set export data based on types or based on
+                                           attributes only, default is export data by
+                                           attributes if false.
+
 ====================== ======= ========== ======================================
 
 
@@ -496,6 +500,26 @@ class GAMSExport(object):
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
+    def export_data_no_types(self):
+        log.info("Exporting data")
+        # Export node data for each node
+        data = ['* Nodes data\n']
+        data.extend(self.export_parameters_no_types(self.network.nodes,'scalar'))
+        data.extend(self.export_parameters_no_types(self.network.nodes,'descriptor'))
+        data.extend(self.export_timeseries_no_types(self.network.nodes))
+        data.extend(self.export_arrays(self.network.nodes)) #?????
+
+        # Export link data for each node
+        data.append('* Links data\n')
+        #links = self.network.get_link(link_type=link_type)
+        data.extend(self.export_parameters_no_types(self.network.links,'scalar', res_type='LINK'))
+        data.extend(self.export_parameters_no_types(self.network.links, 'descriptor', res_type='LINK'))
+        data.extend(self.export_timeseries_no_types(self.network.links, res_type='LINK'))
+        self.export_arrays(self.network.links) #??????
+        self.output = "%s%s"%(self.output, ''.join(data))
+        log.info("Data exported")
+
+
     def export_parameters(self, resources, obj_type, datatype, res_type=None):
         """Export scalars or descriptors.
         """
@@ -547,6 +571,60 @@ class GAMSExport(object):
                 attr_outputs.append('\n')
             attr_outputs.append('\n\n')
         return attr_outputs
+
+    def classify_attributes(self, resources,datatype ):
+        types={}
+        for resource in resources:
+            for resource2 in resources:
+                if(resource==resource2 or len(resource.attributes)!=len(resource2.attributes)):
+                    continue
+                    isItId=True
+                for attr in resource.attributes:
+                    if(isItId==False):
+                        break
+                    len=0
+                    for attr2 in resource.attributes2:
+                        ##if attr.dataset_type == datatype and attr.is_var is False:
+                        if(attr.name!=attr2.name):
+                            isItId=False
+                            break
+                        if(len==len(resource2.attributes)):
+                            pass
+                        else:
+                            len+=1
+
+
+
+
+
+    def export_parameters_no_types(self, resources, datatype, res_type=None):
+            """Export scalars or descriptors.
+            """
+            islink = res_type == 'LINK'
+            attributes = []
+            attr_names = []
+            attr_outputs = []
+            for resource in resources:
+                for attr in resource.attributes:
+                    if attr.dataset_type == datatype and attr.is_var is False:
+                        translated_attr_name = translate_attr_name(attr.name)
+                        attr.name = translated_attr_name
+                        if attr.name not in attr_names:
+                            attributes.append(attr)
+                            attr_names.append(attr.name)
+            for attribute in attributes:
+                attr_outputs.append('Parameter '+ attribute.name+'(i)\n')
+                for resource in resources:
+                    attr = resource.get_attribute(attr_name=attribute.name)
+                    if attr is None or attr.value is None:
+                        continue
+                    if islink:
+                        attr_outputs.append('{0:24}'.format(resource.gams_name))
+                    else:
+                        attr_outputs.append('{0:24}'.format(resource.name))
+                    attr_outputs.append(' %14s' % attr.value.values()[0][0])
+                    attr_outputs.append('\n')
+            return attr_outputs
 
     def export_timeseries(self, resources, obj_type, res_type=None):
         """Export time series.
@@ -622,7 +700,6 @@ class GAMSExport(object):
                         if attr is not None and attr.dataset_id is not None:
                             soap_time = date_to_string(timestamp)
                             data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
-
                             if data is None:
                                 raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
 
@@ -632,6 +709,66 @@ class GAMSExport(object):
                 attr_outputs.append('\n')
             attr_outputs.append('\n')
         return attr_outputs
+
+    def export_timeseries_no_types(self, resources, res_type=None):
+            """Export time series.
+            """
+            islink = res_type == 'LINK'
+            attributes = []
+            attr_names = []
+            attr_outputs = []
+            for resource in resources:
+                for attr in resource.attributes:
+                    if attr.dataset_type == 'timeseries' and attr.is_var is False:
+                        attr.name = translate_attr_name(attr.name)
+                        if attr.name not in attr_names:
+                            attributes.append(attr)
+                            attr_names.append(attr.name)
+            if len(attributes) > 0:
+                #Identify the datasets that we need data for
+                dataset_ids = []
+                for attribute in attributes:
+                    for resource in resources:
+                        attr = resource.get_attribute(attr_name=attribute.name)
+                        if attr is not None and attr.dataset_id is not None:
+                            dataset_ids.append(attr.dataset_id)
+
+                #We need to get the value at each time in the specified time axis,
+                #so we need to identify the relevant timestamps.
+                soap_times = []
+                for t, timestamp in enumerate(self.time_index):
+                    soap_times.append(date_to_string(timestamp))
+
+                #Get all the necessary data for all the datasets we have.
+                all_data = self.connection.call('get_multiple_vals_at_time',
+                                            {'dataset_ids':dataset_ids,
+                                             'timestamps' : soap_times})
+
+                t_='\t\t\t\t'
+                for t, timestamp in enumerate(self.time_index):
+                    t_=t_+('{0:<14}'.format(t))
+                for attribute in attributes:
+                    attr_outputs.append('\n*'+attribute.name)
+                    attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
+                    attr_outputs.append('\n'+str(t_))
+                    for resource in resources:
+                        attr = resource.get_attribute(attr_name=attribute.name)
+                        if attr is not None and attr.dataset_id is not None:
+                            if(islink):
+                                attr_outputs.append('\n'+resource.from_node+'.'+resource.to_node)
+                            else:
+                                attr_outputs.append('\n'+resource.name)
+                            for t, timestamp in enumerate(self.time_index):
+                                soap_time = date_to_string(timestamp)
+                                data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
+                                if data is None:
+                                    raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                data_str = ' %14f' % float(data)
+                                attr_outputs.append(data_str)
+                    attr_outputs.append('\n')
+                attr_outputs.append('\n')
+            return attr_outputs
+
 
     def export_arrays(self, resources):
         """Export arrays.
