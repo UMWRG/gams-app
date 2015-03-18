@@ -47,7 +47,7 @@
            <multiple>N</multiple>
            <allownew>N</allownew>
            <argtype>string</argtype>
-           <help>export data by types(s).</help>
+           <help>to export data by types set this option 'y' or 'yes'.</help>
         </arg>
    		<arg>
             <name>template</name>
