@@ -56,7 +56,9 @@ Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
-
+''--export_type''      ''-et''             set export data based on types or based on
+                                           attributes only, default is export data by
+                                           attributes unless this option is set to 'y'.
 Optional Grouping arguments
 ===========================
 
@@ -156,6 +158,7 @@ def export_network(args):
             exporter.write_time_index(time_axis=args.time_axis)
         else:
             raise HydraPluginError('Time axis not specified.')
+
         if(args.export_type is None or args.export_type.lower()=='n' or args.export_type.lower()=='no'):
              exporter.export_data_using_attributes()
         elif(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
