@@ -48,7 +48,7 @@ Option                 Short   Parameter  Description
 ``--group_links-by``   ``-gl`` GROUP_ATTR Group links by this attribute(s).
 ''--export_type''      ''-et''             set export data based on types or based on
                                            attributes only, default is export data by
-                                           attributes if false.
+                                           attributes unless this option is set to 'y'.
 
 ====================== ======= ========== ======================================
 
@@ -340,6 +340,7 @@ class GAMSExport(object):
             self.network.ID, self.network.scenario_id)
 
     def export_network(self):
+        self.get_longest_node_link_name();
         self.output += '* Network definition\n\n'
         log.info("Exporting nodes")
         write_progress(3, self.steps)
@@ -358,6 +359,14 @@ class GAMSExport(object):
         self.create_connectivity_matrix()
         write_progress(8, self.steps)
         log.info("Matrix created")
+
+    def get_longest_node_link_name(self):
+        node_name_len=0
+        for node in self.network.nodes:
+            if(len(node.name)>node_name_len):
+                node_name_len=len(node.name)
+
+        self.name_len=str(node_name_len*2+5)
 
     def export_nodes(self):
         self.output += 'SETS\n\n'
@@ -475,7 +484,7 @@ class GAMSExport(object):
 
         self.output = self.output + "".join(rows)
 
-    def export_data(self):
+    def export_data_using_type(self):
         log.info("Exporting data")
         # Export node data for each node type
         data = ['* Node data\n\n']
@@ -483,9 +492,9 @@ class GAMSExport(object):
                 self.network.get_node_types(template_id=self.template_id):
             data.append('* Data for node type %s\n\n' % node_type)
             nodes = self.network.get_node(node_type=node_type)
-            data.extend(self.export_parameters(nodes, node_type, 'scalar'))
-            data.extend(self.export_parameters(nodes, node_type, 'descriptor'))
-            data.extend(self.export_timeseries(nodes, node_type))
+            data.extend(self.export_parameters_using_type(nodes, node_type, 'scalar'))
+            data.extend(self.export_parameters_using_type(nodes, node_type, 'descriptor'))
+            data.extend(self.export_timeseries_using_type(nodes, node_type))
             data.extend(self.export_arrays(nodes))
 
         # Export link data for each node type
@@ -493,32 +502,31 @@ class GAMSExport(object):
         for link_type in self.network.get_link_types(template_id=self.template_id):
             data.append('* Data for link type %s\n\n' % link_type)
             links = self.network.get_link(link_type=link_type)
-            data.extend(self.export_parameters(links, link_type, 'scalar', res_type='LINK'))
-            data.extend(self.export_parameters(links, link_type,'descriptor', res_type='LINK'))
-            data.extend(self.export_timeseries(links, link_type, res_type='LINK'))
+            data.extend(self.export_parameters_using_type(links, link_type, 'scalar', res_type='LINK'))
+            data.extend(self.export_parameters_using_type(links, link_type,'descriptor', res_type='LINK'))
+            data.extend(self.export_timeseries_using_type(links, link_type, res_type='LINK'))
             self.export_arrays(links)
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
-    def export_data_no_types(self):
+    def export_data_using_attributes (self):
         log.info("Exporting data")
         # Export node data for each node
         data = ['* Nodes data\n']
-        data.extend(self.export_parameters_no_types(self.network.nodes,'scalar'))
-        data.extend(self.export_parameters_no_types(self.network.nodes,'descriptor'))
-        data.extend(self.export_timeseries_no_types(self.network.nodes))
+        data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
+        data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
+        data.extend(self.export_timeseries_using_attributes (self.network.nodes))
         data.extend(self.export_arrays(self.network.nodes)) #?????
 
         # Export link data for each node
         data.append('* Links data\n')
         #links = self.network.get_link(link_type=link_type)
-        data.extend(self.export_parameters_no_types(self.network.links,'scalar', res_type='LINK'))
-        data.extend(self.export_parameters_no_types(self.network.links, 'descriptor', res_type='LINK'))
-        data.extend(self.export_timeseries_no_types(self.network.links, res_type='LINK'))
+        data.extend(self.export_parameters_using_attributes (self.network.links,'scalar', res_type='LINK'))
+        data.extend(self.export_parameters_using_attributes (self.network.links, 'descriptor', res_type='LINK'))
+        data.extend(self.export_timeseries_using_attributes (self.network.links, res_type='LINK'))
         self.export_arrays(self.network.links) #??????
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
-
 
     def export_parameters(self, resources, obj_type, datatype, res_type=None):
         """Export scalars or descriptors.
@@ -594,10 +602,7 @@ class GAMSExport(object):
                             len+=1
 
 
-
-
-
-    def export_parameters_no_types(self, resources, datatype, res_type=None):
+    def export_parameters_using_attributes (self, resources, datatype, res_type=None):
             """Export scalars or descriptors.
             """
             islink = res_type == 'LINK'
@@ -612,21 +617,28 @@ class GAMSExport(object):
                         if attr.name not in attr_names:
                             attributes.append(attr)
                             attr_names.append(attr.name)
+            ff='{0:<'+self.name_len+'}'
             for attribute in attributes:
-                attr_outputs.append('Parameter '+ attribute.name+'(i)\n')
+                if(islink):
+                    attr_outputs.append('Table '+ attribute.name+'(i,j, t)\n')
+                else:
+                    attr_outputs.append('Table '+ attribute.name+'(i, t)\n\n')
+                attr_outputs.append(ff.format(''))
+                attr_outputs.append(ff.format(0))
+                attr_outputs.append('\n')
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is None or attr.value is None:
                         continue
                     if islink:
-                        attr_outputs.append('{0:24}'.format(resource.gams_name))
+                        attr_outputs.append(ff.format(resource.gams_name))
                     else:
-                        attr_outputs.append('{0:24}'.format(resource.name))
-                    attr_outputs.append(' %14s' % attr.value.values()[0][0])
+                        attr_outputs.append(ff.format(resource.name))
+                    attr_outputs.append(ff.format(attr.value.values()[0][0]))
                     attr_outputs.append('\n')
             return attr_outputs
 
-    def export_timeseries(self, resources, obj_type, res_type=None):
+    def export_timeseries_using_type(self, resources, obj_type, res_type=None):
         """Export time series.
         """
         islink = res_type == 'LINK'
@@ -710,7 +722,7 @@ class GAMSExport(object):
             attr_outputs.append('\n')
         return attr_outputs
 
-    def export_timeseries_no_types(self, resources, res_type=None):
+    def export_timeseries_using_attributes (self, resources, res_type=None):
             """Export time series.
             """
             islink = res_type == 'LINK'
@@ -743,27 +755,32 @@ class GAMSExport(object):
                 all_data = self.connection.call('get_multiple_vals_at_time',
                                             {'dataset_ids':dataset_ids,
                                              'timestamps' : soap_times})
+                ff='{0:<'+self.name_len+'}'
 
-                t_='\t\t\t\t'
+
+                t_=ff.format('')
                 for t, timestamp in enumerate(self.time_index):
-                    t_=t_+('{0:<14}'.format(t))
+                    t_=t_+ff.format(t)
                 for attribute in attributes:
                     attr_outputs.append('\n*'+attribute.name)
-                    attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
+                    if(islink):
+                        attr_outputs.append('\nTable '+attribute.name + ' (i,j, t)\n')
+                    else:
+                        attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
                     attr_outputs.append('\n'+str(t_))
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
                             if(islink):
-                                attr_outputs.append('\n'+resource.from_node+'.'+resource.to_node)
+                                attr_outputs.append('\n'+ff.format(resource.from_node+'.'+resource.to_node))
                             else:
-                                attr_outputs.append('\n'+resource.name)
+                                attr_outputs.append('\n'+ff.format(resource.name))
                             for t, timestamp in enumerate(self.time_index):
                                 soap_time = date_to_string(timestamp)
                                 data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
                                 if data is None:
                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
-                                data_str = ' %14f' % float(data)
+                                data_str = ff.format(str(float(data)))
                                 attr_outputs.append(data_str)
                     attr_outputs.append('\n')
                 attr_outputs.append('\n')

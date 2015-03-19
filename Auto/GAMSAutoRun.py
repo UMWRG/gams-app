@@ -66,7 +66,7 @@ Option                 Short  Parameter  Description
 
 ''--export_type''      ''-et''             set export data based on types or based on
                                            attributes only, default is export data by
-                                           attributes unliess this option is set to 'y'
+                                           attributes unless this option is set to 'y'.
 ====================== ======= ========== =========================================
 
 For Export function:
@@ -194,10 +194,14 @@ def export_network():
         exporter.write_time_index(time_axis=args.time_axis)
     else:
         raise HydraPluginError('Time axis not specified.')
-    if(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
-        exporter.export_data()
+
+
+    if(args.export_type is None or args.export_type.lower()=='n' or args.export_type.lower()=='no'):
+             exporter.export_data_using_attributes()
+    elif(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
+            exporter.export_data_using_types()
     else:
-        exporter.export_data_no_types()
+         raise HydraPluginError('-et is not specified correctly, needs to be yes or no.')
 
     exporter.write_file()
     return exporter
