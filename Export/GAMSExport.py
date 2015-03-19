@@ -157,10 +157,13 @@ def export_network(args):
         else:
             raise HydraPluginError('Time axis not specified.')
 
-        if(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
-            exporter.export_data()
-        else:
+        if args.export_type is None:
              exporter.export_data_no_types()
+        else:
+            if args.export_type.lower()=='y' or args.export_type.lower()=='yes':
+                exporter.export_data()
+            else:
+                exporter.export_data_no_types()
 
         exporter.write_file()
 
