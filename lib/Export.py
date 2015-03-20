@@ -484,7 +484,7 @@ class GAMSExport(object):
 
         self.output = self.output + "".join(rows)
 
-    def export_data_using_type(self):
+    def export_data_using_types(self):
         log.info("Exporting data")
         # Export node data for each node type
         data = ['* Node data\n\n']
