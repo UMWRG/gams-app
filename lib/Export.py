@@ -528,7 +528,7 @@ class GAMSExport(object):
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
-    def export_parameters(self, resources, obj_type, datatype, res_type=None):
+    def export_parameters_using_type(self, resources, obj_type, datatype, res_type=None):
         """Export scalars or descriptors.
         """
         islink = res_type == 'LINK'
