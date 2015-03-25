@@ -31,26 +31,35 @@ Using the commandline tool
 ====================== ======= ========== ======================================
 Option                 Short   Parameter  Description
 ====================== ======= ========== ======================================
-``--network``          ``-t``  NETWORK    ID of the network that will be
+--network              -t      NETWORK    ID of the network that will be
                                           exported.
-``--scenario``         ``-s``  SCENARIO   ID of the scenario that will be
+--scenario             -s      SCENARIO   ID of the scenario that will be
                                           exported.
-``--template-id``      ``-tp`` TEMPLATE   ID of the template used for exporting
+--template-id          -tp     TEMPLATE   ID of the template used for exporting
                                           resources. Attributes that don't
                                           belong to this template are ignored.
-``--output``           ``-o``  OUTPUT     Filename of the output file.
+--output               -o      OUTPUT     Filename of the output file.
 ====================== ======= ========== ======================================
 
 **Optional arguments:**
 
 ====================== ======= ========== ======================================
-``--group-nodes-by``   ``-gn`` GROUP_ATTR Group nodes by this attribute(s).
-``--group_links-by``   ``-gl`` GROUP_ATTR Group links by this attribute(s).
-''--export_type''      ''-et''             set export data based on types or based on
-                                           attributes only, default is export data by
-                                           attributes unless this option is set to 'y'.
-
+Option                 Short   Parameter  Description
 ====================== ======= ========== ======================================
+--group-nodes-by       -gn     GROUP_ATTR Group nodes by this attribute(s).
+--group_links-by       -gl     GROUP_ATTR Group links by this attribute(s).
+====================== ======= ========== ======================================
+
+**Switches:**
+
+====================== ====== =========================================
+Option                 Short  Description
+====================== ====== =========================================
+--export_by_type       -et    Set export data based on types or based
+                              on attributes only, default is export 
+                              data by attributes unless this option 
+                              is set.
+====================== ====== =========================================
 
 
 Specifying the time axis
@@ -62,11 +71,11 @@ mandatory:
 **Option 1:**
 
 ====================== ======= ========== ======================================
-``--start-date``       ``-st`` START_DATE Start date of the time period used for
+--start-date           -st     START_DATE Start date of the time period used for
                                           simulation.
-``--end-date``         ``-en`` END_DATE   End date of the time period used for
+--end-date             -en     END_DATE   End date of the time period used for
                                           simulation.
-``--time-step``        ``-dt`` TIME_STEP  Time step used for simulation. The
+--time-step            -dt     TIME_STEP  Time step used for simulation. The
                                           time step needs to be specified as a
                                           valid time length as supported by
                                           Hydra's unit conversion function (e.g.
@@ -76,7 +85,7 @@ mandatory:
 **Option 2:**
 
 ====================== ======= ========== ======================================
-``--time-axis``        ``-tx`` TIME_AXIS  Time axis for the modelling period (a
+--time-axis            -tx     TIME_AXIS  Time axis for the modelling period (a
                                           list of comma separated time stamps).
 ====================== ======= ========== ======================================
 
@@ -581,7 +590,6 @@ class GAMSExport(object):
         return attr_outputs
 
     def classify_attributes(self, resources,datatype ):
-        types={}
         for resource in resources:
             for resource2 in resources:
                 if(resource==resource2 or len(resource.attributes)!=len(resource2.attributes)):

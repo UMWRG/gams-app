@@ -21,8 +21,8 @@
     plugin_name: GAMS Export
                  Export a network from Hydra to a gams input text file.
 
-Mandatory arguments
-===================
+**Mandatory arguments:**
+
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
@@ -35,41 +35,46 @@ Option                 Short  Parameter  Description
                                          belong to this template are ignored.
 --output              -o    OUTPUT       Filename of the output file.
 
-Server-based arguments
-======================
+**Server-based arguments:**
 
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
-``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
+--server_url           -u     SERVER_URL   Url of the server the plugin will 
                                            connect to.
                                            Defaults to localhost.
-``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software
+--session_id           -c     SESSION_ID   Session ID used by the calling software
                                            If left empty, the plugin will attempt 
                                            to log in itself.
 
-Manually specifying the gams installation
-=========================================
+**Manually specifying the gams installation:**
                                            
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
-''--export_type''      ''-et''             set export data based on types or based on
-                                           attributes only, default is export data by
-                                           attributes unless this option is set to 'y'.
-Optional Grouping arguments
-===========================
 
-====================== ======= =========== ======================================
---group-nodes-by        -gn     GROUP_ATTR Group nodes by this attribute(s).
---group_links-by        -gl     GROUP_ATTR Group links by this attribute(s).
-''--export_type''      ''-et''             set export data based on types or based on
-                                           attributes only, default is export data by
-                                           attributes unliess this option is set to 'y'.
+**Optional Grouping arguments:**
 
-====================== ======= =========== ======================================
+====================== ====== ========== =================================
+Option                 Short  Parameter    Description
+====================== ====== ========== =================================
+--group-nodes-by       -gn    GROUP_ATTR Group nodes by this attribute(s).
+--group_links-by       -gl    GROUP_ATTR Group links by this attribute(s).
+                                           this option is set.
+====================== ======= ========= ===============================
+
+**Switches**
+
+================= ======= ====================================
+Option            Short   Description
+================= ======= ====================================
+--export_by_type  -et     Set export data based on types or 
+                          based on attributes only, default is
+                          export data by attributes unliess 
+                          this option is set.
+================= ======= ====================================
 
 Specifying the time axis
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,10 +102,10 @@ Option                 Short  Parameter  Description
 
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
-====================== ======= ========== ======================================
---time-axis             -tx    TIME_AXIS  Time axis for the modelling period (a
-                                          list of comma separated time stamps).
-====================== ======= ========== ======================================
+====================== ====== ========== ======================================
+--time-axis            -tx    TIME_AXIS  Time axis for the modelling period (a
+                                         list of comma separated time stamps).
+====================== ====== ========== ======================================
 
 
 Examples:
@@ -124,20 +129,67 @@ from HydraLib.HydraException import HydraPluginError
 
 from Export import GAMSExport
 from HydraLib import PluginLib
-from HydraGAMSlib import commandline_parser_Export
-from HydraLib.PluginLib import write_progress
+import argparse as ap
 
 import logging
 log = logging.getLogger(__name__)
 
+
+def commandline_parser():
+    parser = ap.ArgumentParser(
+        description="""Export a network from Hydra to a gams input text file.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+    parser.add_argument('-tp', '--template-id',
+                        help='''ID of the template to be used.''')
+
+    parser.add_argument('-o', '--output',
+                        help='''Output file containing exported data''')
+    parser.add_argument('-nn', '--node-node', action='store_true',
+                        help="""(Default) Export links as 'from_name .
+                        end_name'.""")
+    parser.add_argument('-ln', '--link-name', action='store_true',
+                        help="""Export links as link name only. If two nodes
+                        can be connected by more than one link, you should
+                        choose this option.""")
+    parser.add_argument('-st', '--start-date', nargs='+',
+                        help='''Start date of the time period used for
+                        simulation.''')
+    parser.add_argument('-en', '--end-date', nargs='+',
+                        help='''End date of the time period used for
+                        simulation.''')
+    parser.add_argument('-dt', '--time-step', nargs='+',
+                        help='''Time step used for simulation.''')
+    parser.add_argument('-tx', '--time-axis', nargs='+',
+                        help='''Time axis for the modelling period (a list of
+                        comma separated time stamps).''')
+    parser.add_argument('-et', '--export_by_type', action='store_true',
+                        help='''to export data based on types, set this otion to 'y' or 'yes', default is export data by attributes.''')
+
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
+    return parser
+
+
 def export_network(args):
         template_id = None
 
-        log.info(args.server_url)
-        log.info(args.session_id)
+        log.info("Server url: %s",args.server_url)
+        log.info("Session ID: %s",args.session_id)
         exporter = GAMSExport(steps, args.network,
                               args.scenario,
-                              template_id,#int(args.template_id),
+                              template_id,
                               args.output,
                               link_export_flag,
                               session_id=args.session_id,
@@ -159,12 +211,10 @@ def export_network(args):
         else:
             raise HydraPluginError('Time axis not specified.')
 
-        if(args.export_type is None or args.export_type.lower()=='n' or args.export_type.lower()=='no'):
-             exporter.export_data_using_attributes()
-        elif(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
+        if args.export_by_type is True:
             exporter.export_data_using_types()
         else:
-            raise HydraPluginError('-et is not specified correctly, needs to be yes or no.')
+            exporter.export_data_using_attributes()
 
         exporter.write_file()
 
@@ -193,7 +243,7 @@ if __name__ == '__main__':
     errors  = []
     steps=8
     try:
-        parser = commandline_parser_Export()
+        parser = commandline_parser()
         args = parser.parse_args()
         check_args(args)
 

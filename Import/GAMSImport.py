@@ -21,8 +21,7 @@
  plugin_name: Import GAMS
 	          Import a gdx results file into Hydra.
 
-Mandatory Arguments
-===================
+**Mandatory Arguments:**
 
 
 ====================== ====== ========== ======================================
@@ -36,21 +35,20 @@ Option                 Short  Parameter  Description
                                          used for the simulation.
 --gdx-file            -f     GDX_FILE   GDX file containing GAMS results
 
-Server-based arguments
-======================
+
+**Server-based arguments:**
 
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
-``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
-                                           connect to.
-                                           Defaults to localhost.
-``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software 
-                                           If left empty, the plugin will attempt 
-                                           to log in itself.
+--server_url           -u     SERVER_URL Url of the server the plugin will 
+                                         connect to.
+                                         Defaults to localhost.
+--session_id           -c     SESSION_ID Session ID used by the calling software 
+                                         If left empty, the plugin will attempt 
+                                         to log in itself.
 
-Manually specifying the gams path
-=================================
+**Manually specifying the gams path:**
 
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
@@ -67,6 +65,7 @@ Examples:
 '''
 import sys
 import os
+import argparse as ap
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
@@ -80,8 +79,6 @@ from Import import GAMSImport, set_gams_path
 from HydraLib import PluginLib
 
 from HydraLib.PluginLib import write_progress
-
-from HydraGAMSlib import commandline_parser_Import
 
 import logging
 log = logging.getLogger(__name__)
@@ -114,6 +111,38 @@ def import_results(args):
         gdximport.save()
 
 
+def commandline_parser():
+    parser = ap.ArgumentParser(
+        description="""Import a gdx results file into Hydra.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    parser.add_argument('-G', '--gams-path',
+                        help='Path of the GAMS installation.')
+
+    parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+
+    parser.add_argument('-m', '--gms-file',
+                        help='''Full path to the GAMS model (*.gms) used for
+                        the simulation.''')
+    parser.add_argument('-f', '--gdx-file',
+                        help='GDX file containing GAMS results.')
+
+    # Optional arguments
+    #if(parser.export_only==False):
+    parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+
+    parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
+
+    return parser
 
 
 def check_args(args):
@@ -129,7 +158,7 @@ def check_args(args):
 if __name__ == '__main__':
     try:
         steps=9
-        parser = commandline_parser_Import()
+        parser = commandline_parser()
         args = parser.parse_args()
 
         if os.environ.get('LD_LIBRARY_PATH') in ('', None):

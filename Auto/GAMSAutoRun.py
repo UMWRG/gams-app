@@ -22,52 +22,58 @@ plugin_name: GAMS
             - Rum GAMS.
             - Import a gdx results file into Hydra.
 
-mandatory_args
-==============
-====================== ====== ========== =========================================
-Option                 Short  Parameter  Description
-====================== ====== ========== =========================================
---network              -t     NETWORK    ID of the network where results will
-                                         be imported to. Ideally this coincides
-                                         with the network exported to GAMS.
---scenario            -s     SCENARIO    ID of the underlying scenario used for
---template-id         -tp    TEMPLATE    ID of the template used for exporting
-                                         resources. Attributes that don't
-                                         belong to this template are ignored.
---output              -o     OUTPUT      Filename of the output file.
---gams-model          -m     GMS_FILE    Full path to the GAMS model (*.gms)
-                                         used for the simulation.
+
+**Mandatory Args:**
+
+====================== ======= ========== =========================================
+Option                 Short   Parameter  Description
+====================== ======= ========== =========================================
+--network              -t      NETWORK    ID of the network where results will
+                                          be imported to. Ideally this coincides
+                                          with the network exported to GAMS.
+--scenario             -s      SCENARIO   ID of the underlying scenario used for
+--template-id          -tp     TEMPLATE   ID of the template used for exporting
+                                          resources. Attributes that don't
+                                          belong to this template are ignored.
+--output               -o      OUTPUT     Filename of the output file.
+--gams-model           -m      GMS_FILE   Full path to the GAMS model (*.gms)
+                                          used for the simulation.
 
 
-Server-based arguments
-======================
-
-====================== ====== ========== =========================================
-Option                 Short  Parameter  Description
-====================== ====== ========== =========================================
-``--server_url``       ``-u`` SERVER_URL   Url of the server the plugin will 
-                                           connect to.
-                                           Defaults to localhost.
-``--session_id``       ``-c`` SESSION_ID   Session ID used by the calling software
-                                           If left empty, the plugin will attempt 
-                                           to log in itself.
+**Server-based arguments**
 
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
+--server_url           -u     SERVER_URL Url of the server the plugin will 
+                                         connect to.
+                                         Defaults to localhost.
+--session_id           -c     SESSION_ID Session ID used by the calling software
+                                         If left empty, the plugin will attempt 
+                                         to log in itself.
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
 
 **Optional arguments:**
 
-====================== ======= ========== =========================================
---group-nodes-by        -gn     GROUP_ATTR Group nodes by this attribute(s).
---group_links-by        -gl     GROUP_ATTR Group links by this attribute(s).
+====================== ====== ========== =================================
+Option                 Short  Parameter  Description
+====================== ====== ========== =================================
+--group-nodes-by       -gn    GROUP_ATTR Group nodes by this attribute(s).
+--group_links-by       -gl    GROUP_ATTR Group links by this attribute(s).
+====================== ====== ========== =================================
 
-''--export_type''      ''-et''             set export data based on types or based on
-                                           attributes only, default is export data by
-                                           attributes unless this option is set to 'y'.
-====================== ======= ========== =========================================
+**Switches:**
+
+====================== ====== =========================================
+Option                 Short  Description
+====================== ====== =========================================
+--export_by_type       -et    Set export data based on types or based
+                              on attributes only, default is export 
+                              data by attributes unless this option 
+                              is set.
+====================== ====== =========================================
+
 
 For Export function:
 ====================
@@ -80,14 +86,14 @@ mandatory:
 
 **Option 1:**
 
-====================== ====== ========== ======================================
+====================== ====== ========== =======================================
 Option                 Short  Parameter  Description
-====================== ======= ========== ======================================
---start-date            -st   START_DATE  Start date of the time period used for
+====================== ====== ========== =======================================
+--start-date           -st    START_DATE  Start date of the time period used for
                                           simulation.
---end-date              -en   END_DATE    End date of the time period used for
+--end-date             -en    END_DATE    End date of the time period used for
                                           simulation.
---time-step             -dt   TIME_STEP   Time step used for simulation. The
+--time-step            -dt    TIME_STEP   Time step used for simulation. The
                                           time step needs to be specified as a
                                           valid time length as supported by
                                           Hydra's unit conversion function (e.g.
@@ -114,6 +120,7 @@ import sys
 import os
 import time
 from datetime import datetime
+import argparse as ap
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
@@ -129,13 +136,68 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSExport
 from Import import GAMSImport
 from HydraLib import PluginLib
-from HydraGAMSlib import commandline_parser
 from dateutil import parser
 from HydraLib.PluginLib import write_progress
 from RunGamsModel import GamsModel
 
 import logging
 log = logging.getLogger(__name__)
+
+
+def commandline_parser():
+    cmd_parser = ap.ArgumentParser(
+        description=""" Export a network from Hydra to a gams input text file, Rum GAMS. and finally Import a gdx results file into Hydra.
+                    (c) Copyright 2014, Univeristy of Manchester.
+        """, epilog="For more information, web site will available soon",
+        formatter_class=ap.RawDescriptionHelpFormatter)
+
+    cmd_parser.add_argument('-G', '--gams-path',
+                        help='Path of the GAMS installation.')
+    cmd_parser.add_argument('-sh', '--switch',
+                        help='option to set the plugin function, the options are: A: Auto, export, run then import (default), E: export only. I: Import only')
+    cmd_parser.add_argument('-t', '--network',
+                        help='''ID of the network that will be exported.''')
+    cmd_parser.add_argument('-s', '--scenario',
+                        help='''ID of the scenario that will be exported.''')
+    cmd_parser.add_argument('-tp', '--template-id',
+                        help='''ID of the template to be used.''')
+    cmd_parser.add_argument('-m', '--gms-file',
+                        help='''Full path to the GAMS model (*.gms) used for
+                        the simulation.''')
+    cmd_parser.add_argument('-o', '--output',
+                        help='''Output file containing exported data''')
+    cmd_parser.add_argument('-nn', '--node-node', action='store_true',
+                        help="""(Default) Export links as 'from_name .
+                        end_name'.""")
+    cmd_parser.add_argument('-ln', '--link-name', action='store_true',
+                        help="""Export links as link name only. If two nodes
+                        can be connected by more than one link, you should
+                        choose this option.""")
+    cmd_parser.add_argument('-st', '--start-date', nargs='+',
+                        help='''Start date of the time period used for
+                        simulation.''')
+    cmd_parser.add_argument('-en', '--end-date', nargs='+',
+                        help='''End date of the time period used for
+                        simulation.''')
+    cmd_parser.add_argument('-dt', '--time-step', nargs='+',
+                        help='''Time step used for simulation.''')
+    cmd_parser.add_argument('-tx', '--time-axis', nargs='+',
+                        help='''Time axis for the modelling period (a list of
+                        comma separated time stamps).''')
+    cmd_parser.add_argument('-f', '--gdx-file',
+                        help='GDX file containing GAMS results.')
+
+    cmd_parser.add_argument('-et', '--export_by_type',action='store_true',
+                        help='''Use this switch to export data based on type, rather than attribute.''')
+
+    cmd_parser.add_argument('-u', '--server-url',
+                        help='''Specify the URL of the server to which this
+                        plug-in connects.''')
+
+    cmd_parser.add_argument('-c', '--session_id',
+                        help='''Session ID. If this does not exist, a login will be
+                        attempted based on details in config.''')
+    return cmd_parser 
 
 def get_files_list(directory, ext):
     '''
@@ -196,12 +258,10 @@ def export_network():
         raise HydraPluginError('Time axis not specified.')
 
 
-    if(args.export_type is None or args.export_type.lower()=='n' or args.export_type.lower()=='no'):
-             exporter.export_data_using_attributes()
-    elif(args.export_type.lower()=='y' or args.export_type.lower()=='yes'):
-            exporter.export_data_using_types()
+    if args.export_by_type is True:
+        exporter.export_data_using_types()
     else:
-         raise HydraPluginError('-et is not specified correctly, needs to be yes or no.')
+        exporter.export_data_using_attributes()
 
     exporter.write_file()
     return exporter

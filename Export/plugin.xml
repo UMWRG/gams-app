@@ -41,14 +41,6 @@
         </arg>
     </mandatory_args>
    <non_mandatory_args>
-       <arg>
-           <name>export-by-type</name>
-           <switch>-et</switch>
-           <multiple>N</multiple>
-           <allownew>N</allownew>
-           <argtype>string</argtype>
-           <help>to export data by types set this option 'y' or 'yes' .</help>
-        </arg>
    		<arg>
             <name>template</name>
             <switch>-tp</switch>
@@ -123,5 +115,10 @@
         </arg>
     </non_mandatory_args>
     <switches>
+       <arg>
+           <switch>-et</switch>
+           <name>Export by Type</name>
+           <help>Check to export data by types rather than by attributes. </help>
+        </arg>
     </switches>
  </plugin_info>
