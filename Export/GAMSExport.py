@@ -130,6 +130,7 @@ from HydraLib.HydraException import HydraPluginError
 from Export import GAMSExport
 from HydraLib import PluginLib
 import argparse as ap
+from HydraLib.PluginLib import write_progress
 
 import logging
 log = logging.getLogger(__name__)
@@ -253,9 +254,11 @@ if __name__ == '__main__':
         exporter=export_network(args)
         message="Run successfully"
     except HydraPluginError, e:
+        write_progress(steps, steps)
         log.exception(e)
         errors = [e.message]
     except Exception, e:
+        write_progress(steps, steps)
         log.exception(e)
         errors = []
         if e.message == '':

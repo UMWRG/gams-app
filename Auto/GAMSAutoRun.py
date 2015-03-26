@@ -357,6 +357,7 @@ if __name__ == '__main__':
     except HydraPluginError, e:
         log.exception(e)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
+        write_progress(steps, steps)
         print err
     except Exception as e:
         errors = []
@@ -367,6 +368,7 @@ if __name__ == '__main__':
             errors = [e.message]
         log.exception(e)
         err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
+        write_progress(steps, steps)
         print err
 
 
