@@ -780,7 +780,7 @@ class GAMSExport(object):
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
                             if(islink):
-                                attr_outputs.append('\n'+ff.format(resource.from_node+'.'+resource.to_node))
+                                attr_outputs.append('\n'+ff.format(resource.gams_name))
                             else:
                                 attr_outputs.append('\n'+ff.format(resource.name))
                             for t, timestamp in enumerate(self.time_index):

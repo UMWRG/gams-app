@@ -50,8 +50,9 @@ class GAMSnetwork(HydraNetwork):
                 self.links[i].gams_name = link.from_node + ' . ' + link.to_node
         elif linkformat == 'l':
             for i, link in enumerate(self.links):
-                self.links[i].gams_name = link.from_node + ' . ' + \
-                    link.name + ' . ' + link.to_node
+                #self.links[i].gams_name = link.from_node + ' . ' + \
+                #    link.name + ' . ' + link.to_node
+                self.links[i].gams_name = link.name
 
 
 class GAMSlink(HydraResource):
