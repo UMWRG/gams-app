@@ -173,13 +173,13 @@ def commandline_parser():
                         help="""Export links as link name only. If two nodes
                         can be connected by more than one link, you should
                         choose this option.""")
-    cmd_parser.add_argument('-st', '--start-date', nargs='+',
+    cmd_parser.add_argument('-st', '--start-date',
                         help='''Start date of the time period used for
                         simulation.''')
-    cmd_parser.add_argument('-en', '--end-date', nargs='+',
+    cmd_parser.add_argument('-en', '--end-date',
                         help='''End date of the time period used for
                         simulation.''')
-    cmd_parser.add_argument('-dt', '--time-step', nargs='+',
+    cmd_parser.add_argument('-dt', '--time-step',
                         help='''Time step used for simulation.''')
     cmd_parser.add_argument('-tx', '--time-axis', nargs='+',
                         help='''Time axis for the modelling period (a list of
@@ -288,7 +288,6 @@ def run_gams_model(args):
         files_list=get_files_list(working_directory, '.gdx')
         for file_ in files_list:
             dt = parser.parse(files_list[file_])
-            log.critical(dt)
             delta= (dt-cur_time).total_seconds()
             if delta>=0:
                 args.gdx_file=os.path.join(working_directory, file_)
@@ -323,22 +322,22 @@ def check_args(args):
     try:
         int(args.network)
     except (TypeError, ValueError):
-        raise HydraPluginError('No network is specified')
+        raise HydraPluginError('No network is specified.')
     try:
         int(args.scenario)
     except (TypeError, ValueError):
-        raise HydraPluginError('No senario is specified')
+        raise HydraPluginError('No senario is specified.')
 
     if args.gms_file is None:
-        raise HydraPluginError('Gams file is not specifed')
-    elif os.path.isfile(args.gms_file)==False:
-        raise HydraPluginError('Gams file: '+args.gms_file+', is not existed')
+        raise HydraPluginError('Gams file is not specifed.')
+    elif os.path.isfile(os.path.expanduser(args.gms_file))==False:
+        raise HydraPluginError('Gams file '+args.gms_file+' not found.')
     elif args.output==None:
         args.output=get_input_file_name(args.gms_file)
         if args.output is None:
             raise HydraPluginError('No output file specified')
-    elif os.path.exists(os.path.dirname(args.output))==False:
-            raise HydraPluginError('output file directory: '+ os.path.dirname(args.output)+', is not exist')
+    elif os.path.exists(os.path.dirname(os.path.realpath(args.output)))==False:
+            raise HydraPluginError('Output file directory '+ os.path.dirname(args.output)+' does not exist.')
 
 if __name__ == '__main__':
     try:

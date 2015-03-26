@@ -120,5 +120,12 @@
            <name>Export by Type</name>
            <help>Check to export data by types rather than by attributes. </help>
         </arg>
+        <arg>
+           <switch>-ln</switch>
+           <name>Export Links by Name</name>
+           <help>Export links by their name, rather than by their start, end node. If two nodes
+                        can be connected by more than one link, you should
+                        choose this option.</help>
+        </arg>
     </switches>
  </plugin_info>

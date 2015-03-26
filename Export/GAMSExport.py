@@ -158,13 +158,13 @@ def commandline_parser():
                         help="""Export links as link name only. If two nodes
                         can be connected by more than one link, you should
                         choose this option.""")
-    parser.add_argument('-st', '--start-date', nargs='+',
+    parser.add_argument('-st', '--start-date',
                         help='''Start date of the time period used for
                         simulation.''')
-    parser.add_argument('-en', '--end-date', nargs='+',
+    parser.add_argument('-en', '--end-date',
                         help='''End date of the time period used for
                         simulation.''')
-    parser.add_argument('-dt', '--time-step', nargs='+',
+    parser.add_argument('-dt', '--time-step',
                         help='''Time step used for simulation.''')
     parser.add_argument('-tx', '--time-axis', nargs='+',
                         help='''Time axis for the modelling period (a list of
@@ -233,9 +233,9 @@ def check_args(args):
         output = '.'
 
     if  os.path.exists(output)==False:
-        raise HydraPluginError('output file directory: '+ 
+        raise HydraPluginError('Output file directory '+ 
                                os.path.dirname(args.output)+
-                               ', is not exist')
+                               'does not exist')
 
 if __name__ == '__main__':
 
