@@ -172,7 +172,6 @@ if __name__ == '__main__':
 
             os.execv(sys.executable, sysargs)
         else:
-
             import_results(args)
             message="Run successfully"
             print PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], message=message)
@@ -181,6 +180,7 @@ if __name__ == '__main__':
         log.exception(e)
         errors = [e.message]
         err = PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], errors = errors)
+        write_progress(steps, steps)
         print err
     except Exception, e:
         log.exception(e)
@@ -191,6 +191,7 @@ if __name__ == '__main__':
         else:
             errors = [e.message]
         err = PluginLib.create_xml_response('GAMSImport', args.network, [args.scenario], errors = errors)
+        write_progress(steps, steps)
         print err
 
 
