@@ -861,44 +861,47 @@ class GAMSExport(object):
     def write_time_index(self, start_time=None, end_time=None, time_step=None,
                          time_axis=None):
         log.info("Writing time index")
+        try:
 
-        time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
+            time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
 
-        if time_axis is None:
-            start_date = self.parse_date(start_time)
-            end_date = self.parse_date(end_time)
-            delta_t = self.parse_time_step(time_step)
+            if time_axis is None:
+                start_date = self.parse_date(start_time)
+                end_date = self.parse_date(end_time)
+                delta_t = self.parse_time_step(time_step)
 
-            t = 0
-            while start_date < end_date:
+                t = 0
+                while start_date < end_date:
 
-                time_index.append('%s\n' % t)
-                self.time_index.append(start_date)
-                start_date += timedelta(delta_t)
-                t += 1
+                    time_index.append('%s\n' % t)
+                    self.time_index.append(start_date)
+                    start_date += timedelta(delta_t)
+                    t += 1
 
-            time_index.append('/\n\n')
+                time_index.append('/\n\n')
 
-        else:
-            time_axis = ' '.join(time_axis).split(',')
-            t = 0
-            for timestamp in time_axis:
-                date = self.parse_date(timestamp.strip())
-                self.time_index.append(date)
-                time_index.append('%s\n' % t)
-                t += 1
+            else:
+                time_axis = ' '.join(time_axis).split(',')
+                t = 0
+                for timestamp in time_axis:
+                    date = self.parse_date(timestamp.strip())
+                    self.time_index.append(date)
+                    time_index.append('%s\n' % t)
+                    t += 1
 
-            time_index.append('/\n\n')
+                time_index.append('/\n\n')
 
-        time_index.append('* define time steps dependent on time index (t)\n\n')
-        time_index.append('Parameter timestamp(t) ;\n\n')
-        for t, date in enumerate(self.time_index):
-            time_index.append('    timestamp("%s") = %s ;\n' % \
-                (t, convert_date_to_timeindex(date)))
-        time_index.append('\n\n')
+            time_index.append('* define time steps dependent on time index (t)\n\n')
+            time_index.append('Parameter timestamp(t) ;\n\n')
+            for t, date in enumerate(self.time_index):
+                time_index.append('    timestamp("%s") = %s ;\n' % \
+                    (t, convert_date_to_timeindex(date)))
+            time_index.append('\n\n')
 
-        self.output = self.output + ''.join(time_index)
-        log.info("Time index written")
+            self.output = self.output + ''.join(time_index)
+            log.info("Time index written")
+        except Exception as e:
+            raise HydraPluginError("Please check time-axis or start time, end times and time step.")
 
     def parse_time_step(self, time_step):
         """Read in the time step and convert it to days.
