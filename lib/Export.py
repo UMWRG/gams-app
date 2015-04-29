@@ -56,8 +56,8 @@ Option                 Short   Parameter  Description
 Option                 Short  Description
 ====================== ====== =========================================
 --export_by_type       -et    Set export data based on types or based
-                              on attributes only, default is export 
-                              data by attributes unless this option 
+                              on attributes only, default is export
+                              data by attributes unless this option
                               is set.
 ====================== ====== =========================================
 
@@ -276,6 +276,7 @@ API docs
 import re
 from datetime import datetime
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from string import ascii_lowercase
 
 from HydraLib.PluginLib import JsonConnection
@@ -868,16 +869,17 @@ class GAMSExport(object):
             if time_axis is None:
                 start_date = self.parse_date(start_time)
                 end_date = self.parse_date(end_time)
-                delta_t = self.parse_time_step(time_step)
-
+                delta_t, value, units = self.parse_time_step(time_step)
                 t = 0
-                while start_date < end_date:
-
+                value=int(value)
+                while start_date <=end_date:
                     time_index.append('%s\n' % t)
                     self.time_index.append(start_date)
-                    start_date += timedelta(delta_t)
+                    if(units== "mon"):
+                        start_date=start_date+relativedelta(months=value)
+                    else:
+                        start_date += timedelta(delta_t)
                     t += 1
-
                 time_index.append('/\n\n')
 
             else:
@@ -914,7 +916,7 @@ class GAMSExport(object):
         converted_time_step = self.connection.call('convert_units', {
             'values':[value], 'unit1':units, 'unit2':'day'})[0]
 
-        return float(converted_time_step)
+        return float(converted_time_step), value, units
 
     def parse_date(self, date):
         """Parse date string supplied from the user. All formats supported by

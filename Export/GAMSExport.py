@@ -40,15 +40,15 @@ Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
---server_url           -u     SERVER_URL   Url of the server the plugin will 
+--server_url           -u     SERVER_URL   Url of the server the plugin will
                                            connect to.
                                            Defaults to localhost.
 --session_id           -c     SESSION_ID   Session ID used by the calling software
-                                           If left empty, the plugin will attempt 
+                                           If left empty, the plugin will attempt
                                            to log in itself.
 
 **Manually specifying the gams installation:**
-                                           
+
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== ======================================
@@ -70,9 +70,9 @@ Option                 Short  Parameter    Description
 ================= ======= ====================================
 Option            Short   Description
 ================= ======= ====================================
---export_by_type  -et     Set export data based on types or 
+--export_by_type  -et     Set export data based on types or
                           based on attributes only, default is
-                          export data by attributes unliess 
+                          export data by attributes unliess
                           this option is set.
 ================= ======= ====================================
 
@@ -110,7 +110,7 @@ Option                 Short  Parameter  Description
 
 Examples:
 =========
-  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 
+  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01,
                  2000-06-01 -o "c:\temp\demo_2.dat"
 
 '''
@@ -234,7 +234,7 @@ def check_args(args):
         output = '.'
 
     if  os.path.exists(output)==False:
-        raise HydraPluginError('Output file directory '+ 
+        raise HydraPluginError('Output file directory '+
                                os.path.dirname(args.output)+
                                'does not exist')
 
