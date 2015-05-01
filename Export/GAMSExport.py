@@ -74,6 +74,10 @@ Option            Short   Description
                           based on attributes only, default is
                           export data by attributes unliess
                           this option is set.
+-- use gams date  -gd     Set the time indexes to be timestamps
+                          which are compatible with gams format
+                          (dd.mm.yyyy)
+ index
 ================= ======= ====================================
 
 Specifying the time axis
@@ -110,9 +114,11 @@ Option                 Short  Parameter  Description
 
 Examples:
 =========
-  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01,
-                 2000-06-01 -o "c:\temp\demo_2.dat"
+  -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
+  -t 40 -s 40  -st 2015-04-01 -en  2039-04-01 -dt "1 yr"  -o "c:\temp\CH2M_2.dat" -et
 
+s=40, s=40
+-s 37 -t 37 -o "F:\work\CAL_Model\csv data for California model\excel files final\input_f.txt" -st "1922-01-01"  -en "1993-12-01" -dt "1 mon"
 '''
 import sys
 import os
@@ -173,6 +179,9 @@ def commandline_parser():
     parser.add_argument('-et', '--export_by_type', action='store_true',
                         help='''to export data based on types, set this otion to 'y' or 'yes', default is export data by attributes.''')
 
+    parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
+                        help='''Set the time indexes to be timestamps which are compatible with gams format (dd.mm.yyyy)''')
+
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
@@ -201,6 +210,8 @@ def export_network(args):
 
         exporter.export_network()
 
+        if(args.gams_date_time_index is True):
+            exporter.use_gams_date_index=True
 
         if args.start_date is not None and args.end_date is not None \
                 and args.time_step is not None:

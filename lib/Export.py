@@ -304,6 +304,7 @@ class GAMSExport(object):
                  link_export_flag,
                  session_id=None,
                  url=None):
+        self.use_gams_date_index=False
         network_id = int(network_id)
         scenario_id = int(scenario_id)
         self.filename = filename
@@ -377,6 +378,7 @@ class GAMSExport(object):
                 node_name_len=len(node.name)
 
         self.name_len=str(node_name_len*2+5)
+        self.array_len=str(node_name_len*2+15)
 
     def export_nodes(self):
         self.output += 'SETS\n\n'
@@ -629,9 +631,9 @@ class GAMSExport(object):
             ff='{0:<'+self.name_len+'}'
             for attribute in attributes:
                 if(islink):
-                    attr_outputs.append('Table '+ attribute.name+'(i,j, t)\n')
+                    attr_outputs.append('parameter '+ attribute.name+'(i,j)\n')
                 else:
-                    attr_outputs.append('Table '+ attribute.name+'(i, t)\n\n')
+                    attr_outputs.append('parameter  '+ attribute.name+'(i)\n\n')
                 attr_outputs.append(ff.format(''))
                 attr_outputs.append(ff.format(0))
                 attr_outputs.append('\n')
@@ -679,7 +681,7 @@ class GAMSExport(object):
             for attribute in attributes:
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    if attr.dataset_id is not None:
+                    if attr is not None and attr.dataset_id is not None:
                         if islink:
                             col_header = ' %14s' % (resource.gams_name + '.'
                                                     + attribute.name)
@@ -714,7 +716,7 @@ class GAMSExport(object):
                                          'timestamps' : soap_times})
 
             for t, timestamp in enumerate(self.time_index):
-                attr_outputs.append('{0:<7}'.format(t))
+                attr_outputs.append('{0:<7}'.format(self.times_table[timestamp]))
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
@@ -723,8 +725,13 @@ class GAMSExport(object):
                             data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
                             if data is None:
                                 raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                            try:
+                                data_str = ' %14f' % float(data)
+                            except:
+                                ff_='{0:<'+self.array_len+'}'
+                                data_str = ff_.format(str(data))
+                                #data_str = ' %14' % str(data)
 
-                            data_str = ' %14f' % float(data)
                             attr_outputs.append(
                                 data_str.rjust(col_header_length[(attribute, resource)]))
                 attr_outputs.append('\n')
@@ -765,11 +772,12 @@ class GAMSExport(object):
                                             {'dataset_ids':dataset_ids,
                                              'timestamps' : soap_times})
                 ff='{0:<'+self.name_len+'}'
+                ff_='{0:<'+self.array_len+'}'
 
 
                 t_=ff.format('')
                 for t, timestamp in enumerate(self.time_index):
-                    t_=t_+ff.format(t)
+                    t_=t_+ff.format(self.times_table[timestamp])
                 for attribute in attributes:
                     attr_outputs.append('\n*'+attribute.name)
                     if(islink):
@@ -789,7 +797,10 @@ class GAMSExport(object):
                                 data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
                                 if data is None:
                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
-                                data_str = ff.format(str(float(data)))
+                                try:
+                                    data_str = ff.format(str(float(data)))
+                                except:
+                                    data_str = ff_.format(str(data))
                                 attr_outputs.append(data_str)
                     attr_outputs.append('\n')
                 attr_outputs.append('\n')
@@ -850,18 +861,22 @@ class GAMSExport(object):
                         attr_outputs.append('\n')
                         arr_index = create_arr_index(dim[0:-1])
                         matr_array = arr_to_matrix(array, dim)
-                        for i, idx in enumerate(arr_index):
-                            for n in range(ydim):
-                                attr_outputs.append('{0:<10}'.format(
-                                    ' . '.join([str(k) for k in idx])))
-                                attr_outputs.append('{0:10}'.format(matr_array[i][n]))
-                            attr_outputs.append('\n')
+                        #for i, idx in enumerate(arr_index):
+                         #   print i, idx
+                          #  for n in range(ydim):
+                           #     print n
+                            #    attr_outputs.append('{0:<10}'.format(
+                             #       ' . '.join([str(k) for k in idx])))
+                        for item in matr_array:
+                            attr_outputs.append('{0:20}'.format(item))
+                        attr_outputs.append('\n')
                         attr_outputs.append('\n\n')
         return attr_outputs
 
     def write_time_index(self, start_time=None, end_time=None, time_step=None,
                          time_axis=None):
         log.info("Writing time index")
+        self.times_table={}
         try:
 
             time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
@@ -873,8 +888,18 @@ class GAMSExport(object):
                 t = 0
                 value=int(value)
                 while start_date <=end_date:
-                    time_index.append('%s\n' % t)
+                    #print start_date
+                    _t=str(start_date.day)+"."+str(start_date.month)+"."+str(start_date.year)
+                    if(self.use_gams_date_index is True):
+                        time_index.append('%s\n' % _t)
+                    else:
+                        time_index.append('%s\n' % t)
                     self.time_index.append(start_date)
+                    if(self.use_gams_date_index is True):
+                         self.times_table[start_date]=_t
+                    else:
+                         self.times_table[start_date]=t
+
                     if(units== "mon"):
                         start_date=start_date+relativedelta(months=value)
                     else:
@@ -887,18 +912,31 @@ class GAMSExport(object):
                 t = 0
                 for timestamp in time_axis:
                     date = self.parse_date(timestamp.strip())
+                    _t=str(date.day)+"."+str(date.month)+"."+str(date.year)
                     self.time_index.append(date)
-                    time_index.append('%s\n' % t)
+                    if(self.use_gams_date_index is True):
+                         time_index.append('%s\n' % _t)
+                         self.times_table[date]=_t
+                    else:
+                         time_index.append('%s\n' % t)
+                         self.times_table[date]=t
                     t += 1
 
                 time_index.append('/\n\n')
 
             time_index.append('* define time steps dependent on time index (t)\n\n')
             time_index.append('Parameter timestamp(t) ;\n\n')
+            #print "wrinting time"
             for t, date in enumerate(self.time_index):
                 time_index.append('    timestamp("%s") = %s ;\n' % \
-                    (t, convert_date_to_timeindex(date)))
+                    (self.times_table[date], convert_date_to_timeindex(date)))
             time_index.append('\n\n')
+
+           ## time_index.append('Parameter actualtimestamp(t) ;\n\n')
+           ## for t, date in enumerate(self.time_index):
+            ##    time_index.append('    actualtimestamp("%s") = %s ;\n' % \
+             ##       (t, str(date.day)+"."+str(date.month)+"."+str(date.year)))
+            ##time_index.append('\n\n')
 
             self.output = self.output + ''.join(time_index)
             log.info("Time index written")
