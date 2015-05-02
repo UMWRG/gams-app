@@ -631,9 +631,9 @@ class GAMSExport(object):
             ff='{0:<'+self.name_len+'}'
             for attribute in attributes:
                 if(islink):
-                    attr_outputs.append('parameter '+ attribute.name+'(i,j)\n')
+                    attr_outputs.append('Table '+ attribute.name+'(i,j, t)\n')
                 else:
-                    attr_outputs.append('parameter  '+ attribute.name+'(i)\n\n')
+                    attr_outputs.append('Table  '+ attribute.name+'(i, t)\n\n')
                 attr_outputs.append(ff.format(''))
                 attr_outputs.append(ff.format(0))
                 attr_outputs.append('\n')
@@ -900,8 +900,10 @@ class GAMSExport(object):
                     else:
                          self.times_table[start_date]=t
 
-                    if(units== "mon"):
+                    if(units.lower()== "mon"):
                         start_date=start_date+relativedelta(months=value)
+                    elif (units.lower()== "yr"):
+                        start_date=start_date+relativedelta(years=value)
                     else:
                         start_date += timedelta(delta_t)
                     t += 1

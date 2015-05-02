@@ -75,8 +75,8 @@ Option            Short   Description
                           export data by attributes unliess
                           this option is set.
 -- use gams date  -gd     Set the time indexes to be timestamps
-                          which are compatible with gams format
-                          (dd.mm.yyyy)
+                          which are compatible with gams date
+                          format (dd.mm.yyyy)
  index
 ================= ======= ====================================
 
@@ -180,7 +180,7 @@ def commandline_parser():
                         help='''to export data based on types, set this otion to 'y' or 'yes', default is export data by attributes.''')
 
     parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
-                        help='''Set the time indexes to be timestamps which are compatible with gams format (dd.mm.yyyy)''')
+                        help='''Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)''')
 
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this

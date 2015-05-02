@@ -121,17 +121,17 @@
            <name>Export by Type</name>
            <help>Check to export data by types rather than by attributes. </help>
         </arg>
-         <arg>
-           <switch>-gd</switch>
-           <name>Set gams date time index</name>
-           <help>Set the time indexes to be timestamps which are compatible with gams format (dd.mm.yyyy)</help>
-        </arg>
         <arg>
            <switch>-ln</switch>
            <name>Export Links by Name</name>
            <help>Export links by their name, rather than by their start, end node. If two nodes
                         can be connected by more than one link, you should
                         choose this option.</help>
+        </arg>
+        <arg>
+           <switch>-gd</switch>
+           <name>Set gams date time index</name>
+           <help>Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)</help>
         </arg>
     </switches>
  </plugin_info>
