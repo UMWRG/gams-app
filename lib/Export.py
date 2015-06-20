@@ -283,6 +283,7 @@ from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
 from HydraLib.dateutil import guess_timefmt, date_to_string
+from gevent.socket import socket
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
@@ -326,6 +327,12 @@ class GAMSExport(object):
                                                    'scenario_ids':[scenario_id]})
         self.net=net
         log.info("Network retrieved")
+
+        if(net.scenarios is not None):
+            for scenario_ in net.scenarios:
+                if(scenario_.id== session_id):
+                    self.scenario=scenario_
+
         attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(attrs))
         self.network = GAMSnetwork()
@@ -541,7 +548,8 @@ class GAMSExport(object):
         log.info("Data exported")
 
     def export_parameters_using_type(self, resources, obj_type, datatype, res_type=None):
-        """Export scalars or descriptors.
+        """
+        Export scalars or descriptors.
         """
         islink = res_type == 'LINK'
         attributes = []
@@ -587,7 +595,7 @@ class GAMSExport(object):
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is None or attr.value is None:
                         continue
-                    attr_outputs.append(' %14s' % attr.value.values()[0][0])
+                    attr_outputs.append(' %14s' % attr.value)
                 attr_outputs.append('\n')
             attr_outputs.append('\n\n')
         return attr_outputs
@@ -645,7 +653,9 @@ class GAMSExport(object):
                         attr_outputs.append(ff.format(resource.gams_name))
                     else:
                         attr_outputs.append(ff.format(resource.name))
-                    attr_outputs.append(ff.format(attr.value.values()[0][0]))
+                    print "Attr: ",attr
+                    print "attr.value: ",attr.value
+                    attr_outputs.append(ff.format(attr.value))
                     attr_outputs.append('\n')
             return attr_outputs
 
@@ -695,7 +705,7 @@ class GAMSExport(object):
                                                       len(col_header)})
                             attr_outputs.append(col_header)
             attr_outputs.append('\n')
-
+            all_res_data={}
             #Identify the datasets that we need data for
             dataset_ids = []
             for attribute in attributes:
@@ -703,6 +713,8 @@ class GAMSExport(object):
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is not None and attr.dataset_id is not None:
                         dataset_ids.append(attr.dataset_id)
+                        value=json.loads(attr.value)
+                        all_res_data[attr.dataset_id]=value
 
             #We need to get the value at each time in the specified time axis,
             #so we need to identify the relevant timestamps.
@@ -711,9 +723,9 @@ class GAMSExport(object):
                 soap_times.append(date_to_string(timestamp))
 
             #Get all the necessary data for all the datasets we have.
-            all_data = self.connection.call('get_multiple_vals_at_time',
-                                        {'dataset_ids':dataset_ids,
-                                         'timestamps' : soap_times})
+            #all_data = self.connection.call('get_multiple_vals_at_time',
+            #                            {'dataset_ids':dataset_ids,
+            #                             'timestamps' : soap_times})
 
             for t, timestamp in enumerate(self.time_index):
                 attr_outputs.append('{0:<7}'.format(self.times_table[timestamp]))
@@ -722,7 +734,13 @@ class GAMSExport(object):
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
                             soap_time = date_to_string(timestamp)
-                            data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
+                            ####
+                            value=all_res_data[attr.dataset_id]
+                            for st, data_ in value.items():
+                                pass
+                            data=self.get_time_value(data_, soap_time)
+
+                            #data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
                             if data is None:
                                 raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
                             try:
@@ -741,10 +759,12 @@ class GAMSExport(object):
     def export_timeseries_using_attributes (self, resources, res_type=None):
             """Export time series.
             """
+            print "Export time series."
             islink = res_type == 'LINK'
             attributes = []
             attr_names = []
             attr_outputs = []
+            all_res_data={}
             for resource in resources:
                 for attr in resource.attributes:
                     if attr.dataset_type == 'timeseries' and attr.is_var is False:
@@ -759,6 +779,8 @@ class GAMSExport(object):
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
                         if attr is not None and attr.dataset_id is not None:
+                            value=json.loads(attr.value)
+                            all_res_data[attr.dataset_id]=value
                             dataset_ids.append(attr.dataset_id)
 
                 #We need to get the value at each time in the specified time axis,
@@ -768,12 +790,12 @@ class GAMSExport(object):
                     soap_times.append(date_to_string(timestamp))
 
                 #Get all the necessary data for all the datasets we have.
-                all_data = self.connection.call('get_multiple_vals_at_time',
-                                            {'dataset_ids':dataset_ids,
-                                             'timestamps' : soap_times})
+                #all_data = self.connection.call('get_multiple_vals_at_time',
+                #                           {'dataset_ids':dataset_ids,
+                #                           'timestamps' : soap_times})
+
                 ff='{0:<'+self.name_len+'}'
                 ff_='{0:<'+self.array_len+'}'
-
 
                 t_=ff.format('')
                 for t, timestamp in enumerate(self.time_index):
@@ -792,9 +814,13 @@ class GAMSExport(object):
                                 attr_outputs.append('\n'+ff.format(resource.gams_name))
                             else:
                                 attr_outputs.append('\n'+ff.format(resource.name))
+                            #get_attr_value()
                             for t, timestamp in enumerate(self.time_index):
                                 soap_time = date_to_string(timestamp)
-                                data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
+                                value=all_res_data[attr.dataset_id]
+                                for st, data_ in value.items():
+                                    pass
+                                data=self.get_time_value(data_, soap_time)
                                 if data is None:
                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
                                 try:
@@ -806,6 +832,21 @@ class GAMSExport(object):
                 attr_outputs.append('\n')
             return attr_outputs
 
+    #########################
+
+    def get_time_value(self, value, soap_time):
+        data=None
+        for date_time, item_value in value.items():
+            print soap_time
+            print date_time,": ", item_value
+            if(date_time.startswith("XXXX")):
+                if date_time [5:] == soap_time [5:]:
+                    data=item_value
+                    break
+            elif (date_time == soap_time):
+                data=item_value
+                break
+        return data
 
     def export_arrays(self, resources):
         """Export arrays.

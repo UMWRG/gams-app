@@ -114,14 +114,15 @@ Option                 Short  Parameter  Description
 
 Examples:
 =========
+Exporting use time axis:
   -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
+Exporting use start time, end time and time step:
   -t 40 -s 40  -st 2015-04-01 -en  2039-04-01 -dt "1 yr"  -o "c:\temp\CH2M_2.dat" -et
-
-s=40, s=40
--s 37 -t 37 -o "F:\work\CAL_Model\csv data for California model\excel files final\input_f.txt" -st "1922-01-01"  -en "1993-12-01" -dt "1 mon"
+  -s 37 -t 37 -o "F:\work\CAL_Model\csv data for California model\excel files final\input_f.txt" -st "1922-01-01"  -en "1993-12-01" -dt "1 mon"
 '''
 import sys
 import os
+
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
