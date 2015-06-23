@@ -70,6 +70,7 @@ from HydraLib import PluginLib
 import re
 import sys
 import logging
+import json
 import argparse
 
 from operator import mul
@@ -315,12 +316,12 @@ class GAMSImport(object):
                     elif gdxvar.dim == 0:
                         data = gdxvar.data[0]
                         try:
-                            data = float(data)
+                            data_ = float(data)
                             dataset['type'] = 'scalar'
-                            dataset['value'] = self.create_scalar(data)
+                            dataset['value'] = json.dumps(data)
                         except ValueError:
                             dataset['type'] = 'descriptor'
-                            dataset['value'] = self.create_descriptor(data)
+                            dataset['value'] = data
                     elif gdxvar.dim > 0:
                         dataset['type'] = 'array'
                         dataset['value'] = self.create_array(gdxvar.index,
@@ -358,14 +359,12 @@ class GAMSImport(object):
                                 if node.name in idx:
                                     data = gdxvar.data[i]
                                     try:
-                                        data = float(data)
+                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = \
-                                            self.create_scalar(data)
+                                        dataset['value'] = json.dumps(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = \
-                                            self.create_descriptor(data)
+                                        dataset['value'] = data
                                     break
                         elif gdxvar.dim > 1:
                             dataset['type'] = 'array'
@@ -413,14 +412,12 @@ class GAMSImport(object):
                                    idx.index(fromnode) < idx.index(tonode):
                                     data = gdxvar.data[i]
                                     try:
-                                        data = float(data)
+                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = \
-                                            self.create_scalar(data)
+                                        dataset['value'] = json.dumps(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = \
-                                            self.create_descriptor(data)
+                                        dataset['value'] = data
                                     break
                         elif gdxvar.dim > 2:
                             dataset['type'] = 'array'
@@ -442,18 +439,13 @@ class GAMSImport(object):
                         self.res_scenario.append(res_scen)
 
     def create_timeseries(self, index, data):
-        timeseries = {'ts_values': []}
+        timeseries = {'0': {}}
         for i, idx in enumerate(index):
-            timeseries['ts_values'].append({'ts_time':
-                                            self.time_axis[int(idx)],
-                                            'ts_value':
-                                            float(data[i])
-                                            })
-
-        return timeseries
+            timeseries['0'][self.time_axis[int(idx)]] = float(data[i])
+        return json.dumps(timeseries)
 
     def create_scalar(self, value):
-        return dict(param_value = value)
+        return value
 
     def create_array(self, index, data):
         dimension = len(index[0])
