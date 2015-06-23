@@ -508,6 +508,7 @@ class GAMSExport(object):
         log.info("Exporting data")
         # Export node data for each node type
         data = ['* Node data\n\n']
+        self.time_table={}
         for node_type in \
                 self.network.get_node_types(template_id=self.template_id):
             data.append('* Data for node type %s\n\n' % node_type)
@@ -533,6 +534,7 @@ class GAMSExport(object):
         log.info("Exporting data")
         # Export node data for each node
         data = ['* Nodes data\n']
+        self.time_table={}
         data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
         data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
         data.extend(self.export_timeseries_using_attributes (self.network.nodes))
@@ -839,12 +841,20 @@ class GAMSExport(object):
                 if date_time [5:] == soap_time [5:]:
                     data=item_value
                     break
-            elif (guess_timefmt(date_time) == soap_time):
+            elif date_time==soap_time:
                 data=item_value
                 break
-            elif (date_to_string(parse(date_time))== soap_time):
-                data=item_value
-                break
+            else:
+                if date_time in self.time_table:
+                    if self.time_table[date_time]== soap_time:
+                        data=item_value
+                        break
+                else:
+                    converted_time=date_to_string(parse(date_time))
+                    self.time_table[date_time]=converted_time
+                    if converted_time== soap_time:
+                        data=item_value
+                        break
 
         if data is not None:
             if type(data) is list:
@@ -857,6 +867,7 @@ class GAMSExport(object):
                 data=new_data+"]"
         return data
 
+
     def get_dim(self, arr):
         dim = []
         if(type(arr) is list):
@@ -868,7 +879,7 @@ class GAMSExport(object):
                     break
         else:
              dim.append(len(arr))
-        print len(dim), "-------------------------------------", dim
+
         return dim
 
     def export_arrays(self, resources):
@@ -907,7 +918,6 @@ class GAMSExport(object):
                             attr_outputs.append(indexvars[i] + '_' + \
                                 resource.name + '_' + attr.name + \
                                 ' array_'+str(i)+' index /\n')
-                            print "====================================================== n", n
                             for idx in range(n):
                                 attr_outputs.append(str(idx) + '\n')
                             attr_outputs.append('/\n\n')
