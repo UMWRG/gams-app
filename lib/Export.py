@@ -278,6 +278,7 @@ from datetime import datetime
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from string import ascii_lowercase
+from dateutil.parser import parse
 
 from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
@@ -593,7 +594,7 @@ class GAMSExport(object):
                     attr_outputs.append('{0:24}'.format(resource.name))
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    if attr is None or attr.value is None:
+                    if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
                     attr_outputs.append(' %14s' % attr.value)
                 attr_outputs.append('\n')
@@ -647,14 +648,13 @@ class GAMSExport(object):
                 attr_outputs.append('\n')
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    if attr is None or attr.value is None:
+                    if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
                     if islink:
                         attr_outputs.append(ff.format(resource.gams_name))
                     else:
                         attr_outputs.append(ff.format(resource.name))
-                    print "Attr: ",attr
-                    print "attr.value: ",attr.value
+
                     attr_outputs.append(ff.format(attr.value))
                     attr_outputs.append('\n')
             return attr_outputs
@@ -738,6 +738,7 @@ class GAMSExport(object):
                             value=all_res_data[attr.dataset_id]
                             for st, data_ in value.items():
                                 pass
+
                             data=self.get_time_value(data_, soap_time)
 
                             #data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
@@ -759,7 +760,6 @@ class GAMSExport(object):
     def export_timeseries_using_attributes (self, resources, res_type=None):
             """Export time series.
             """
-            print "Export time series."
             islink = res_type == 'LINK'
             attributes = []
             attr_names = []
@@ -796,7 +796,6 @@ class GAMSExport(object):
 
                 ff='{0:<'+self.name_len+'}'
                 ff_='{0:<'+self.array_len+'}'
-
                 t_=ff.format('')
                 for t, timestamp in enumerate(self.time_index):
                     t_=t_+ff.format(self.times_table[timestamp])
@@ -809,7 +808,7 @@ class GAMSExport(object):
                     attr_outputs.append('\n'+str(t_))
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
-                        if attr is not None and attr.dataset_id is not None:
+                        if attr is not None and attr.dataset_id is not None and attr.dataset_type == "timeseries":
                             if(islink):
                                 attr_outputs.append('\n'+ff.format(resource.gams_name))
                             else:
@@ -833,20 +832,44 @@ class GAMSExport(object):
             return attr_outputs
 
     #########################
-
     def get_time_value(self, value, soap_time):
         data=None
         for date_time, item_value in value.items():
-            print soap_time
-            print date_time,": ", item_value
             if(date_time.startswith("XXXX")):
                 if date_time [5:] == soap_time [5:]:
                     data=item_value
                     break
-            elif (date_time == soap_time):
+            elif (guess_timefmt(date_time) == soap_time):
                 data=item_value
                 break
+            elif (date_to_string(parse(date_time))== soap_time):
+                data=item_value
+                break
+
+        if data is not None:
+            if type(data) is list:
+                new_data="["
+                for v in data:
+                    if(new_data== "["):
+                        new_data=new_data+str(v)
+                    else:
+                        new_data=new_data+" "+str(v)
+                data=new_data+"]"
         return data
+
+    def get_dim(self, arr):
+        dim = []
+        if(type(arr) is list):
+            for i in range(len(arr)):
+                if(type(arr[i]) is list):
+                    dim.append((len(arr[i])))
+                else:
+                    dim.append(len(arr))
+                    break
+        else:
+             dim.append(len(arr))
+        print len(dim), "-------------------------------------", dim
+        return dim
 
     def export_arrays(self, resources):
         """Export arrays.
@@ -854,6 +877,7 @@ class GAMSExport(object):
         attributes = []
         attr_names = []
         attr_outputs = []
+        all_res_values={}
         for resource in resources:
             for attr in resource.attributes:
                 if attr.dataset_type == 'array' and attr.is_var is False:
@@ -869,9 +893,10 @@ class GAMSExport(object):
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is not None and attr.value is not None:
-                        array_dict = attr.value['arr_data'][0]
-                        array = parse_array(array_dict)
-                        dim = array_dim(array)
+                        #array_dict = attr.value['arr_data'][0]
+                        #array = parse_array(array_dict)
+                        array=json.loads(attr.value)
+                        dim = self.get_dim(array)
                         attr_outputs.append('* Array %s for node %s, ' % \
                             (attr.name, resource.name))
                         attr_outputs.append('dimensions are %s\n\n' % dim)
@@ -881,7 +906,8 @@ class GAMSExport(object):
                         for i, n in enumerate(dim):
                             attr_outputs.append(indexvars[i] + '_' + \
                                 resource.name + '_' + attr.name + \
-                                ' array index /\n')
+                                ' array_'+str(i)+' index /\n')
+                            print "====================================================== n", n
                             for idx in range(n):
                                 attr_outputs.append(str(idx) + '\n')
                             attr_outputs.append('/\n\n')
@@ -897,19 +923,28 @@ class GAMSExport(object):
                         ydim = dim[-1]
                         #attr_outputs.append(' '.join(['{0:10}'.format(y)
                         #                        for y in range(ydim)])
-                        for y in range(ydim):
-                            attr_outputs.append('{0:20}'.format(y))
-                        attr_outputs.append('\n')
-                        arr_index = create_arr_index(dim[0:-1])
-                        matr_array = arr_to_matrix(array, dim)
+                        if len(dim)>1:
+                            for y in range(ydim):
+                                attr_outputs.append('{0:20}'.format(y))
+                            attr_outputs.append('\n')
+                        #arr_index = create_arr_index(dim[0:-1])
+                        #matr_array = arr_to_matrix(array, dim)
                         #for i, idx in enumerate(arr_index):
                          #   print i, idx
                           #  for n in range(ydim):
                            #     print n
                             #    attr_outputs.append('{0:<10}'.format(
-                             #       ' . '.join([str(k) for k in idx])))
-                        for item in matr_array:
-                            attr_outputs.append('{0:20}'.format(item))
+
+                        i=0     #       ' . '.join([str(k) for k in idx])))
+                        for item in array:
+                            attr_outputs.append("\n")
+                            attr_outputs.append(format(i)+'{0:20}'.format(""))
+                            i+=1
+                            if(type(item) is list):
+                                for value in item:
+                                    attr_outputs.append('{0:20}'.format(value))
+                            else:
+                                attr_outputs.append('{0:20}'.format(item))
                         attr_outputs.append('\n')
                         attr_outputs.append('\n\n')
         return attr_outputs
@@ -1012,7 +1047,6 @@ class GAMSExport(object):
         write_progress(9, self.steps)
         with open(self.filename, 'w') as f:
             f.write(self.output)
-
 
 
 def translate_attr_name(name):
