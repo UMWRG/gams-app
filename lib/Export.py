@@ -279,6 +279,9 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from string import ascii_lowercase
 from dateutil.parser import parse
+from decimal import Decimal
+import pandas as pd
+import zlib
 
 from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
@@ -777,6 +780,7 @@ class GAMSExport(object):
             if len(attributes) > 0:
                 #Identify the datasets that we need data for
                 dataset_ids = []
+                datasets={}
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
@@ -795,6 +799,7 @@ class GAMSExport(object):
                 #all_data = self.connection.call('get_multiple_vals_at_time',
                 #                           {'dataset_ids':dataset_ids,
                 #                           'timestamps' : soap_times})
+
 
                 ff='{0:<'+self.name_len+'}'
                 ff_='{0:<'+self.array_len+'}'
@@ -822,6 +827,7 @@ class GAMSExport(object):
                                 for st, data_ in value.items():
                                     pass
                                 data=self.get_time_value(data_, soap_time)
+
                                 if data is None:
                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
                                 try:
@@ -836,6 +842,7 @@ class GAMSExport(object):
     #########################
     def get_time_value(self, value, soap_time):
         data=None
+        self.set_time_table(value.keys())
         for date_time, item_value in value.items():
             if(date_time.startswith("XXXX")):
                 if date_time [5:] == soap_time [5:]:
@@ -845,17 +852,15 @@ class GAMSExport(object):
                 data=item_value
                 break
             else:
-                if date_time in self.time_table:
-                    if self.time_table[date_time]== soap_time:
-                        data=item_value
-                        break
+                if self.time_table[date_time]== soap_time:
+                     data=item_value
+                     break
                 else:
-                    converted_time=date_to_string(parse(date_time))
-                    self.time_table[date_time]=converted_time
-                    if converted_time== soap_time:
-                        data=item_value
-                        break
-
+                    pass
+        if data is None:
+            date=self.check_time( soap_time, sorted(value.keys()))
+            if date is not None:
+                data= value[date]
         if data is not None:
             if type(data) is list:
                 new_data="["
@@ -865,7 +870,41 @@ class GAMSExport(object):
                     else:
                         new_data=new_data+" "+str(v)
                 data=new_data+"]"
+
         return data
+
+
+    def check_time(self, timestamp, times):
+        for i in range (0, len(times)):
+            if(i==0):
+                if(timestamp<self.time_table[times[0]]):
+                     return None
+            if(timestamp<self.time_table[times[i]]):
+                if(i>0 and timestamp>self.time_table[times[i-1]]):
+                    return times[i-1]
+        return self.get_last_valid_occurrence(timestamp, times)
+        return None
+
+    def get_last_valid_occurrence(self, timestamp, times):
+        for date_time in times:
+            if self.time_table[date_time] [5:] == timestamp [5:]:
+                return date_time
+            else:
+                time=timestamp [:5]+self.time_table[date_time] [5:]
+                re_time=self.check_time(time,times)
+                if(re_time is not None):
+                    return re_time
+        return None
+
+    def set_time_table(self, times):
+         for date_time in times:
+             if  date_time in self.time_table:
+                 pass
+             else:
+                 if date_time.startswith("XXXX"):
+                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1900")))
+                 else:
+                     self.time_table[date_time]=date_to_string(parse(date_time))
 
 
     def get_dim(self, arr):
@@ -1058,6 +1097,98 @@ class GAMSExport(object):
         with open(self.filename, 'w') as f:
             f.write(self.output)
 
+
+
+
+########################
+
+def get_val(value , data_type, timestamp=None):
+    """
+        Turn the string value of a dataset into an appropriate
+        value, be it a decimal value, array or time series.
+
+        If a timestamp is passed to this function,
+        return the values appropriate to the requested times.
+
+        If the timestamp is *before* the start of the timeseries data, return None
+        If the timestamp is *after* the end of the timeseries data, return the last
+        value.
+
+        The raw flag indicates whether timeseries should be returned raw -- exactly
+        as they are in the DB (a timeseries being a list of timeseries data objects,
+        for example) or as a single python dictionary
+
+    """
+    if data_type == 'array':
+        try:
+            pass#json.loads(dataset.value)
+        except ValueError:
+            #Didn't work? Maybe because it was compressed.
+            val = zlib.decompress(value)
+            return json.loads(val)
+    elif data_type  == 'descriptor':
+        return str(value)
+    elif data_type  == 'scalar':
+        return Decimal(str(value))
+    elif data_type  == 'timeseries':
+        try:
+            timeseries = value#pd.read_json(value)
+        except ValueError:
+            #Didn't work? Maybe because it was compressed.
+            val = zlib.decompress(value)
+            timeseries = pd.read_json(val)
+
+        if timestamp is None:
+            return timeseries
+        else:
+            try:
+                idx = timeseries.index
+                #Seasonal timeseries are stored in the year
+                #1900. Therefore if the timeseries is seasonal,
+                #the request must be a seasonal request, not a
+                #standard request
+                if type(idx) == pd.DatetimeIndex:
+                    if set(idx.year) == set([1900]):
+                        if type(timestamp) == list:
+                            seasonal_timestamp = []
+                            for t in timestamp:
+                                t_1900 = t.replace(year=1900)
+                                seasonal_timestamp.append(t_1900)
+                            timestamp = seasonal_timestamp
+                        else:
+                            timestamp = timestamp.replace(year=1900)
+
+                pandas_ts = timeseries.reindex(timestamp, method='ffill')
+
+                #If there are no values at all, just return None
+                if len(pandas_ts.dropna()) == 0:
+                    return None
+
+                #Replace all numpy NAN values with None
+                pandas_ts = pandas_ts.where(pandas_ts.notnull(), None)
+
+                val_is_array = False
+                if len(pandas_ts.columns) > 1:
+                    val_is_array = True
+
+                if val_is_array:
+                    if type(timestamp) is list and len(timestamp) == 1:
+                        ret_val = pandas_ts.loc[timestamp[0]].values.tolist()
+                    else:
+                        ret_val = pandas_ts.loc[timestamp].values.tolist()
+                else:
+                    if type(timestamp) is list and len(timestamp) == 1:
+                        ret_val = pandas_ts.loc[timestamp[0]][0]
+                    else:
+                        ret_val = pandas_ts.loc[timestamp][0].values.tolist()
+
+                return ret_val
+
+            except Exception, e:
+                log.critical("Unable to retrive data. Check timestamps.")
+                log.critical(e)
+
+########################
 
 def translate_attr_name(name):
     """Replace non alphanumeric characters with '_'. This function throws an

@@ -292,7 +292,6 @@ class GAMSImport(object):
                 #: "+ args.gms_file)
             if 't' in params:
                 self.gdx_ts_vars.update({varname: params.index('t')})
-
             i += 1
             line = self.gms_data[i]
 
