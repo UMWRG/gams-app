@@ -286,8 +286,8 @@ import zlib
 from HydraLib.PluginLib import JsonConnection
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.util import array_dim, parse_array
-from HydraLib.dateutil import guess_timefmt, date_to_string
-from gevent.socket import socket
+from HydraLib.hydra_dateutil import guess_timefmt, date_to_string
+#from gevent.socket import socket
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import create_arr_index
@@ -519,7 +519,7 @@ class GAMSExport(object):
             data.extend(self.export_parameters_using_type(nodes, node_type, 'scalar'))
             data.extend(self.export_parameters_using_type(nodes, node_type, 'descriptor'))
             data.extend(self.export_timeseries_using_type(nodes, node_type))
-            data.extend(self.export_arrays(nodes))
+            #data.extend(self.export_arrays(nodes))
 
         # Export link data for each node type
         data.append('* Link data\n\n')
@@ -529,7 +529,7 @@ class GAMSExport(object):
             data.extend(self.export_parameters_using_type(links, link_type, 'scalar', res_type='LINK'))
             data.extend(self.export_parameters_using_type(links, link_type,'descriptor', res_type='LINK'))
             data.extend(self.export_timeseries_using_type(links, link_type, res_type='LINK'))
-            self.export_arrays(links)
+            #self.export_arrays(links)
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 

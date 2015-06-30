@@ -77,11 +77,12 @@ from operator import mul
 
 
 from HydraLib.HydraException import HydraPluginError
-from HydraLib.dateutil import ordinal_to_timestamp, date_to_string
+from HydraLib.hydra_dateutil import ordinal_to_timestamp, date_to_string
 from HydraLib import PluginLib
 from HydraLib.PluginLib import JsonConnection
 from decimal import Decimal
 #sys.path.append("C:\\GAMS\\win32\\24.3\\apifiles\\Python\\api\\")
+sys.path.append("F:\work\HydraPlatform")
 #import gdxcc
 import traceback
 
@@ -327,6 +328,9 @@ class GAMSImport(object):
                                                           gdxvar.data)
 
                     # Add data
+                    metadata={}
+                    dataset['metadata']=json.dumps(metadata)
+                    dataset['dimension']=attr.resourcescenario.value.dimension
                     res_scen = dict(resource_attr_id = attr.id,
                                     attr_id = attr.attr_id,
                                     value = dataset)
@@ -360,7 +364,7 @@ class GAMSImport(object):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = json.dumps(data)
+                                        dataset['value'] = json.dumpsdata
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = data
@@ -376,6 +380,10 @@ class GAMSImport(object):
                                     data.append(gdxvar.data[i])
                             dataset['value'] = self.create_array(gdxvar.index,
                                                               gdxvar.data)
+
+                        metadata={}
+                        dataset['metadata']=json.dumps(metadata)
+                        dataset['dimension']=attr.resourcescenario.value.dimension
 
                         res_scen = dict(resource_attr_id = attr.id,
                                         attr_id = attr.attr_id,
@@ -416,7 +424,7 @@ class GAMSImport(object):
                                         dataset['value'] = json.dumps(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = data
+                                        dataset['value'] = json.dumps(data)
                                     break
                         elif gdxvar.dim > 2:
                             dataset['type'] = 'array'
@@ -431,7 +439,9 @@ class GAMSImport(object):
                                     data.append(gdxvar.data[i])
                             dataset['value'] = self.create_array(gdxvar.index,
                                                               gdxvar.data)
-
+                        metadata={}
+                        dataset['metadata']=json.dumps(metadata)
+                        dataset['dimension']=attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id = attr.id,
                                         attr_id = attr.attr_id,
                                         value = dataset)
@@ -440,7 +450,7 @@ class GAMSImport(object):
     def create_timeseries(self, index, data):
         timeseries = {'0': {}}
         for i, idx in enumerate(index):
-            timeseries['0'][self.time_axis[int(idx)]] = float(data[i])
+            timeseries['0'][self.time_axis[int(idx)]] = json.dumps(data[i])
         return json.dumps(timeseries)
 
     def create_scalar(self, value):

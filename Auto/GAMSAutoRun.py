@@ -295,11 +295,11 @@ def run_gams_model(args):
               raise HydraPluginError('Result file is not provided/found.')
 
 
-
 def read_results(network):
     write_progress(13, steps)
     gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
-    gdximport.set_network(network)
+    #gdximport.set_network(network)
+    gdximport.load_network(args.network, args.scenario)
     write_progress(14, steps)
     gdximport.load_gams_file(args.gms_file)
     write_progress(15, steps)
