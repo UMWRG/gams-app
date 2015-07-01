@@ -890,7 +890,8 @@ class GAMSExport(object):
             if self.time_table[date_time] [5:] == timestamp [5:]:
                 return date_time
             else:
-                time=timestamp [:5]+self.time_table[date_time] [5:]
+                #time=timestamp [:5]+self.time_table[date_time] [5:]
+                time=self.time_table[date_time][:5]+timestamp  [5:]
                 re_time=self.check_time(time,times)
                 if(re_time is not None):
                     return re_time
