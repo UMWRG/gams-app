@@ -270,6 +270,7 @@ class GAMSImport(object):
         """For all variables stored in the gdx file, check if these are time
         time series or not.
         """
+
         for i, line in enumerate(self.gms_data):
             if line.strip().lower() == 'variables':
                 break
@@ -296,6 +297,44 @@ class GAMSImport(object):
             i += 1
             line = self.gms_data[i]
 
+    def parse_variables(self, varaible):
+        """For all variables stored in the gdx file, check if these are time
+        time series or not.
+        """
+        for i, line in enumerate(self.gms_data):
+            if line.strip().lower() == varaible:
+                break
+
+        i += 1
+        if(i>=len(self.gms_data)):
+            return;
+
+        line = self.gms_data[i]
+
+        while line.strip() != ';':
+
+            if len(line.strip()) is 0:
+                break
+
+            var = line.split()[0]
+            splitvar = var.split('(', 1)
+            if len(splitvar) <= 1:
+                params = []
+            else:
+                params = splitvar[1][0:-1].split(',')
+            varname = splitvar[0]
+            if(re.search(r'\[(.*?)\]', line)!=None):
+                self.units.update({varname:
+                                re.search(r'\[(.*?)\]', line).group(1)})
+            else:
+                error_message="Units are missing, units need to be added in square brackets where the variables are specified in the .gms file, ex: v1(i, t) my variable [m^3]"
+                #raise HydraPluginError(error_message)
+                #: "+ args.gms_file)
+            if 't' in params:
+                self.gdx_ts_vars.update({varname: params.index('t')})
+            i += 1
+            line = self.gms_data[i]
+
     def assign_attr_data(self):
         """Assign data to all variable attributes in the network.
         """
@@ -305,7 +344,11 @@ class GAMSImport(object):
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                     dataset = dict(name='GAMS import - ' + gdxvar.name,)
-                    dataset['unit'] = self.units[gdxvar.name]
+                    if(gdxvar.name in self.units):
+                            dataset['unit'] = self.units[gdxvar.name]
+                    else:
+                        dataset['unit'] ='-'
+
                     if gdxvar.name in self.gdx_ts_vars.keys():
                         dataset['type'] = 'timeseries'
                         index = []
@@ -346,7 +389,10 @@ class GAMSImport(object):
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         dataset = dict(name = 'GAMS import - ' + node.name + ' ' \
                             + gdxvar.name)
-                        dataset['unit'] = self.units[gdxvar.name]
+                        if(gdxvar.name in self.units):
+                            dataset['unit'] = self.units[gdxvar.name]
+                        else:
+                            dataset['unit'] ='-'
                         if gdxvar.name in self.gdx_ts_vars.keys():
                             dataset['type'] = 'timeseries'
                             index = []
@@ -401,7 +447,11 @@ class GAMSImport(object):
                         dataset = dict(name = 'GAMS import - ' + link.name + ' ' \
                             + gdxvar.name,
                                       locked='N')
-                        dataset['unit'] = self.units[gdxvar.name]
+                        if(gdxvar.name in self.units):
+                            dataset['unit'] = self.units[gdxvar.name]
+                        else:
+                            dataset['unit'] ='-'
+
                         if gdxvar.name in self.gdx_ts_vars.keys():
                             dataset['type'] = 'timeseries'
                             index = []
@@ -462,7 +512,10 @@ class GAMSImport(object):
         for n in range(dimension):
             n_idx = []
             for idx in index:
-                n_idx.append(int(idx[n]))
+                try:
+                    n_idx.append(int(idx[n]))
+                except:
+                    break
             extent.append(max(n_idx))
 
         array = 0

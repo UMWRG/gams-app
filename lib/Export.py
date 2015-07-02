@@ -974,7 +974,7 @@ class GAMSExport(object):
                         indexvars = list(ascii_lowercase)
                         for i, n in enumerate(dim):
                             attr_outputs.append(indexvars[i] + '_' + \
-                                resource.name + '_' + attr.name + \
+                                resource.name + '_' + attr.name +"_"+ str(i)+\
                                 ' array_'+str(i)+' index /\n')
                             for idx in range(n):
                                 attr_outputs.append(str(idx) + '\n')
@@ -984,7 +984,7 @@ class GAMSExport(object):
                             attr.name + '(')
                         for i, n in enumerate(dim):
                             attr_outputs.append(indexvars[i] + '_' + resource.name \
-                                + '_' + attr.name)
+                                + '_' + attr.name+"_"+str(i))
                             if i < (len(dim) - 1):
                                 attr_outputs.append(',')
                         attr_outputs.append(') \n\n')
@@ -1006,13 +1006,24 @@ class GAMSExport(object):
                         i=0     #       ' . '.join([str(k) for k in idx])))
                         for item in array:
                             attr_outputs.append("\n")
-                            attr_outputs.append(format(i)+'{0:20}'.format(""))
-                            i+=1
+                            c=0
                             if(type(item) is list):
+                                attr_outputs.append(format(str(i) + " . " + str(c)))
+                                i+=1
                                 for value in item:
-                                    attr_outputs.append('{0:20}'.format(value))
+                                    if(c is 0):
+                                       attr_outputs.append('{0:15}'.format(value))
+                                    else:
+                                         attr_outputs.append('{0:20}'.format(value))
+                                    c+=1
                             else:
-                                attr_outputs.append('{0:20}'.format(item))
+                                attr_outputs.append(format(str(i)))
+                                i+=1
+                                if(c is 0):
+                                    attr_outputs.append('{0:15}'.format(value))
+                                else:
+                                    attr_outputs.append('{0:20}'.format(item))
+                                c+=1
                         attr_outputs.append('\n')
                         attr_outputs.append('\n\n')
         return attr_outputs
