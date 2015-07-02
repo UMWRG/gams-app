@@ -519,7 +519,7 @@ class GAMSExport(object):
             data.extend(self.export_parameters_using_type(nodes, node_type, 'scalar'))
             data.extend(self.export_parameters_using_type(nodes, node_type, 'descriptor'))
             data.extend(self.export_timeseries_using_type(nodes, node_type))
-            #data.extend(self.export_arrays(nodes))
+            data.extend(self.export_arrays(nodes))
 
         # Export link data for each node type
         data.append('* Link data\n\n')
@@ -529,7 +529,7 @@ class GAMSExport(object):
             data.extend(self.export_parameters_using_type(links, link_type, 'scalar', res_type='LINK'))
             data.extend(self.export_parameters_using_type(links, link_type,'descriptor', res_type='LINK'))
             data.extend(self.export_timeseries_using_type(links, link_type, res_type='LINK'))
-            #self.export_arrays(links)
+            self.export_arrays(links)
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
@@ -741,14 +741,21 @@ class GAMSExport(object):
                             soap_time = date_to_string(timestamp)
                             ####
                             value=all_res_data[attr.dataset_id]
+                            data=None
                             for st, data_ in value.items():
-                                pass
+                                tmp=str(self.get_time_value(data_, soap_time))
+                                if tmp is None or tmp=="None":
+                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                if(data is not None):
+                                    data=data+"-"+tmp
+                                else:
+                                    data=tmp
 
-                            data=self.get_time_value(data_, soap_time)
+                           # data=self.get_time_value(data_, soap_time)
 
                             #data = json.loads(all_data['dataset_%s'%attr.dataset_id]).get(soap_time)
-                            if data is None:
-                                raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                            #if data is None:
+                             #   raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
                             try:
                                 data_str = ' %14f' % float(data)
                             except:
@@ -761,6 +768,7 @@ class GAMSExport(object):
                 attr_outputs.append('\n')
             attr_outputs.append('\n')
         return attr_outputs
+
 
     def export_timeseries_using_attributes (self, resources, res_type=None):
             """Export time series.
@@ -821,15 +829,24 @@ class GAMSExport(object):
                             else:
                                 attr_outputs.append('\n'+ff.format(resource.name))
                             #get_attr_value()
+
                             for t, timestamp in enumerate(self.time_index):
                                 soap_time = date_to_string(timestamp)
                                 value=all_res_data[attr.dataset_id]
+                                data=None
                                 for st, data_ in value.items():
-                                    pass
-                                data=self.get_time_value(data_, soap_time)
+                                    tmp=str(self.get_time_value(data_, soap_time))
+                                    if tmp is None or tmp=="None":
+                                         raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                    if(data is not None):
+                                        data=data+"-"+tmp
+                                    else:
+                                        data=tmp
 
-                                if data is None:
-                                    raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                #data=self.get_time_value(data_, soap_time)
+
+                               # if data is None:
+                                #    raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
                                 try:
                                     data_str = ff.format(str(float(data)))
                                 except:
@@ -880,16 +897,17 @@ class GAMSExport(object):
                 if(timestamp<self.time_table[times[0]]):
                      return None
             if(timestamp<self.time_table[times[i]]):
+
                 if(i>0 and timestamp>self.time_table[times[i-1]]):
                     return times[i-1]
-        return self.get_last_valid_occurrence(timestamp, times)
+        return self.get_last_valid_occurrence(timestamp, times, 12)
         return None
 
-    def get_last_valid_occurrence(self, timestamp, times):
+    def get_last_valid_occurrence(self, timestamp, times, switch=None):
         for date_time in times:
             if self.time_table[date_time] [5:] == timestamp [5:]:
                 return date_time
-            else:
+            elif(switch is None):
                 #time=timestamp [:5]+self.time_table[date_time] [5:]
                 time=self.time_table[date_time][:5]+timestamp  [5:]
                 re_time=self.check_time(time,times)

@@ -364,7 +364,7 @@ class GAMSImport(object):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = json.dumpsdata
+                                        dataset['value'] = json.dumps(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = data
