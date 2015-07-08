@@ -266,36 +266,7 @@ class GAMSImport(object):
             i += 1
             line = self.gms_data[i]
 
-    def parse_variables(self):
-        """For all variables stored in the gdx file, check if these are time
-        time series or not.
-        """
 
-        for i, line in enumerate(self.gms_data):
-            if line.strip().lower() == 'variables':
-                break
-
-        i += 1
-        line = self.gms_data[i]
-        while line.strip() != ';':
-            var = line.split()[0]
-            splitvar = var.split('(', 1)
-            if len(splitvar) <= 1:
-                params = []
-            else:
-                params = splitvar[1][0:-1].split(',')
-            varname = splitvar[0]
-            if(re.search(r'\[(.*?)\]', line)!=None):
-                self.units.update({varname:
-                                re.search(r'\[(.*?)\]', line).group(1)})
-            else:
-                error_message="Units are missing, units need to be added in square brackets where the variables are specified in the .gms file, ex: v1(i, t) my variable [m^3]"
-                raise HydraPluginError(error_message)
-                #: "+ args.gms_file)
-            if 't' in params:
-                self.gdx_ts_vars.update({varname: params.index('t')})
-            i += 1
-            line = self.gms_data[i]
 
     def parse_variables(self, varaible):
         """For all variables stored in the gdx file, check if these are time
