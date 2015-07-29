@@ -137,12 +137,11 @@ from Export import GAMSExport
 from Import import GAMSImport
 from HydraLib import PluginLib
 from dateutil import parser
-from HydraLib.PluginLib import write_progress
-from RunGamsModel import GamsModel
+from HydraLib.PluginLib import write_progress, write_output
+from HydraGAMSlib import GamsModel
 
 import logging
 log = logging.getLogger(__name__)
-
 
 def commandline_parser():
     cmd_parser = ap.ArgumentParser(
@@ -153,11 +152,9 @@ def commandline_parser():
 
     cmd_parser.add_argument('-G', '--gams-path',
                         help='Path of the GAMS installation.')
-    cmd_parser.add_argument('-sh', '--switch',
-                        help='option to set the plugin function, the options are: A: Auto, export, run then import (default), E: export only. I: Import only')
-    cmd_parser.add_argument('-t', '--network',
+    cmd_parser.add_argument('-t', '--network-id',
                         help='''ID of the network that will be exported.''')
-    cmd_parser.add_argument('-s', '--scenario',
+    cmd_parser.add_argument('-s', '--scenario-id',
                         help='''ID of the scenario that will be exported.''')
     cmd_parser.add_argument('-tp', '--template-id',
                         help='''ID of the template to be used.''')
@@ -205,7 +202,7 @@ def get_files_list(directory, ext):
     '''
     files_list={}
     for file_ in os.listdir(directory):
-        if(file_.endswith(ext)):
+        if file_.endswith(ext):
             absolute_path = os.stat(os.path.join(directory,file_))
             files_list[file_]=time.ctime(absolute_path.st_mtime)
     return files_list
@@ -234,34 +231,26 @@ def get_input_file_name(gams_model):
     return inputfilename
 
 def export_network():
-    template_id = None
-    exporter = GAMSExport(steps, args.network,
-                          args.scenario,
-                          template_id,#int(args.template_id),
-                          args.output,
-                          link_export_flag,
-                          session_id=args.session_id,
-                          url=args.server_url)
+    exporter = GAMSExport(args)
+   
+    write_progress(2, steps)
 
-    exporter.steps=steps
-    if args.template_id is not None:
-        exporter.template_id = int(args.template_id)
+    exporter.get_network()
+
+    write_progress(3, steps)
+
     exporter.export_network()
-    if args.start_date is not None and args.end_date is not None \
-            and args.time_step is not None:
-        exporter.write_time_index(start_time=args.start_date,
-                                  end_time=args.end_date,
-                                  time_step=args.time_step)
-    elif args.time_axis is not None:
-        exporter.write_time_index(time_axis=args.time_axis)
-    else:
-        raise HydraPluginError('Time axis not specified.')
-
+    
+    write_progress(4, steps)
+    exporter.write_time_index()
 
     if args.export_by_type is True:
         exporter.export_data_using_types()
     else:
         exporter.export_data_using_attributes()
+
+    write_progress(5, steps)
+    write_output("Writing output file")
 
     exporter.write_file()
     return exporter
@@ -269,64 +258,75 @@ def export_network():
 def run_gams_model(args):
     log.info("Running GAMS model .....")
     cur_time=datetime.now().replace(microsecond=0)
-    write_progress(9, steps)
+    write_progress(6, steps)
     working_directory=os.path.dirname(args.gms_file)
     
     if working_directory == '':
         working_directory = '.'
 
     model = GamsModel(args.gams_path, working_directory)
-    write_progress(10, steps)
+    write_progress(7, steps)
     model.add_job(os.path.basename(args.gms_file))
-    write_progress(11, steps)
+    write_progress(8, steps)
     model.run()
-    write_progress(12, steps)
+    write_progress(9, steps)
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
-    if(args.gdx_file==None):
+    if args.gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
         for file_ in files_list:
             dt = parser.parse(files_list[file_])
-            delta= (dt-cur_time).total_seconds()
+            delta = (dt-cur_time).total_seconds()
             if delta>=0:
-                args.gdx_file=os.path.join(working_directory, file_)
-        if(args.gdx_file==None):
+                args.gdx_file = os.path.join(working_directory, file_)
+        if args.gdx_file is None:
               raise HydraPluginError('Result file is not provided/found.')
 
 
-def read_results(network):
-    write_progress(13, steps)
-    gdximport = GAMSImport(session_id=args.session_id,url=args.server_url)
-    #gdximport.set_network(network)
-    gdximport.load_network(args.network, args.scenario)
-    write_progress(14, steps)
+def read_results(args, network, connection):
+    """
+        Instantiate a GAMSImport class, assign the network, read the 
+        gdx and gms files, update the network's data and then save
+        the network.
+    """
+    write_progress(10, steps)
+    gdximport = GAMSImport(args, connection)
+
+    write_progress(11, steps)
     gdximport.load_gams_file(args.gms_file)
-    write_progress(15, steps)
-    gdximport.load_network(args.network, args.scenario)
-    write_progress(16, steps)
+    
+    write_progress(12, steps)
+    gdximport.set_network(network)
+    
+    write_progress(13, steps)
     gdximport.parse_time_index()
-    write_progress(17, steps)
+    
+    write_progress(14, steps)
     gdximport.open_gdx_file(args.gdx_file)
-    write_progress(18, steps)
+    
+    write_progress(15, steps)
     gdximport.read_gdx_data()
-    write_progress(19, steps)
+    
+    write_progress(16, steps)
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
-    write_progress(20, steps)
+    
+    write_progress(17, steps)
     gdximport.assign_attr_data()
-    write_progress(21, steps)
+    
+    write_progress(18, steps)
     gdximport.save()
 
 
 def check_args(args):
     try:
-        int(args.network)
+        int(args.network_id)
     except (TypeError, ValueError):
         raise HydraPluginError('No network is specified.')
     try:
-        int(args.scenario)
+        int(args.scenario_id)
     except (TypeError, ValueError):
         raise HydraPluginError('No senario is specified.')
 
@@ -343,24 +343,22 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
-        steps=21
+        steps=18
+        write_progress(1, steps)
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
         check_args(args)
-        link_export_flag = 'nn'
-        if args.link_name is True:
-             link_export_flag = 'l'
         exporter=export_network()
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
-        read_results(exporter.net)
+        read_results(args, exporter.hydranetwork, exporter.connection)
         message="Run successfully"
-        print PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], message=message)
+        errors = []
     except HydraPluginError, e:
         log.exception(e)
-        err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
         write_progress(steps, steps)
-        print err
+        errors = [e.message]
+        message = "An error has occurred"
     except Exception as e:
         errors = []
         if e.message == '':
@@ -369,8 +367,9 @@ if __name__ == '__main__':
         else:
             errors = [e.message]
         log.exception(e)
-        err = PluginLib.create_xml_response('GAMSAuto', args.network, [args.scenario], errors = [e.message])
+        message = "An unknown error has occurred"
         write_progress(steps, steps)
-        print err
+    
+    print PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
 
 

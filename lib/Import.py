@@ -15,83 +15,23 @@
 # You should have received a copy of the GNU General Public License\
 # along with Import.  If not, see <http://www.gnu.org/licenses/>\
 #
-"""A Hydra plug-in to import results from a GAMS model run. All results need to
-be stored in a *.gdx file (the GAMS proprietary binary format). Also, variables
-that will be imported need to be present in HydraPlatform, before results can
-be loaded. We strongly recommend the use of a template.
-
-Basics
-~~~~~~
-
-The GAMS import plug-in provides an easy to use tool to import results from a
-model run back into HydraPlatform. It is recommended that the input data for
-this GAMS model is generated using the GAMSexport plug-in. This is because
-GAMSimport depends on a specific definition of the time axis and on the
-presence of variables (attributes) in HydraPlatform that will hold the results
-after import.
-
-Options
-~~~~~~~
-
-====================== ====== ========== ======================================
-Option                 Short  Parameter  Description
-====================== ====== ========== ======================================
---gams-path            -G     GAMS_PATH  File path of the GAMS installation.
---network              -t     NETWORK    ID of the network where results will
-                                         be imported to. Ideally this coincides
-                                         with the network exported to GAMS.
---scenario             -s     SCENARIO   ID of the underlying scenario used for
-                                         the most recent simulation run.
---gdx-file             -f     GDX_FILE   GDX file containing GAMS results
---gams-model           -m     GMS_FILE   Full path to the GAMS model (*.gms)
-                                         used for the simulation.
-====================== ====== ========== ======================================
-
-.. note::
-
-    GAMSimport needs a wrapper script that sets an environment variable
-    (``LD_LIBRARY_PATH``) before the gamsAPI library is loaded. This can not be
-    done at run-time because environment variables can not be set from a
-    running process.
-
-API docs
-~~~~~~~~
-"""
-
-#!/usr/bin/env python
-"""Wrapper script that sets the necessary environment variables for GAMSimport.
-"""
 
 import os
 import sys
-import subprocess
 from HydraLib import PluginLib
 
 import re
-import sys
 import logging
 import json
-import argparse
 
 from operator import mul
 
-
 from HydraLib.HydraException import HydraPluginError
 from HydraLib.hydra_dateutil import ordinal_to_timestamp, date_to_string
-from HydraLib import PluginLib
-from HydraLib.PluginLib import JsonConnection
+from HydraLib.PluginLib import JSONPlugin
 from decimal import Decimal
-#sys.path.append("C:\\GAMS\\win32\\24.3\\apifiles\\Python\\api\\")
-sys.path.append("F:\work\HydraPlatform")
-#import gdxcc
-import traceback
 
-from HydraGAMSlib import import_gms_data
-
-from HydraGAMSlib import get_gams_path
-
-from HydraLib.PluginLib import write_progress
-
+from HydraGAMSlib import import_gms_data, get_gams_path
 
 log = logging.getLogger(__name__)
 
@@ -113,9 +53,9 @@ class GDXvariable(object):
         self.description = extinfo[3]
 
 
-class GAMSImport(object):
+class GAMSImport(JSONPlugin):
 
-    def __init__(self,  session_id=None, url=None):
+    def __init__(self, args, connection=None):
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
@@ -125,28 +65,32 @@ class GAMSImport(object):
         self.symbol_count = 0
         self.element_count = 0
         self.gdx_variables = dict()
-        self.units = dict()
+        self.gams_units = dict()
         self.gdx_ts_vars = dict()
-        self.network_id = None
-        self.scenario_id = None
+        self.network_id = args.network_id
+        self.scenario_id = args.scenario_id
         self.network = None
         self.res_scenario = None
         self.attrs = dict()
         self.time_axis = dict()
         self.gms_data = []
+        self.connection = connection
 
 
-        self.connection = JsonConnection(url)
-        if session_id is not None:
-            log.info("Using existing session %s", session_id)
-            self.connection.session_id = session_id
-        else:
-            self.connection.login()
+        if self.connection is None:
+            self.connect(args)
+
+        attrslist = self.connection.call('get_all_attributes', {})
+        for attr in attrslist:
+            self.attrs.update({attr.id: attr.name})
 
     def load_network(self, network_id=None, scenario_id=None):
         """
-         Load network and scenario from the server.
+         Load network and scenario from the server. If the network
+         has been set externally (to save getting it again) then simply
+         set this.res_scenario using the existing network
         """
+
         # Use the network id specified by the user, if it is None, fall back to
         # the network id read from the gms file
         try:
@@ -168,10 +112,8 @@ class GAMSImport(object):
                                              'include_data': 'Y',
                                              'scenario_ids': [int(scenario_id)],
                                              'template_id': None})
+
         self.res_scenario = self.network.scenarios[0].resourcescenarios
-        attrslist = self.connection.call('get_all_attributes', {})
-        for attr in attrslist:
-            self.attrs.update({attr.id: attr.name})
 
     #####################################################
     def set_network(self, network):
@@ -180,9 +122,6 @@ class GAMSImport(object):
         """
         self.network =network
         self.res_scenario = self.network.scenarios[0].resourcescenarios
-        attrslist = self.connection.call('get_all_attributes', {})
-        for attr in attrslist:
-            self.attrs.update({attr.id: attr.name})
 
     #####################################################
     def open_gdx_file(self, filename):
@@ -193,9 +132,12 @@ class GAMSImport(object):
             raise HydraPluginError("gdx file not specified.")
 
         filename = os.path.abspath(filename)
+        
         self.gdxcc.gdxOpenRead(self.gdx_handle, filename)
+        
         x, self.symbol_count, self.element_count = \
             self.gdxcc.gdxSystemInfo(self.gdx_handle)
+
         if x != 1:
             raise HydraPluginError('GDX file could not be opened.')
         log.info('Importing %s symbols and %s elements.' %
@@ -206,14 +148,19 @@ class GAMSImport(object):
         """
         for i in range(self.symbol_count):
             gdx_variable = GDXvariable()
+            
             info = self.gdxcc.gdxSymbolInfo(self.gdx_handle, i + 1)
             extinfo = self.gdxcc.gdxSymbolInfoX(self.gdx_handle, i + 1)
+            
             gdx_variable.set_info(info, extinfo)
+            
             self.gdxcc.gdxDataReadStrStart(self.gdx_handle, i + 1)
+            
             for n in range(gdx_variable.records):
                 x, idx, data, y = self.gdxcc.gdxDataReadStr(self.gdx_handle)
                 gdx_variable.index.append(idx)
                 gdx_variable.data.append(data[0])
+            
             self.gdx_variables.update({gdx_variable.name: gdx_variable})
 
     def load_gams_file(self, gms_file):
@@ -222,9 +169,13 @@ class GAMSImport(object):
         if gms_file is None:
             raise HydraPluginError(".gms file not specified.")
         gms_file = os.path.abspath(gms_file)
+        
         gms_data = import_gms_data(gms_file)
+        
         self.gms_data = gms_data.split('\n')
-        self.network_id, self.scenario_id = self.get_ids_from_gms()
+        
+        if self.network_id is None or self.scenario_id is None:
+            self.network_id, self.scenario_id = self.get_ids_from_gms()
 
     def get_ids_from_gms(self):
         """Read the network and scenario ids from the GMS file. This function
@@ -266,14 +217,12 @@ class GAMSImport(object):
             i += 1
             line = self.gms_data[i]
 
-
-
-    def parse_variables(self, varaible):
+    def parse_variables(self, variable):
         """For all variables stored in the gdx file, check if these are time
         time series or not.
         """
         for i, line in enumerate(self.gms_data):
-            if line.strip().lower() == varaible:
+            if line.strip().lower() == variable:
                 break
 
         i += 1
@@ -295,7 +244,7 @@ class GAMSImport(object):
                 params = splitvar[1][0:-1].split(',')
             varname = splitvar[0]
             if(re.search(r'\[(.*?)\]', line)!=None):
-                self.units.update({varname:
+                self.gams_units.update({varname:
                                 re.search(r'\[(.*?)\]', line).group(1)})
             else:
                 error_message="Units are missing, units need to be added in square brackets where the variables are specified in the .gms file, ex: v1(i, t) my variable [m^3]"
@@ -315,8 +264,8 @@ class GAMSImport(object):
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                     dataset = dict(name='GAMS import - ' + gdxvar.name,)
-                    if(gdxvar.name in self.units):
-                            dataset['unit'] = self.units[gdxvar.name]
+                    if(gdxvar.name in self.gams_units):
+                            dataset['unit'] = self.gams_units[gdxvar.name]
                     else:
                         dataset['unit'] ='-'
 
@@ -360,8 +309,8 @@ class GAMSImport(object):
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         dataset = dict(name = 'GAMS import - ' + node.name + ' ' \
                             + gdxvar.name)
-                        if(gdxvar.name in self.units):
-                            dataset['unit'] = self.units[gdxvar.name]
+                        if(gdxvar.name in self.gams_units):
+                            dataset['unit'] = self.gams_units[gdxvar.name]
                         else:
                             dataset['unit'] ='-'
                         if gdxvar.name in self.gdx_ts_vars.keys():
@@ -379,7 +328,6 @@ class GAMSImport(object):
                                 if node.name in idx:
                                     data = gdxvar.data[i]
                                     try:
-                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
                                         dataset['value'] = json.dumps(data)
                                     except ValueError:
@@ -418,8 +366,8 @@ class GAMSImport(object):
                         dataset = dict(name = 'GAMS import - ' + link.name + ' ' \
                             + gdxvar.name,
                                       locked='N')
-                        if(gdxvar.name in self.units):
-                            dataset['unit'] = self.units[gdxvar.name]
+                        if(gdxvar.name in self.gams_units):
+                            dataset['unit'] = self.gams_units[gdxvar.name]
                         else:
                             dataset['unit'] ='-'
 
@@ -440,7 +388,6 @@ class GAMSImport(object):
                                    idx.index(fromnode) < idx.index(tonode):
                                     data = gdxvar.data[i]
                                     try:
-                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
                                         dataset['value'] = json.dumps(data)
                                     except ValueError:
@@ -473,9 +420,6 @@ class GAMSImport(object):
         for i, idx in enumerate(index):
             timeseries['0'][self.time_axis[int(idx)]] = json.dumps(data[i])
         return json.dumps(timeseries)
-
-    def create_scalar(self, value):
-        return value
 
     def create_array(self, index, data):
         dimension = len(index[0])
@@ -510,11 +454,6 @@ class GAMSImport(object):
         hydra_array = dict(arr_data = PluginLib.create_dict(array))
 
         return hydra_array
-
-    def create_descriptor(self, value):
-        descriptor = dict(desc_val = value)
-        return descriptor
-        return descriptor
 
     def save(self):
         self.network.scenarios[0].resourcescenarios = self.res_scenario

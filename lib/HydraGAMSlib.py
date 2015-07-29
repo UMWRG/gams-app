@@ -16,42 +16,40 @@
 # along with HydraGAMSLib.  If not, see <http://www.gnu.org/licenses/>\
 #
 
-"""A set of classes to facilitate import and export from and to GAMS.
-
-Basics
-~~~~~~
-
-The GAMS import and export plug-in provides pre- and post-processing facilities
-for GAMS models. The basic idea is that this plug-in exports data and
-constraints from Hydra to a text file which can be imported into an existing
-GAMS model using the ``$ import`` statement.
-
-API docs
-~~~~~~~~
-"""
-
 import os
 import sys
 
-from HydraLib.PluginLib import HydraResource
-from HydraLib.PluginLib import HydraNetwork
-import argparse as ap
+from HydraLib.resources import HydraResource, HydraNetwork
+from HydraLib.HydraException import HydraPluginError
 
+class GamsModel(object):
+    def __init__(self, gamspath, working_directory):
+        if(gamspath==None):
+            gamspath=get_gams_path()
+        real_path = os.path.realpath(os.path.abspath(gamspath))
+        api_path = os.path.join(real_path,'apifiles','Python','api')
+        if api_path not in sys.path:
+            sys.path.insert(0, api_path)
+        from gams import  workspace
+        self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 1)
 
+    def add_job(self, model_file):
+        self.job = self.ws.add_job_from_file(model_file)
+
+    def run(self):
+        self.job.run()
 
 class GAMSnetwork(HydraNetwork):
-    def gams_names_for_links(self, linkformat=None):
+    def gams_names_for_links(self, use_link_name=False):
         """
         Add a string to each link that can be used directly in GAMS code in
         order to define a link.
         """
-        if linkformat == 'nn':
+        if use_link_name is False:
             for i, link in enumerate(self.links):
                 self.links[i].gams_name = link.from_node + ' . ' + link.to_node
-        elif linkformat == 'l':
+        else:
             for i, link in enumerate(self.links):
-                #self.links[i].gams_name = link.from_node + ' . ' + \
-                #    link.name + ' . ' + link.to_node
                 self.links[i].gams_name = link.name
 
 
