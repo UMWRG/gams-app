@@ -17,15 +17,9 @@
 #
 
 
-import re
 from datetime import datetime
-from datetime import timedelta
-from dateutil.relativedelta import relativedelta
 from string import ascii_lowercase
 from dateutil.parser import parse
-from decimal import Decimal
-import pandas as pd
-import zlib
 
 from HydraLib.PluginLib import JSONPlugin 
 from HydraLib.HydraException import HydraPluginError
@@ -33,7 +27,6 @@ from HydraLib.hydra_dateutil import guess_timefmt, date_to_string
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
-from HydraLib.PluginLib import write_progress
 
 import json
 
@@ -512,7 +505,6 @@ class GAMSExport(JSONPlugin):
             if len(attributes) > 0:
                 #Identify the datasets that we need data for
                 dataset_ids = []
-                datasets={}
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
@@ -579,8 +571,9 @@ class GAMSExport(JSONPlugin):
     def get_time_value(self, value, soap_time):
         data=None
         self.set_time_table(value.keys())
+
         for date_time, item_value in value.items():
-            if date_time.startswith("XXXX"):
+            if date_time.startswith("9999") or date_time.startswith('XXXX'):
                 if date_time [5:] == soap_time [5:]:
                     data=item_value
                     break
@@ -623,7 +616,7 @@ class GAMSExport(JSONPlugin):
 
     def get_last_valid_occurrence(self, timestamp, times, switch=None):
         for date_time in times:
-            if self.time_table[date_time] [5:] == timestamp [5:]:
+            if self.time_table[date_time][5:] == timestamp[5:]:
                 return date_time
             elif switch is None:
                 time=self.time_table[date_time][:5]+timestamp  [5:]
@@ -638,7 +631,7 @@ class GAMSExport(JSONPlugin):
                  pass
              else:
                  if date_time.startswith("XXXX"):
-                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1900")))
+                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","9999")))
                  else:
                      self.time_table[date_time]=date_to_string(parse(date_time))
 
@@ -678,8 +671,7 @@ class GAMSExport(JSONPlugin):
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is not None and attr.value is not None:
-                        #array_dict = attr.value['arr_data'][0]
-                        #array = parse_array(array_dict)
+                        
                         array=json.loads(attr.value)
                         dim = self.get_dim(array)
                         attr_outputs.append('* Array %s for node %s, ' % \

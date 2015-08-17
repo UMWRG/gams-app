@@ -19,7 +19,7 @@
 import os
 import sys
 
-from HydraLib.resources import HydraResource, HydraNetwork
+from HydraLib.PluginLib import HydraResource, HydraNetwork
 from HydraLib.HydraException import HydraPluginError
 
 class GamsModel(object):
