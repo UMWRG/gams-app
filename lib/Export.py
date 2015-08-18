@@ -54,7 +54,6 @@ class GAMSExport(JSONPlugin):
                                   args.end_date,
                                   args.time_step,
                                   time_axis=args.time_axis)
-    
         if args.link_name is True:
             self.links_as_name = True
         else:
@@ -571,10 +570,13 @@ class GAMSExport(JSONPlugin):
     def get_time_value(self, value, soap_time):
         data=None
         self.set_time_table(value.keys())
-
+        soap_datetime = self.parse_date(soap_time)
         for date_time, item_value in value.items():
             if date_time.startswith("9999") or date_time.startswith('XXXX'):
-                if date_time [5:] == soap_time [5:]:
+                #copy the year from the soap time and put it as the first 4
+                #characters of the seasonal datetime. 
+                value_datetime = self.parse_date(soap_time[0:4]+date_time[4:])
+                if value_datetime == soap_datetime:
                     data=item_value
                     break
             elif date_time==soap_time:
