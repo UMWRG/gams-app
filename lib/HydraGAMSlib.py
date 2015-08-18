@@ -34,10 +34,62 @@ class GamsModel(object):
         self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 1)
 
     def add_job(self, model_file):
-        self.job = self.ws.add_job_from_file(model_file)
+       """
+       read the model from the file and add model stratus scalar to the model
+        and job to the Gams workspace
+       """
+       self.cp = self.ws.add_checkpoint()
+       print model_file
+       with open (model_file, "r") as myfile:
+            model=myfile.read()
+       self.model_name=self.get_model_name(model)
+       if self.model_name is not None:
+            model=model+"\nscalar ms; \nms="+self.model_name+".Modelstat; \nDisplay ms,"+self.model_name+".Modelstat;"
+
+       self.job = self.ws.add_job_from_string(model)
+
+    def get_model_name(self, model):
+        '''
+        get the model name from the GAMS model string
+        '''
+        lines=model.split("\n")
+        for line in lines:
+            line=line.lower()
+            if line.startswith("model"):
+                line=line.replace("model","")
+                line=line.replace("/all/","")
+                model_name=line.replace(";","").strip()
+                return model_name
+        return None
 
     def run(self):
-        self.job.run()
+        '''
+        run the GAMS model
+        and raise an error if something going wrong
+        '''
+        self.job.run(checkpoint=self.cp)#, gams_options=options.ESolPrint)
+        if self.model_name is not None:
+            status=self.job.out_db["ms"].find_record().value
+            if(status == 4):
+                raise HydraPluginError('Infeasible model found.')
+            elif status== 5:
+                raise HydraPluginError('locally infeasible model found.')
+            elif status==6:
+                raise HydraPluginError('Solver terminated early and model was still infeasible.')
+            elif status== 7:
+                raise HydraPluginError('Solver terminated early and model was feasible but not yet optimal.')
+            elif status==  11:
+                raise HydraPluginError('Licensing problem.')
+            elif status==  12:
+                raise HydraPluginError('Error - No cause known.')
+            elif status == 13:
+                raise HydraPluginError('Error - No solution attained.')#
+            elif status == 14:
+                raise HydraPluginError('No solution returned.')
+            elif status == 18:
+                raise HydraPluginError('Unbounded - no solution.')
+            elif status == 19:
+                raise HydraPluginError('Infeasible - no solution.')
 
 class GAMSnetwork(HydraNetwork):
     def gams_names_for_links(self, use_link_name=False):

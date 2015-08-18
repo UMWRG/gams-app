@@ -266,7 +266,7 @@ def run_gams_model(args):
 
     model = GamsModel(args.gams_path, working_directory)
     write_progress(7, steps)
-    model.add_job(os.path.basename(args.gms_file))
+    model.add_job(args.gms_file)
     write_progress(8, steps)
     model.run()
     write_progress(9, steps)
