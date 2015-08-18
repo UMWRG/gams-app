@@ -39,7 +39,6 @@ class GamsModel(object):
         and job to the Gams workspace
        """
        self.cp = self.ws.add_checkpoint()
-       print model_file
        with open (model_file, "r") as myfile:
             model=myfile.read()
        self.model_name=self.get_model_name(model)
