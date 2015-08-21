@@ -466,7 +466,7 @@ class GAMSExport(JSONPlugin):
                             for st, data_ in value.items():
                                 tmp=str(self.get_time_value(data_, soap_time))
                                 if tmp is None or tmp=="None":
-                                     raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                     raise HydraPluginError("Resourcse %s has not value for attribute %s for time: %s, i.e.dataset %s has no data for time %s"%(resource.name, attr.name, soap_time, attr.dataset_id, soap_time))
                                 if data is not None:
                                     data = data+"-"+tmp
                                 else:
@@ -551,12 +551,11 @@ class GAMSExport(JSONPlugin):
                                 for st, data_ in value.items():
                                     tmp=str(self.get_time_value(data_, soap_time))
                                     if tmp is None or tmp=="None":
-                                         raise HydraPluginError("Dataset %s has no data for time %s"%(attr.dataset_id, soap_time))
+                                        raise HydraPluginError("Resourcse %s has not value for attribute %s for time: %s, i.e.dataset %s has no data for time %s"%(resource.name, attr.name, soap_time, attr.dataset_id, soap_time))
                                     if data is not None:
                                         data=data+"-"+tmp
                                     else:
                                         data=tmp
-
                                 try:
                                     data_str = ff.format(str(float(data)))
                                 except:
@@ -566,8 +565,11 @@ class GAMSExport(JSONPlugin):
                 attr_outputs.append('\n')
             return attr_outputs
 
-    #########################
     def get_time_value(self, value, soap_time):
+        '''
+        get data for timesamp
+        return None if no data is found
+        '''
         data=None
         self.set_time_table(value.keys())
         soap_datetime = self.parse_date(soap_time)
@@ -576,7 +578,7 @@ class GAMSExport(JSONPlugin):
                 #copy the year from the soap time and put it as the first 4
                 #characters of the seasonal datetime. 
                 value_datetime = self.parse_date(soap_time[0:4]+date_time[4:])
-                if value_datetime == soap_datetime:
+                if (value_datetime) == (soap_datetime):
                     data=item_value
                     break
             elif date_time==soap_time:
@@ -601,31 +603,40 @@ class GAMSExport(JSONPlugin):
                     else:
                         new_data=new_data+" "+str(v)
                 data=new_data+"]"
-
         return data
 
 
-    def check_time(self, timestamp, times):
+    def check_time(self, timestamp, times, key=None):
+        '''
+        check time
+        if the timestamp is before the the earliest date
+        it will retunn None
+        '''
         for i in range (0, len(times)):
             if i==0:
-                if timestamp<self.time_table[times[0]]:
+                if parse(timestamp)<parse(self.time_table[times[0]]):
                      return None
-            if timestamp<self.time_table[times[i]]:
-
-                if i>0 and timestamp>self.time_table[times[i-1]]:
+            elif parse(timestamp)<parse(self.time_table[times[i]]):
+                if  parse(timestamp)>parse(self.time_table[times[i-1]]):
                     return times[i-1]
-        return self.get_last_valid_occurrence(timestamp, times, 12)
+        if(key is None):
+            return self.get_last_valid_occurrence(timestamp, times)
 
-    def get_last_valid_occurrence(self, timestamp, times, switch=None):
+    def get_last_valid_occurrence(self, timestamp, times):
+        '''
+        get the last occurrence
+        '''
         for date_time in times:
             if self.time_table[date_time][5:] == timestamp[5:]:
                 return date_time
-            elif switch is None:
+
+        for date_time in times:
                 time=self.time_table[date_time][:5]+timestamp  [5:]
-                re_time=self.check_time(time,times)
+                re_time=self.check_time(time,times, 0)
                 if re_time is not None:
                     return re_time
         return None
+
 
     def set_time_table(self, times):
          for date_time in times:
@@ -633,7 +644,9 @@ class GAMSExport(JSONPlugin):
                  pass
              else:
                  if date_time.startswith("XXXX"):
-                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","9999")))
+                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1750")))
+                 elif date_time.startswith("9999"):
+                     self.time_table[date_time]=date_to_string(parse(date_time.replace("9999","1900")))
                  else:
                      self.time_table[date_time]=date_to_string(parse(date_time))
 
