@@ -296,7 +296,7 @@ if api_path not in sys.path:
 
 from HydraLib.HydraException import HydraPluginError
 
-from Export import GAMSExport
+from Exporter import GAMSExporter
 from HydraLib import PluginLib
 import argparse as ap
 from HydraLib.PluginLib import write_progress
@@ -358,7 +358,7 @@ def commandline_parser():
 def export_network(args):
 
         write_progress(2, steps)
-        exporter = GAMSExport(args)
+        exporter = GAMSExporter(args)
 
 
         write_progress(3, steps)

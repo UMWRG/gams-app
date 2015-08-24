@@ -133,8 +133,8 @@ if api_path not in sys.path:
 
 from HydraLib.HydraException import HydraPluginError
 
-from Export import GAMSExport
-from Import import GAMSImport
+from Exporter import GAMSExporter
+from Importer import GAMSImporter
 from HydraLib import PluginLib
 from dateutil import parser
 from HydraLib.PluginLib import write_progress, write_output
@@ -231,7 +231,7 @@ def get_input_file_name(gams_model):
     return inputfilename
 
 def export_network():
-    exporter = GAMSExport(args)
+    exporter = GAMSExporter(args)
    
     write_progress(2, steps)
 
@@ -283,7 +283,6 @@ def run_gams_model(args):
         if args.gdx_file is None:
               raise HydraPluginError('Result file is not provided/found.')
 
-
 def read_results(args, network, connection):
     """
         Instantiate a GAMSImport class, assign the network, read the 
@@ -291,7 +290,7 @@ def read_results(args, network, connection):
         the network.
     """
     write_progress(10, steps)
-    gdximport = GAMSImport(args, connection)
+    gdximport = GAMSImporter(args, connection)
 
     write_progress(11, steps)
     gdximport.load_gams_file(args.gms_file)

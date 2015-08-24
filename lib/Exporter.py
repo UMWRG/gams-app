@@ -33,10 +33,9 @@ import json
 import logging
 log = logging.getLogger(__name__)
 
-class GAMSExport(JSONPlugin):
+class GAMSExporter(JSONPlugin):
 
     def __init__(self, args):
-
 
         if args.template_id is not None:
             self.template_id = int(args.template_id)
@@ -644,7 +643,7 @@ class GAMSExport(JSONPlugin):
                  pass
              else:
                  if date_time.startswith("XXXX"):
-                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1750")))
+                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1900")))
                  elif date_time.startswith("9999"):
                      self.time_table[date_time]=date_to_string(parse(date_time.replace("9999","1900")))
                  else:
@@ -780,7 +779,6 @@ class GAMSExport(JSONPlugin):
         except Exception as e:
             log.exception(e)
             raise HydraPluginError("Please check time-axis or start time, end times and time step.")
-
 
     def parse_date(self, date):
         """Parse date string supplied from the user. All formats supported by

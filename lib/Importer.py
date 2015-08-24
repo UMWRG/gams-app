@@ -53,7 +53,7 @@ class GDXvariable(object):
         self.description = extinfo[3]
 
 
-class GAMSImport(JSONPlugin):
+class GAMSImporter(JSONPlugin):
 
     def __init__(self, args, connection=None):
         import gdxcc
