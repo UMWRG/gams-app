@@ -125,6 +125,7 @@ def import_results(args):
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
+    gdximport.parse_variables('binary variables')
     
     write_progress(8, steps)
     gdximport.assign_attr_data()

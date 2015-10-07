@@ -311,7 +311,8 @@ def read_results(args, network, connection):
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
-    
+    gdximport.parse_variables('binary variables')
+
     write_progress(17, steps)
     gdximport.assign_attr_data()
     

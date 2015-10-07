@@ -28,6 +28,7 @@ from HydraLib.hydra_dateutil import guess_timefmt, date_to_string
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
 
+
 import json
 
 import logging
@@ -48,6 +49,8 @@ class GAMSExporter(JSONPlugin):
         self.time_index = []
         
         self.connect(args)
+        if args.time_axis is not None:
+            args.time_axis = ' '.join(args.time_axis).split(' ')
 
         self.time_axis = self.get_time_axis(args.start_date,
                                   args.end_date,
@@ -58,9 +61,10 @@ class GAMSExporter(JSONPlugin):
         else:
             self.links_as_name = False
 
+
+
         self.attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(self.attrs))
-
 
     def get_network(self):
         net = self.connection.call('get_network', {'network_id':self.network_id,
@@ -262,8 +266,11 @@ class GAMSExporter(JSONPlugin):
     def export_data_using_attributes (self):
         log.info("Exporting data")
         # Export node data for each node
-        data = ['* Nodes data\n']
+
         self.time_table={}
+        data = ['* Network data\n']
+        data.extend(self.export_parameters_using_attributes([self.network],'scalar',res_type='NETWORK'))
+        data.append('\n* Nodes data\n')
         data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
         data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
         data.extend(self.export_timeseries_using_attributes (self.network.nodes))
@@ -370,11 +377,13 @@ class GAMSExporter(JSONPlugin):
             ff='{0:<'+self.name_len+'}'
             for attribute in attributes:
                 if islink:
-                    attr_outputs.append('Table '+ attribute.name+'(i,j, t)\n')
+                    attr_outputs.append('\nParameter '+ attribute.name+'(i,j)\n')
+                elif(res_type is 'NETWORK'):
+                     attr_outputs.append('\nScalar '+ attribute.name+'\n')
                 else:
-                    attr_outputs.append('Table  '+ attribute.name+'(i, t)\n\n')
-                attr_outputs.append(ff.format(''))
-                attr_outputs.append(ff.format(0))
+                    attr_outputs.append('\nParameter  '+ attribute.name+'(i)\n')
+                attr_outputs.append(ff.format('/'))
+                #attr_outputs.append(ff.format(0))
                 attr_outputs.append('\n')
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
@@ -382,11 +391,14 @@ class GAMSExporter(JSONPlugin):
                         continue
                     if islink:
                         attr_outputs.append(ff.format(resource.gams_name))
+                    elif(res_type is 'NETWORK'):
+                         pass
                     else:
                         attr_outputs.append(ff.format(resource.name))
 
                     attr_outputs.append(ff.format(attr.value))
                     attr_outputs.append('\n')
+                attr_outputs.append(ff.format('/;\n'))
             return attr_outputs
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
