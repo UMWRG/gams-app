@@ -3,9 +3,9 @@
     <plugin_dir>GAMSExport.exe</plugin_dir>
     <plugin_description>Export a network from Hydra to a gams input text file.
 	</plugin_description>
+    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<smallicon>gams_icon16.png</smallicon>
     <largeicon>gams_icon32.png</largeicon>
-    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<mandatory_args>
         <arg>
             <name>network</name>

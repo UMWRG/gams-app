@@ -17,13 +17,11 @@
 #
 
 
-from datetime import datetime
 from string import ascii_lowercase
-from dateutil.parser import parse
 
 from HydraLib.PluginLib import JSONPlugin 
 from HydraLib.HydraException import HydraPluginError
-from HydraLib.hydra_dateutil import guess_timefmt, date_to_string
+from HydraLib.hydra_dateutil import reindex_timeseries 
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
@@ -298,10 +296,14 @@ class GAMSExporter(JSONPlugin):
 
         if len(attributes) > 0:
             attr_outputs.append('SETS\n\n')  # Needed before sets are defined
+            
             attr_outputs.append(obj_type + '_' + datatype + 's /\n')
+            
             for attribute in attributes:
                 attr_outputs.append(attribute.name + '\n')
+
             attr_outputs.append('/\n\n')
+            
             if islink:
                 if self.links_as_name:
                     obj_index = 'i,links,j,'
@@ -315,21 +317,30 @@ class GAMSExporter(JSONPlugin):
                     '_data(i,' + obj_type + '_' + datatype + 's) \n\n')
 
             attr_outputs.append('                        ')
+            
             for attribute in attributes:
                 attr_outputs.append(' %14s' % attribute.name)
+            
             attr_outputs.append('\n')
+
             for resource in resources:
                 if islink:
                     attr_outputs.append('{0:24}'.format(resource.gams_name))
                 else:
                     attr_outputs.append('{0:24}'.format(resource.name))
+                
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
+                    
                     if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
+                    
                     attr_outputs.append(' %14s' % attr.value)
+                
                 attr_outputs.append('\n')
+            
             attr_outputs.append('\n\n')
+        
         return attr_outputs
 
     def classify_attributes(self, resources,datatype ):
@@ -367,19 +378,26 @@ class GAMSExporter(JSONPlugin):
                         if attr.name not in attr_names:
                             attributes.append(attr)
                             attr_names.append(attr.name)
+            
             ff='{0:<'+self.name_len+'}'
+
             for attribute in attributes:
+
                 if islink:
                     attr_outputs.append('Table '+ attribute.name+'(i,j, t)\n')
                 else:
                     attr_outputs.append('Table  '+ attribute.name+'(i, t)\n\n')
+
                 attr_outputs.append(ff.format(''))
                 attr_outputs.append(ff.format(0))
                 attr_outputs.append('\n')
+               
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
+                    
                     if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
+
                     if islink:
                         attr_outputs.append(ff.format(resource.gams_name))
                     else:
@@ -387,6 +405,7 @@ class GAMSExporter(JSONPlugin):
 
                     attr_outputs.append(ff.format(attr.value))
                     attr_outputs.append('\n')
+
             return attr_outputs
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
@@ -396,6 +415,8 @@ class GAMSExporter(JSONPlugin):
         attributes = []
         attr_names = []
         attr_outputs = []
+
+        #Identify only the timeseries values we're interested in.
         for resource in resources:
             for attr in resource.attributes:
                 if attr.dataset_type == 'timeseries' and attr.is_var is False:
@@ -403,6 +424,7 @@ class GAMSExporter(JSONPlugin):
                     if attr.name not in attr_names:
                         attributes.append(attr)
                         attr_names.append(attr.name)
+
         if len(attributes) > 0:
             attr_outputs.append('SETS\n\n')  # Needed before sets are defined
             attr_outputs.append(obj_type + '_timeseries /\n')
@@ -417,6 +439,7 @@ class GAMSExporter(JSONPlugin):
                 attr_outputs.append('Table ' + obj_type + \
                     '_timeseries_data(t,i,' + obj_type + \
                     '_timeseries) \n\n       ')
+
             col_header_length = dict()
             for attribute in attributes:
                 for resource in resources:
@@ -434,65 +457,63 @@ class GAMSExporter(JSONPlugin):
                             col_header_length.update({(attribute, resource):
                                                       len(col_header)})
                             attr_outputs.append(col_header)
+
             attr_outputs.append('\n')
-            all_res_data={}
-            #Identify the datasets that we need data for
-            dataset_ids = []
-            for attribute in attributes:
-                for resource in resources:
-                    attr = resource.get_attribute(attr_name=attribute.name)
-                    if attr is not None and attr.dataset_id is not None:
-                        dataset_ids.append(attr.dataset_id)
-                        value=json.loads(attr.value)
-                        all_res_data[attr.dataset_id]=value
-
-            #We need to get the value at each time in the specified time axis,
-            #so we need to identify the relevant timestamps.
-            soap_times = []
-            for t, timestamp in enumerate(self.time_index):
-                soap_times.append(date_to_string(timestamp))
-
-            for t, timestamp in enumerate(self.time_index):
+            resource_data_cache = {}
+            for timestamp in self.time_index:
                 attr_outputs.append('{0:<7}'.format(self.times_table[timestamp]))
+
                 for attribute in attributes:
                     for resource in resources:
                         attr = resource.get_attribute(attr_name=attribute.name)
-                        if attr is not None and attr.dataset_id is not None:
-                            soap_time = date_to_string(timestamp)
-                            ####
-                            value=all_res_data[attr.dataset_id]
-                            data=None
-                            for st, data_ in value.items():
-                                tmp=str(self.get_time_value(data_, soap_time))
-                                if tmp is None or tmp=="None":
-                                     raise HydraPluginError("Resourcse %s has not value for attribute %s for time: %s, i.e.dataset %s has no data for time %s"%(resource.name, attr.name, soap_time, attr.dataset_id, soap_time))
-                                if data is not None:
-                                    data = data+"-"+tmp
-                                else:
-                                    data = tmp
 
+                        #Only interested in attributes with data
+                        if attr is None or attr.dataset_id is None:
+                            continue
 
-                            try:
-                                data_str = ' %14f' % float(data)
-                            except:
-                                ff_='{0:<'+self.array_len+'}'
-                                data_str = ff_.format(str(data))
+                        #Pass in the JSON value and the list of timestamps,
+                        #Get back a dictionary with values, keyed on the timestamps
+                        try:
+                            all_data = resource_data_cache.get((resource.name, attribute.name))
+                            if all_data is None:
+                                all_data = self.get_time_value(attr.value, self.time_index)
+                                resource_data_cache[(resource.name, attribute.name)] = all_data
+                        except Exception, e:
+                            log.exception(e)
+                            all_data = None
+                        
+                        if all_data is None:
+                            raise HydraPluginError("Error finding value attribute %s on" 
+                                                  "resource %s"%(attr.name, resource.name))
 
-                            attr_outputs.append(
-                                data_str.rjust(col_header_length[(attribute, resource)]))
+                        #Get each value in turn and add it to the line
+                        data = all_data[timestamp]     
+
+                        try:
+                            data_str = ' %14f' % float(data)
+                        except:
+                            ff_='{0:<'+self.array_len+'}'
+                            data_str = ff_.format(str(data))
+
+                        attr_outputs.append(
+                            data_str.rjust(col_header_length[(attribute, resource)]))
+
                 attr_outputs.append('\n')
             attr_outputs.append('\n')
+
         return attr_outputs
 
 
-    def export_timeseries_using_attributes (self, resources, res_type=None):
+    def export_timeseries_using_attributes(self, resources, res_type=None):
             """Export time series.
             """
             islink = res_type == 'LINK'
             attributes = []
             attr_names = []
             attr_outputs = []
-            all_res_data={}
+            
+            #Identify all the timeseries attributes and unique attribute
+            #names
             for resource in resources:
                 for attr in resource.attributes:
                     if attr.dataset_type == 'timeseries' and attr.is_var is False:
@@ -500,155 +521,98 @@ class GAMSExporter(JSONPlugin):
                         if attr.name not in attr_names:
                             attributes.append(attr)
                             attr_names.append(attr.name)
-            if len(attributes) > 0:
+
+            ff='{0:<'+self.name_len+'}'
+            t_=ff.format('')
+
+            for timestamp in self.time_index:
+                t_=t_+ff.format(self.times_table[timestamp])
+
+            for attribute in attributes:
+
+                attr_outputs.append('\n*'+attribute.name)
+
+                if islink:
+                    attr_outputs.append('\nTable '+attribute.name + ' (i,j, t)\n')
+                else:
+                    attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
+
+                attr_outputs.append('\n'+str(t_))
+
                 #Identify the datasets that we need data for
-                dataset_ids = []
-                for attribute in attributes:
-                    for resource in resources:
-                        attr = resource.get_attribute(attr_name=attribute.name)
-                        if attr is not None and attr.dataset_id is not None:
-                            value=json.loads(attr.value)
-                            all_res_data[attr.dataset_id]=value
-                            dataset_ids.append(attr.dataset_id)
+                for resource in resources:
+                    attr = resource.get_attribute(attr_name=attribute.name)
 
-                #We need to get the value at each time in the specified time axis,
-                #so we need to identify the relevant timestamps.
-                soap_times = []
-                for t, timestamp in enumerate(self.time_index):
-                    soap_times.append(date_to_string(timestamp))
+                    #Only interested in attributes with data and that are timeseries
+                    if attr is None or attr.dataset_id is None or attr.dataset_type != "timeseries":
+                        continue
 
-                #Get all the necessary data for all the datasets we have.
-                #all_data = self.connection.call('get_multiple_vals_at_time',
-                #                           {'dataset_ids':dataset_ids,
-                #                           'timestamps' : soap_times})
+                    #Pass in the JSON value and the list of timestamps,
+                    #Get back a dictionary with values, keyed on the timestamps
+                    try:
+                        all_data = self.get_time_value(attr.value, self.time_index)
+                    except Exception, e:
+                        log.exception(e)
+                        all_data = None
+                    
+                    if all_data is None:
+                        raise HydraPluginError("Error finding value attribute %s on" 
+                                              "resource %s"%(attr.name, resource.name))
 
-
-                ff='{0:<'+self.name_len+'}'
-                ff_='{0:<'+self.array_len+'}'
-                t_=ff.format('')
-                for t, timestamp in enumerate(self.time_index):
-                    t_=t_+ff.format(self.times_table[timestamp])
-                for attribute in attributes:
-                    attr_outputs.append('\n*'+attribute.name)
                     if islink:
-                        attr_outputs.append('\nTable '+attribute.name + ' (i,j, t)\n')
+                        attr_outputs.append('\n'+ff.format(resource.gams_name))
                     else:
-                        attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
-                    attr_outputs.append('\n'+str(t_))
-                    for resource in resources:
-                        attr = resource.get_attribute(attr_name=attribute.name)
-                        if attr is not None and attr.dataset_id is not None and attr.dataset_type == "timeseries":
-                            if islink:
-                                attr_outputs.append('\n'+ff.format(resource.gams_name))
-                            else:
-                                attr_outputs.append('\n'+ff.format(resource.name))
+                        attr_outputs.append('\n'+ff.format(resource.name))
+                    
+                    #Get each value in turn and add it to the line
+                    for timestamp in self.time_index:
+                        tmp = all_data[timestamp]     
 
-                            for t, timestamp in enumerate(self.time_index):
-                                soap_time = date_to_string(timestamp)
-                                value=all_res_data[attr.dataset_id]
-                                data=None
-                                for st, data_ in value.items():
-                                    tmp=str(self.get_time_value(data_, soap_time))
-                                    if tmp is None or tmp=="None":
-                                        raise HydraPluginError("Resourcse %s has not value for attribute %s for time: %s, i.e.dataset %s has no data for time %s"%(resource.name, attr.name, soap_time, attr.dataset_id, soap_time))
-                                    if data is not None:
-                                        data=data+"-"+tmp
-                                    else:
-                                        data=tmp
-                                try:
-                                    data_str = ff.format(str(float(data)))
-                                except:
-                                    data_str = ff_.format(str(data))
-                                attr_outputs.append(data_str)
-                    attr_outputs.append('\n')
+                        if isinstance(tmp, list):
+                            data="-".join(tmp)
+                            ff_='{0:<'+self.array_len+'}'
+                            data_str = ff_.format(str(data))
+                        else:
+                            data=str(tmp)
+                            data_str = ff.format(str(float(data)))
+
+                        attr_outputs.append(data_str)
+
                 attr_outputs.append('\n')
+
+            attr_outputs.append('\n')
+
+
             return attr_outputs
 
-    def get_time_value(self, value, soap_time):
+    def get_time_value(self, value, timestamps):
         '''
-        get data for timesamp
-        return None if no data is found
+            get data for timesamp
+
+            :param a JSON string
+            :param a timestamp or list of timestamps (datetimes)
+            :returns a dictionary, keyed on the timestamps provided.
+            return None if no data is found
         '''
-        data=None
-        self.set_time_table(value.keys())
-        soap_datetime = self.parse_date(soap_time)
-        for date_time, item_value in value.items():
-            if date_time.startswith("9999") or date_time.startswith('XXXX'):
-                #copy the year from the soap time and put it as the first 4
-                #characters of the seasonal datetime. 
-                value_datetime = self.parse_date(soap_time[0:4]+date_time[4:])
-                if (value_datetime) == (soap_datetime):
-                    data=item_value
-                    break
-            elif date_time==soap_time:
-                data=item_value
-                break
-            else:
-                if self.time_table[date_time]== soap_time:
-                     data=item_value
-                     break
-                else:
-                    pass
-        if data is None:
-            date=self.check_time( soap_time, sorted(value.keys()))
-            if date is not None:
-                data= value[date]
-        if data is not None:
-            if type(data) is list:
-                new_data="["
-                for v in data:
-                    if new_data== "[":
-                        new_data=new_data+str(v)
-                    else:
-                        new_data=new_data+" "+str(v)
-                data=new_data+"]"
-        return data
+        converted_ts = reindex_timeseries(value, timestamps)
+  
+        #For simplicity, turn this into a standard python dict with
+        #no columns. 
+        value_dict = {}
 
+        val_is_array = False
+        if len(converted_ts.columns) > 1:
+            val_is_array = True
 
-    def check_time(self, timestamp, times, key=None):
-        '''
-        check time
-        if the timestamp is before the the earliest date
-        it will retunn None
-        '''
-        for i in range (0, len(times)):
-            if i==0:
-                if parse(timestamp)<parse(self.time_table[times[0]]):
-                     return None
-            elif parse(timestamp)<parse(self.time_table[times[i]]):
-                if  parse(timestamp)>parse(self.time_table[times[i-1]]):
-                    return times[i-1]
-        if(key is None):
-            return self.get_last_valid_occurrence(timestamp, times)
+        if val_is_array:
+            for t in timestamps:
+                value_dict[t] = converted_ts.loc[t].values.tolist()
+        else:
+            first_col = converted_ts.columns[0]
+            for t in timestamps:
+                value_dict[t] = converted_ts.loc[t][first_col]
 
-    def get_last_valid_occurrence(self, timestamp, times):
-        '''
-        get the last occurrence
-        '''
-        for date_time in times:
-            if self.time_table[date_time][5:] == timestamp[5:]:
-                return date_time
-
-        for date_time in times:
-                time=self.time_table[date_time][:5]+timestamp  [5:]
-                re_time=self.check_time(time,times, 0)
-                if re_time is not None:
-                    return re_time
-        return None
-
-
-    def set_time_table(self, times):
-         for date_time in times:
-             if  date_time in self.time_table:
-                 pass
-             else:
-                 if date_time.startswith("XXXX"):
-                     self.time_table[date_time]=date_to_string(parse(date_time.replace("XXXX","1900")))
-                 elif date_time.startswith("9999"):
-                     self.time_table[date_time]=date_to_string(parse(date_time.replace("9999","1900")))
-                 else:
-                     self.time_table[date_time]=date_to_string(parse(date_time))
-
+        return value_dict
 
     def get_dim(self, arr):
         dim = []
@@ -779,14 +743,6 @@ class GAMSExporter(JSONPlugin):
         except Exception as e:
             log.exception(e)
             raise HydraPluginError("Please check time-axis or start time, end times and time step.")
-
-    def parse_date(self, date):
-        """Parse date string supplied from the user. All formats supported by
-        HydraLib.PluginLib.guess_timefmt can be used.
-        """
-        # Guess format of the string
-        FORMAT = guess_timefmt(date)
-        return datetime.strptime(date, FORMAT)
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
