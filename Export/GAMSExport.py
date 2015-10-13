@@ -299,12 +299,10 @@ from HydraLib.HydraException import HydraPluginError
 from Exporter import GAMSExporter
 from HydraLib import PluginLib
 import argparse as ap
-from HydraLib.PluginLib import write_progress, validate_plugin_xml
+from HydraLib.PluginLib import write_progress
 
 import logging
 log = logging.getLogger(__name__)
-
-__location__ = os.path.split(sys.argv[0])[0]
 
 
 def commandline_parser():
@@ -416,9 +414,6 @@ if __name__ == '__main__':
         parser = commandline_parser()
         args = parser.parse_args()
         check_args(args)
-
-
-        validate_plugin_xml(os.path.join(__location__, 'plugin.xml'))
 
         link_export_flag = 'nn'
         if args.link_name is True:

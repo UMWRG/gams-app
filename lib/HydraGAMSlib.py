@@ -43,9 +43,23 @@ class GamsModel(object):
             model=myfile.read()
        self.model_name=self.get_model_name(model)
        if self.model_name is not None:
-            model=model+"\nscalar ms; \nms="+self.model_name+".Modelstat; \nDisplay ms,"+self.model_name+".Modelstat;"
+             model=model+"\nscalar ms; \nms="+self.model_name.strip()+".Modelstat; "
 
        self.job = self.ws.add_job_from_string(model)
+
+    def get_model_name_2(self, model):
+        '''
+        get the model name from the GAMS model string
+        '''
+        lines=model.split("\n")
+        for line in lines:
+            line=line.lower()
+            if line.startswith("model"):
+                line=line.replace("model","")
+                line=line.replace("/all/","")
+                model_name=line.replace(";","").strip()
+                return model_name
+        return None
 
     def get_model_name(self, model):
         '''
@@ -58,6 +72,9 @@ class GamsModel(object):
                 line=line.replace("model","")
                 line=line.replace("/all/","")
                 model_name=line.replace(";","").strip()
+                line=line.split("/")
+                if(line[0] is not None):
+                    model_name=line[0]
                 return model_name
         return None
 
