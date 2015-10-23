@@ -4,7 +4,7 @@ a = Analysis(['GAMSImport.py'],
              hiddenimports=[],
              hookspath=None,
              runtime_hooks=None,
-             excludes=['_tkinter', 'IPython', 'win32ui', 'cPickle', 'win32com', 'sqlalchemy', 'sqlite3', 'pyexpat'])
+             excludes=['_tkinter', 'IPython', 'win32ui', 'cPickle', 'win32com', 'sqlalchemy', 'sqlite3', 'pyexpat', 'gams'])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
