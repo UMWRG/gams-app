@@ -3,9 +3,9 @@
     <plugin_dir>GAMSExport.exe</plugin_dir>
     <plugin_description>Export a network from Hydra to a gams input text file.
 	</plugin_description>
-    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<smallicon>gams_icon16.png</smallicon>
     <largeicon>gams_icon32.png</largeicon>
+    <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<mandatory_args>
         <arg>
             <name>network</name>
@@ -23,6 +23,7 @@
             <argtype>scenario</argtype>
             <help> ID of the underlying scenario used for the most recent simulation run.</help>
         </arg>
+
 		<arg>
             <name>output</name>
             <switch>-o</switch>
@@ -31,46 +32,40 @@
             <argtype>file</argtype>
             <help>Filename of the output file.</help>
         </arg>
-        <choices>
-            <choice>
-                <arg>
-                    <name>time-axis</name>
-                    <switch>-tx</switch>
-                    <multiple>N</multiple>
-                    <allownew>N</allownew>
-                    <argtype>string</argtype>
-                    <help>Time axis for the modelling period (a list of comma separated time stamps). Either this OR a start-date, end-date, time-step combination MUST be specified. For example: 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01, 2000-07-01</help>
-                </arg>
-            </choice>
-            <choice>
-                <arg>
-                    <name>start-date</name>
-                    <switch>-st</switch>
-                    <multiple>N</multiple>
-                    <allownew>N</allownew>
-                    <argtype>date</argtype>
-                    <help>Start date of the time period used for simulation. Must be after 1900-01-01.</help>
-                </arg>
-                <arg>
-                    <name>end-date</name>
-                    <switch>-en</switch>
-                    <multiple>N</multiple>
-                    <allownew>N</allownew>
-                    <argtype>date</argtype>
-                    <help>End date of the time period used for simulation. Must be after 1900-01-01.</help>
-                </arg>
-                <arg>
-                    <name>time-step</name>
-                    <switch>-dt</switch>
-                    <multiple>N</multiple>
-                    <allownew>N</allownew>
-                    <argtype>string</argtype>
-                    <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
-                </arg>
-            </choice>
-        </choices>
     </mandatory_args>
    <non_mandatory_args>
+        <arg>
+           <name>time-axis</name>
+           <switch>-tx</switch>
+           <multiple>N</multiple>
+            <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Time axis for the modelling period (a list of comma separated time stamps). Either this OR a start-date, end-date, time-step combination MUST be specified. For example: 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01, 2000-07-01</help>
+        </arg>
+        <arg>
+           <name>start-date</name>
+           <switch>-st</switch>
+           <multiple>N</multiple>
+            <allownew>N</allownew>
+           <argtype>date</argtype>
+           <help>Start date of the time period used for simulation. Must be after 1900-01-01.</help>
+        </arg>
+         <arg>
+           <name>end-date</name>
+           <switch>-en</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>date</argtype>
+           <help>End date of the time period used for simulation. Must be after 1900-01-01.</help>
+        </arg>
+        <arg>
+           <name>time-step</name>
+           <switch>-dt</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
+        </arg>
    		<arg>
             <name>template</name>
             <switch>-tp</switch>

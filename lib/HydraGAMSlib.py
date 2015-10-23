@@ -43,7 +43,9 @@ class GamsModel(object):
             model=myfile.read()
        self.model_name=self.get_model_name(model)
        if self.model_name is not None:
-             model=model+"\nscalar ms; \nms="+self.model_name.strip()+".Modelstat; "
+           self.model_name=self.model_name.replace(";", "")
+           model=model+"\nscalar ms; \nms="+self.model_name.strip()+".Modelstat; "
+
 
        self.job = self.ws.add_job_from_string(model)
 
