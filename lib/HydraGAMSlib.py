@@ -86,11 +86,7 @@ class GamsModel(object):
         and raise an error if something going wrong
         '''
 
-        #try:
-            self.job.run(checkpoint=self.cp)#, gams_options=options.ESolPrint)
-        except:
-            pass
-
+        self.job.run(checkpoint=self.cp)#, gams_options=options.ESolPrint)
         if self.model_name is not None:
             status=self.job.out_db["ms"].find_record().value
             if(status == 4):
