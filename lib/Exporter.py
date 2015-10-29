@@ -546,9 +546,14 @@ class GAMSExporter(JSONPlugin):
                 attr_outputs.append('\n*'+attribute.name)
 
                 if islink:
-                    attr_outputs.append('\nTable '+attribute.name + ' (i,j, t)\n')
+                    attr_outputs.append('\nTable '+attribute.name + ' (i,j')
                 else:
-                    attr_outputs.append('\nTable '+attribute.name + ' (i,t)\n')
+                    attr_outputs.append('\nTable '+attribute.name + ' (i')
+
+                if self.use_gams_date_index is True:
+                    attr_outputs.append(', yr, mn, dy)\n')
+                else:
+                    attr_outputs.append(', t)\n')
 
                 attr_outputs.append('\n'+str(t_))
 
@@ -718,22 +723,66 @@ class GAMSExporter(JSONPlugin):
                         attr_outputs.append('\n\n')
         return attr_outputs
 
+
+    def get_years_months_days(self):
+        '''
+        used to get years, months days in time axis to
+         write them in case of use_gams_date_index is true
+        '''
+        years=[]
+        months=[]
+        days=[]
+        for date in self.time_axis:
+            if date.year in years:
+                pass
+            else:
+                years.append(date.year)
+            if date.month in months:
+                pass
+            else:
+                months.append(date.month)
+            if date.day in days:
+                pass
+            else:
+                days.append((date.day))
+        return years, months, days
+
     def write_time_index(self):
+
         """
             Using the time-axis determined in __init__, write the time
             axis to the output file.
         """
         log.info("Writing time index")
+
         self.times_table={}
         try:
+            if self.use_gams_date_index is True:
+                years, months, days= self.get_years_months_days()
 
-            time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
+                t='SETS\n yr  /\n'
+                for year in years:
+                    t=t+str(year)+'\n'
+                t=t+'/\n\n'
+
+                t=t+'SETS\n mn  /\n'
+                for month in months:
+                    t=t+str(month)+'\n'
+                t=t+'/\n\n'
+                t=t+'SETS\n dy  /\n'
+                for day in days:
+                      t=t+str(day)+'\n'
+                t=t+'/\n\n'
+
+                time_index = [t+'\n\n', '* Time index\n','t(yr, mn, dy)  time index /\n']
+            else:
+                time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
 
             t = 0
             for date in self.time_axis:
-                _t=str(date.day)+"."+str(date.month)+"."+str(date.year)
                 self.time_index.append(date)
                 if self.use_gams_date_index is True:
+                     _t=str(date.year)+" . "+str(date.month)+" . "+str(date.day)
                      time_index.append('%s\n' % _t)
                      self.times_table[date]=_t
                 else:
@@ -744,10 +793,21 @@ class GAMSExporter(JSONPlugin):
             time_index.append('/\n\n')
 
             time_index.append('* define time steps dependent on time index (t)\n\n')
-            time_index.append('Parameter timestamp(t) ;\n\n')
+            if self.use_gams_date_index is True:
+                time_index.append('Set time_index \n/')
+                time_index.append('0*'+str(len(self.times_table)-1)+'\n/\n\n')
+                time_index.append('Parameter timestamp(time_index) ;\n\n')
+            else:
+                time_index.append('Parameter timestamp(t) ;\n\n')
             #print "wrinting time"
+            count=0
             for t, date in enumerate(self.time_index):
-                time_index.append('    timestamp("%s") = %s ;\n' % \
+                if self.use_gams_date_index is True:
+                    time_index.append('    timestamp("%s") = %s ;\n' % \
+                    (count, convert_date_to_timeindex(date)))
+                    count+=1
+                else:
+                    time_index.append('    timestamp("%s") = %s ;\n' % \
                     (self.times_table[date], convert_date_to_timeindex(date)))
             time_index.append('\n\n')
 
