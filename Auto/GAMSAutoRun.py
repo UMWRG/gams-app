@@ -191,6 +191,10 @@ def commandline_parser():
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
 
+    cmd_parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
+                        help='''Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)''')
+
+
     cmd_parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
@@ -240,6 +244,9 @@ def export_network():
     write_progress(3, steps)
 
     exporter.export_network()
+
+    if(args.gams_date_time_index is True):
+            exporter.use_gams_date_index=True
     
     write_progress(4, steps)
     exporter.write_time_index()
