@@ -114,7 +114,6 @@ class GAMSImporter(JSONPlugin):
                                              'template_id': None})
 
         self.res_scenario = self.network.scenarios[0].resourcescenarios
-
     #####################################################
     def set_network(self, network):
         """
@@ -160,7 +159,6 @@ class GAMSImporter(JSONPlugin):
                 x, idx, data, y = self.gdxcc.gdxDataReadStr(self.gdx_handle)
                 gdx_variable.index.append(idx)
                 gdx_variable.data.append(data[0])
-            
             self.gdx_variables.update({gdx_variable.name: gdx_variable})
 
     def load_gams_file(self, gms_file):
@@ -204,18 +202,38 @@ class GAMSImporter(JSONPlugin):
         Read the time index of the GAMS model used. This only works for
         models where data is exported from Hydra using GAMSexport.
         """
+        time_index_type=None
         for i, line in enumerate(self.gms_data):
-            if line[0:24] == 'Parameter timestamp(t) ;':
+            #if line[0:24] == 'Parameter timestamp(t) ;':
+             #  break
+            if line.strip().startswith('Parameter timestamp(yr, mn, dy)'):
+                time_index_type='date'
                 break
-        i += 2
-        line = self.gms_data[i]
-        while line.split('(', 1)[0].strip() == 'timestamp':
-            idx = int(line.split('"')[1])
-            timestamp = ordinal_to_timestamp(Decimal(line.split()[2]))
-            timestamp = date_to_string(timestamp)
-            self.time_axis.update({idx: timestamp})
-            i += 1
+            elif line.strip().startswith('Parameter timestamp(t)'):
+                time_index_type='t_index'
+                break
+        if time_index_type is "t_index":
+            i += 2
             line = self.gms_data[i]
+            while line.split('(', 1)[0].strip() == 'timestamp':
+                idx = int(line.split('"')[1])
+                timestamp = ordinal_to_timestamp(Decimal(line.split()[2]))
+                timestamp = date_to_string(timestamp)
+                self.time_axis.update({idx: timestamp})
+                i += 1
+                line = self.gms_data[i]
+        elif time_index_type is "date":
+           i += 2
+           line = self.gms_data[i]
+           while line.strip().startswith("timestamp"):
+               line_parts=line.split("=")
+               timestamp=ordinal_to_timestamp(Decimal(line_parts[1].replace(";","")))
+               #idx=[timestamp.year, timestamp.month, timestamp.day]
+               idx=str(timestamp.year)+"."+str(timestamp.month)+"."+str(timestamp.day)
+               timestamp=date_to_string(timestamp)
+               self.time_axis.update({idx: timestamp})
+               i += 1
+               line = self.gms_data[i]
 
     def parse_variables(self, variable):
         """For all variables stored in the gdx file, check if these are time
@@ -235,7 +253,6 @@ class GAMSImporter(JSONPlugin):
 
             if len(line.strip()) is 0:
                 break
-
             var = line.split()[0]
             splitvar = var.split('(', 1)
             if len(splitvar) <= 1:
@@ -252,6 +269,8 @@ class GAMSImporter(JSONPlugin):
                 #: "+ args.gms_file)
             if 't' in params:
                 self.gdx_ts_vars.update({varname: params.index('t')})
+            elif('yr' in params and 'mn' in params and 'dy' in params):
+                self.gdx_ts_vars.update({varname: params.index('dy')})
             i += 1
             line = self.gms_data[i]
 
@@ -272,8 +291,12 @@ class GAMSImporter(JSONPlugin):
                     if gdxvar.name in self.gdx_ts_vars.keys():
                         dataset['type'] = 'timeseries'
                         index = []
+                        count=0;
                         for idx in gdxvar.index:
-                            index.append(idx[self.gdx_ts_vars[gdxvar.name]])
+                            if len(idx) is 1:
+                                index.append(idx[self.gdx_ts_vars[gdxvar.name]])
+                            elif len(idx) is 3:
+                                 index.append('.'.join(map(str,idx)))
                         data = gdxvar.data
                         dataset['value'] = self.create_timeseries(index, data)
                     elif gdxvar.dim == 0:
@@ -298,7 +321,6 @@ class GAMSImporter(JSONPlugin):
                                     attr_id = attr.attr_id,
                                     value = dataset)
                     self.res_scenario.append(res_scen)
-
         # Node attributes
         nodes = dict()
         for node in self.network.nodes:
@@ -319,8 +341,10 @@ class GAMSImporter(JSONPlugin):
                             data = []
                             for i, idx in enumerate(gdxvar.index):
                                 if node.name in idx:
-                                    index.append(
-                                        idx[self.gdx_ts_vars[gdxvar.name]])
+                                    if len(idx) is 4:
+                                        index.append('.'.join(map(str,idx[1:])))
+                                    elif len(idx) is 2:
+                                        index.append(idx[self.gdx_ts_vars[gdxvar.name]])
                                     data.append(gdxvar.data[i])
                             dataset['value'] = self.create_timeseries(index, data)
                         elif gdxvar.dim == 1:
@@ -378,8 +402,10 @@ class GAMSImporter(JSONPlugin):
                             for i, idx in enumerate(gdxvar.index):
                                 if fromnode in idx and tonode in idx and \
                                    idx.index(fromnode) < idx.index(tonode):
-                                    index.append(
-                                        idx[self.gdx_ts_vars[gdxvar.name]])
+                                    if len (idx) is 5:
+                                        index.append('.'.join(map(str,idx[2:])))
+                                    elif len (idx) is 3:
+                                        index.append(idx[self.gdx_ts_vars[gdxvar.name]])
                                     data.append(gdxvar.data[i])
                             dataset['value'] = self.create_timeseries(index, data)
                         elif gdxvar.dim == 2:
@@ -418,7 +444,11 @@ class GAMSImporter(JSONPlugin):
     def create_timeseries(self, index, data):
         timeseries = {'0': {}}
         for i, idx in enumerate(index):
-            timeseries['0'][self.time_axis[int(idx)]] = json.dumps(data[i])
+             if idx.find(".") is -1:
+                 timeseries['0'][self.time_axis[int(idx)]] = json.dumps(data[i])
+             else:
+                 timeseries['0'][self.time_axis[idx]] = json.dumps(data[i])
+
         return json.dumps(timeseries)
 
     def create_array(self, index, data):

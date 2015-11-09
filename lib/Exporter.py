@@ -19,9 +19,9 @@
 
 from string import ascii_lowercase
 
-from HydraLib.PluginLib import JSONPlugin 
+from HydraLib.PluginLib import JSONPlugin
 from HydraLib.HydraException import HydraPluginError
-from HydraLib.hydra_dateutil import reindex_timeseries 
+from HydraLib.hydra_dateutil import reindex_timeseries
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
@@ -576,7 +576,6 @@ class GAMSExporter(JSONPlugin):
                     if all_data is None:
                         raise HydraPluginError("Error finding value attribute %s on" 
                                               "resource %s"%(attr.name, resource.name))
-
                     if islink:
                         attr_outputs.append('\n'+ff.format(resource.gams_name))
                     else:
@@ -772,9 +771,8 @@ class GAMSExporter(JSONPlugin):
                 t=t+'SETS\n dy  /\n'
                 for day in days:
                       t=t+str(day)+'\n'
-                t=t+'/\n\n'
-
-                time_index = [t+'\n\n', '* Time index\n','t(yr, mn, dy)  time index /\n']
+                #t=t+'/\n\n'
+                time_index = [t+'\n\n']####', '* Time index\n','t(yr, mn, dy)  time index /\n']
             else:
                 time_index = ['SETS\n\n', '* Time index\n','t time index /\n']
 
@@ -783,7 +781,6 @@ class GAMSExporter(JSONPlugin):
                 self.time_index.append(date)
                 if self.use_gams_date_index is True:
                      _t=str(date.year)+" . "+str(date.month)+" . "+str(date.day)
-                     time_index.append('%s\n' % _t)
                      self.times_table[date]=_t
                 else:
                      time_index.append('%s\n' % t)
@@ -794,18 +791,15 @@ class GAMSExporter(JSONPlugin):
 
             time_index.append('* define time steps dependent on time index (t)\n\n')
             if self.use_gams_date_index is True:
-                time_index.append('Set time_index \n/')
-                time_index.append('0*'+str(len(self.times_table)-1)+'\n/\n\n')
-                time_index.append('Parameter timestamp(time_index) ;\n\n')
+                time_index.append('Parameter timestamp(yr, mn, dy) ;\n\n')
             else:
                 time_index.append('Parameter timestamp(t) ;\n\n')
             #print "wrinting time"
-            count=0
             for t, date in enumerate(self.time_index):
                 if self.use_gams_date_index is True:
+                    keyy=str(date.year)+"\",\""+str(date.month)+"\", \""+str(date.day)
                     time_index.append('    timestamp("%s") = %s ;\n' % \
-                    (count, convert_date_to_timeindex(date)))
-                    count+=1
+                    (keyy, convert_date_to_timeindex(date)))
                 else:
                     time_index.append('    timestamp("%s") = %s ;\n' % \
                     (self.times_table[date], convert_date_to_timeindex(date)))

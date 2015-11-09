@@ -142,5 +142,10 @@
                         can be connected by more than one link, you should
                         choose this option.</help>
         </arg>
+         <arg>
+           <switch>-gd</switch>
+           <name>Use gams date time index</name>
+           <help>Use the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)</help>
+        </arg>
     </switches>
  </plugin_info>

@@ -144,8 +144,8 @@
         </arg>
          <arg>
            <switch>-gd</switch>
-           <name>Set gams date time index</name>
-           <help>Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)</help>
+           <name>Use gams date time index</name>
+           <help>Use the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)</help>
         </arg>
     </switches>
  </plugin_info>
