@@ -46,7 +46,7 @@
            <switch>-st</switch>
            <multiple>N</multiple>
             <allownew>N</allownew>
-           <argtype>date</argtype>
+           <argtype>starttime</argtype>
            <help>Start date of the time period used for simulation. Must be after 1900-01-01.</help>
         </arg>
          <arg>
@@ -54,7 +54,7 @@
            <switch>-en</switch>
            <multiple>N</multiple>
            <allownew>N</allownew>
-           <argtype>date</argtype>
+           <argtype>endtime</argtype>
            <help>End date of the time period used for simulation. Must be after 1900-01-01.</help>
         </arg>
          <arg>
@@ -62,7 +62,7 @@
            <switch>-dt</switch>
            <multiple>N</multiple>
            <allownew>N</allownew>
-           <argtype>string</argtype>
+           <argtype>timestep</argtype>
            <help>Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)</help>
         </arg>
    		<arg>
