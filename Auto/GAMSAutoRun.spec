@@ -1,7 +1,7 @@
 # -*- mode: python -*-
 a = Analysis(['GAMSAutoRun.py'],
              pathex=['..\\lib'],
-             hiddenimports=['filecmp', 'gams'],
+             hiddenimports=['filecmp'],
              hookspath=None,
              runtime_hooks=None,
              excludes=['_tkinter', 'IPython', 'win32ui', 'cPickle', 'win32com', 'sqlalchemy', 'sqlite3', 'pyexpat', 'gams'] )
