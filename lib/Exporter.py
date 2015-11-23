@@ -492,6 +492,8 @@ class GAMSExporter(JSONPlugin):
                                 all_data = self.get_time_value(attr.value, self.time_index)
                                 resource_data_cache[(resource.name, attribute.name)] = all_data
                         except Exception, e:
+                            log.critical("Attr value: %s", attr.value)
+                            log.critical("Time Index: %s", self.time_index)
                             log.exception(e)
                             all_data = None
                         
@@ -570,6 +572,8 @@ class GAMSExporter(JSONPlugin):
                     try:
                         all_data = self.get_time_value(attr.value, self.time_index)
                     except Exception, e:
+                        log.critical("Attr value: %s", attr.value)
+                        log.critical("Time Index: %s", self.time_index)
                         log.exception(e)
                         all_data = None
                     
