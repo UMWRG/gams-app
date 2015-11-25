@@ -319,6 +319,7 @@ def read_results(args, network, connection):
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
     gdximport.parse_variables('binary variables')
+    gdximport.parse_variables('parameters')
 
     write_progress(17, steps)
     gdximport.assign_attr_data()
@@ -366,7 +367,7 @@ if __name__ == '__main__':
         write_progress(steps, steps)
         errors = [e.message]
         message = "An error has occurred"
-            except Exception as e:
+    except Exception as e:
         errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):
