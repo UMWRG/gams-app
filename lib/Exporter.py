@@ -108,6 +108,8 @@ class GAMSExporter(JSONPlugin):
         self.export_link_groups()
         log.info("Creating connectivity matrix")
         self.create_connectivity_matrix()
+        log.info("Writing nodes coordinates")
+        self.export_resources_coordinates()
         log.info("Matrix created")
 
     def get_longest_node_link_name(self):
@@ -234,6 +236,24 @@ class GAMSExporter(JSONPlugin):
             rows.append("%s%s"%(x, '\n\n'))
 
         self.output = self.output + "".join(rows)
+
+    def export_resources_coordinates(self):
+        ff='{0:<'+self.name_len+'}'
+        self.output += ('\nParameter x (i)/\n')
+
+        for node in self.network.nodes:
+            print node
+            self.output += (ff.format(node.name))
+            self.output += (ff.format(node.X))
+            self.output += ('\n')
+
+        self.output += ('/;\n\nParameter y (i)/\n')
+        for node in self.network.nodes:
+            self.output += (ff.format(node.name))
+            self.output += (ff.format(node.Y))
+            self.output += ('\n')
+        self.output += ('/;\n\n\n')
+
 
     def export_data_using_types(self):
         log.info("Exporting data")
@@ -598,7 +618,6 @@ class GAMSExporter(JSONPlugin):
                 attr_outputs.append('\n')
 
             attr_outputs.append('\n')
-
 
             return attr_outputs
 

@@ -309,10 +309,10 @@ class GAMSImporter(JSONPlugin):
                             dataset['type'] = 'descriptor'
                             dataset['value'] = data
                     elif gdxvar.dim > 0:
+                        continue
                         dataset['type'] = 'array'
                         dataset['value'] = self.create_array(gdxvar.index,
                                                           gdxvar.data)
-
                     # Add data
                     metadata={}
                     dataset['metadata']=json.dumps(metadata)
@@ -359,6 +359,7 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = data
                                     break
                         elif gdxvar.dim > 1:
+                            continue
                             dataset['type'] = 'array'
                             index = []
                             data = []
@@ -421,6 +422,7 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = json.dumps(data)
                                     break
                         elif gdxvar.dim > 2:
+                            continue
                             dataset['type'] = 'array'
                             index = []
                             data = []
