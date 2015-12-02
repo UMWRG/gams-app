@@ -1,23 +1,24 @@
 __author__ = 'Gust'
 
 from License import create_lic
+import sys
 
-#input file which sent by user, it contains his machine idenetitfications
-file_="F:\\work\\Apps\\hydra_plugins\\GAMS\Export\\gasm_lic.txt.tmp"
-#outputfile which contains the Licence
-lic_file="F:\\work\\Apps\\hydra_plugins\\GAMS\Export\\gasm_lic.txt"
+def generate_license (argv):
+    #input file which sent by user, it contains his machine idenetitfications
+    file_=argv[0]
+    #outputfile which contains the Licence
+    lic_file=argv[1]
+    #key for encrypt and decrypt
+    # this should be the same asw the one in Hydar gams lib file
+    key=argv[2]
+    file = open(file_, 'rb')
+    machine_id=file.read()
+    file.close()
+    try:
+        create_lic( machine_id, "Time limited", 12, lic_file, key)
+        print "Done ", lic_file , "is genrated"
+    except Exception, e:
+        print e.message
 
-
-file = open(file_, 'rb')
-machine_id=file.read()
-file.close()
-
-#key for encrypt and decrypt
-# this should be the same asw the one in Hydar gams lib file
-key="12/FfCHspo*&s}:QMwd><s?:"
-
-try:
-    create_lic( machine_id, "Time limited", 12, lic_file, key)
-    print "Done ", lic_file , "is genrated"
-except Exception, e:
-    print e.message
+if __name__ == "__main__":
+   generate_license(sys.argv[1:])
