@@ -295,11 +295,14 @@ if api_path not in sys.path:
 ##########################
 
 from HydraLib.HydraException import HydraPluginError
+from HydraGAMSlib import check_lic
+from License import LicencePluginError
 
 from Exporter import GAMSExporter
 from HydraLib import PluginLib
 import argparse as ap
 from HydraLib.PluginLib import write_progress
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -404,13 +407,12 @@ def check_args(args):
                                'does not exist')
 
 if __name__ == '__main__':
-
+    check_lic()
     message = None
     errors  = []
     steps=7
     try:
         write_progress(1, steps)
-
         parser = commandline_parser()
         args = parser.parse_args()
         check_args(args)
@@ -433,7 +435,6 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-
     err = PluginLib.create_xml_response('GAMSExport',
                                             args.network_id,
                                             [args.scenario_id],

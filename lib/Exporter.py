@@ -242,7 +242,6 @@ class GAMSExporter(JSONPlugin):
         self.output += ('\nParameter x (i)/\n')
 
         for node in self.network.nodes:
-            print node
             self.output += (ff.format(node.name))
             self.output += (ff.format(node.X))
             self.output += ('\n')
@@ -252,7 +251,7 @@ class GAMSExporter(JSONPlugin):
             self.output += (ff.format(node.name))
             self.output += (ff.format(node.Y))
             self.output += ('\n')
-        self.output += ('/;\n\n\n')
+        self.output += ('/;\n\n');
 
 
     def export_data_using_types(self):

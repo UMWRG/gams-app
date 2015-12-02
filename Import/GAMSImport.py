@@ -97,6 +97,7 @@ if api_path not in sys.path:
 from HydraLib.HydraException import HydraPluginError
 from Importer import GAMSImporter, set_gams_path
 from HydraLib import PluginLib
+from HydraGAMSlib import check_lic
 
 from HydraLib.PluginLib import write_progress
 
@@ -126,6 +127,7 @@ def import_results(args):
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
     gdximport.parse_variables('binary variables')
+    gdximport.parse_variables('parameters')
     
     write_progress(8, steps)
     gdximport.assign_attr_data()
@@ -178,6 +180,7 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
+        check_lic()
         steps=9
         parser = commandline_parser()
         args = parser.parse_args()

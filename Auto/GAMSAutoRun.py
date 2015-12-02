@@ -132,6 +132,7 @@ if api_path not in sys.path:
 
 
 from HydraLib.HydraException import HydraPluginError
+from HydraGAMSlib import check_lic
 
 from Exporter import GAMSExporter
 from Importer import GAMSImporter
@@ -351,6 +352,7 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
+        check_lic()
         steps=18
         write_progress(1, steps)
         cmd_parser = commandline_parser()
@@ -362,6 +364,7 @@ if __name__ == '__main__':
         read_results(args, exporter.hydranetwork, exporter.connection)
         message="Run successfully"
         errors = []
+
     except HydraPluginError, e:
         log.exception(e)
         write_progress(steps, steps)
