@@ -21,6 +21,9 @@ import sys
 
 from HydraLib.PluginLib import HydraResource, HydraNetwork
 from HydraLib.HydraException import HydraPluginError
+from License import License
+from License import LicencePluginError
+from HydraLib import PluginLib
 
 class GamsModel(object):
     def __init__(self, gamspath, working_directory):
@@ -267,3 +270,37 @@ def get_gams_path():
             raise HydraPluginError("Unable to find GAMS installation. Please specify folder containing gams executable.")
     else:
         return gams_path
+key="12/FfCHspo*&s}:QMwd><s?:"
+lic_file="gasm_l.bin"
+REG_PATH="gams\lic"
+#lic_file, REG_PATH, key
+
+def check_lic():
+    if os.name == 'nt':
+        err=""
+        try:
+            lic=License(lic_file, REG_PATH, key)
+            return lic.is_licensed()
+        except LicencePluginError, e:
+            message="Licence error"
+            errors = [e.message]
+            err = PluginLib.create_xml_response('GAMS plugin',
+                                                "",
+                                                "",
+                                                errors = errors,
+                                                message=message)
+            print err
+            sys.exit(0)
+
+        except Exception, e:
+            message="Licence error"
+            errors = ["Reading licence error", e.message]
+            err = PluginLib.create_xml_response('GAMS plugin',
+                                                "",
+                                                "",
+                                                errors = errors,
+                                                message=message)
+            print err
+            sys.exit(0)
+
+

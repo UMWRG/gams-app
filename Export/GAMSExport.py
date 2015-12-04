@@ -295,11 +295,14 @@ if api_path not in sys.path:
 ##########################
 
 from HydraLib.HydraException import HydraPluginError
+from HydraGAMSlib import check_lic
+from License import LicencePluginError
 
 from Exporter import GAMSExporter
 from HydraLib import PluginLib
 import argparse as ap
 from HydraLib.PluginLib import write_progress
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -355,14 +358,14 @@ def commandline_parser():
     return parser
 
 
-def export_network(args):
+def export_network(args, is_licensed):
 
         write_progress(2, steps)
         exporter = GAMSExporter(args)
 
 
         write_progress(3, steps)
-        exporter.get_network()
+        exporter.get_network(is_licensed)
 
         write_progress(4, steps)
         exporter.export_network()
@@ -404,13 +407,12 @@ def check_args(args):
                                'does not exist')
 
 if __name__ == '__main__':
-
+    is_licensed=check_lic()
     message = None
     errors  = []
     steps=7
     try:
         write_progress(1, steps)
-
         parser = commandline_parser()
         args = parser.parse_args()
         check_args(args)
@@ -418,7 +420,7 @@ if __name__ == '__main__':
         link_export_flag = 'nn'
         if args.link_name is True:
             link_export_flag = 'l'
-        exporter=export_network(args)
+        exporter=export_network(args, is_licensed)
         message="Run successfully"
     except HydraPluginError, e:
         write_progress(steps, steps)
@@ -433,7 +435,6 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-
     err = PluginLib.create_xml_response('GAMSExport',
                                             args.network_id,
                                             [args.scenario_id],
