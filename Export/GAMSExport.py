@@ -358,14 +358,14 @@ def commandline_parser():
     return parser
 
 
-def export_network(args):
+def export_network(args, is_licensed):
 
         write_progress(2, steps)
         exporter = GAMSExporter(args)
 
 
         write_progress(3, steps)
-        exporter.get_network()
+        exporter.get_network(is_licensed)
 
         write_progress(4, steps)
         exporter.export_network()
@@ -407,7 +407,7 @@ def check_args(args):
                                'does not exist')
 
 if __name__ == '__main__':
-    check_lic()
+    is_licensed=check_lic()
     message = None
     errors  = []
     steps=7
@@ -420,7 +420,7 @@ if __name__ == '__main__':
         link_export_flag = 'nn'
         if args.link_name is True:
             link_export_flag = 'l'
-        exporter=export_network(args)
+        exporter=export_network(args, is_licensed)
         message="Run successfully"
     except HydraPluginError, e:
         write_progress(steps, steps)

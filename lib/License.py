@@ -34,34 +34,31 @@ class License(object):
                  lic_string=decrypt(lic_string, self.key)
                  lic_=lic_string.split(',')
                  self.type=lic_[0]
-                 self.startdate=lic_[1]
-                 self.period= (lic_[2])
-                 self.Id=lic_[3]
+                 #self.startdate=lic_[1]
+                 #self.period= (lic_[2])
+                 #self.Id=lic_[3]
                  done=True
              except Exception, e:
                  raise LicencePluginError("Reading licence file error: "+e.message)
-         else:
+         #else:
              #if there is no lic file, create a temp file which contrains the curremt machine id, this should be send to the software vendor to genarte
              # licence file
-             get_lic_id(lic_file+".tmp", self.key)
-             log.info("No licence found, please send this file: "+lic_file+".tmp"+" to the software vendor if you want to get a licence")
+             #get_lic_id(lic_file+".tmp", self.key)
+             #log.info("No licence found, please send this file: "+lic_file+".tmp"+" to the software vendor if you want to get a licence")
 
          if(done is False):
              # set demo status
              self.type="demo"
+             log.info("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
              self.startdate=None
              if(period is None):
-                 self.period=45
+                 self.period=90
              else:
                  self.period=period
              self.Id=None
 
-    def is_valid(self):
+    def is_licensed(self):
          cur=datetime.datetime.now()
-         if(self.Id is not None):
-             if(get_machine_id() != self.Id):
-                 log.info("Computer Id error, Licence is registered for one machine, user cannot use for different machine")
-                 raise LicencePluginError ("Computer Id error, Licence is registered for one machine, user cannot use for different machine")
 
          if(self.type.lower() == "ultimate"):
              log.info("ultimate licence is installed")
@@ -81,16 +78,19 @@ class License(object):
              if(lst is not None):
                  lst=datetime.date.fromordinal(int(lst))
                  if(lst>cur.date()):
+                     self.type="limited demo"
                      log.info("Machine time error")
-                     log.info("Machine time error")
-                     raise LicencePluginError ("Machine time error")
+                     log.info("The licence is limited demo (20 nodes, 20 times steps).  please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
              set_reg(hash_name_method(self.REG_PATH+"last_date"), str(datetime.date.toordinal(cur)), "software\\")
              if(cur.date()> startdate+datetime.timedelta(days=int(self.period))):
-                 log.info("The licence is not valid due to time restriction, please contact software vendor to get a new licence")
-                 raise LicencePluginError ("The licence "+self.type+" is not valid due to time restriction, please contact software vendor to get a new licence")
+                 self.type="limited demo"
+                 log.info("The licence is limited demo (20 nodes, 20 times steps) due to time restriction, please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+                 return False
              else:
-                 log.info("Licence type: "+self.type+", will expire on: "+str(startdate+datetime.timedelta(days=int(self.period))))
-         return True
+                 self.type="demo"
+                 log.info("Licence type: "+self.type+", will be limited to 20 nodes, and 20 times steps on: "+str(startdate+datetime.timedelta(days=int(self.period))))
+                 return True
+         return False
 
 def set_reg(name, value, REG_PATH):
     try:
@@ -134,11 +134,19 @@ def get_machine_id():
     return ss[len(ss)-1]
 
 
-def  create_lic( machine_id, type, period, file_name, key):
+def  create_lic(type, period, file_name, key, machine_id):
      machine_id=decrypt(machine_id, key)
      print machine_id
      st=str(datetime.datetime.now())
      lic_str=type+","+st+","+str(period)+","+machine_id
+     lic_str= encrypt(lic_str, key)
+     file = open(file_name, "wb")
+     file.write(lic_str)
+     file.close()
+
+def  create_lic(type, key, file_name):
+     st=str(datetime.datetime.now())
+     lic_str=type
      lic_str= encrypt(lic_str, key)
      file = open(file_name, "wb")
      file.write(lic_str)

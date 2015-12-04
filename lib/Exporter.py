@@ -45,12 +45,16 @@ class GAMSExporter(JSONPlugin):
         self.template_id = int(args.template_id) if args.template_id is not None else None
         self.filename = args.output
         self.time_index = []
+        self.time_axis =None
+
+
         
         self.connect(args)
         if args.time_axis is not None:
             args.time_axis = ' '.join(args.time_axis).split(' ')
 
-        self.time_axis = self.get_time_axis(args.start_date,
+        if(args.start_date is not None and args.end_date is not None and args.time_step is not None):
+            self.time_axis = self.get_time_axis(args.start_date,
                                   args.end_date,
                                   args.time_step,
                                   time_axis=args.time_axis)
@@ -64,7 +68,7 @@ class GAMSExporter(JSONPlugin):
         self.attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(self.attrs))
 
-    def get_network(self):
+    def get_network(self, is_licensed):
         net = self.connection.call('get_network', {'network_id':self.network_id,
                                                    'include_data': 'Y',
                                                    'template_id':self.template_id,
@@ -78,9 +82,15 @@ class GAMSExporter(JSONPlugin):
                     self.scenario=s
 
 
+
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
+        if(is_licensed is False):
+            if len(self.network.nodes)>20:
+                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+            if len (self.time_axis)>20:
+                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
         log.info("Gams network loaded")
         self.network.gams_names_for_links(use_link_name=self.links_as_name)
         log.info("Names for links retrieved")
@@ -562,6 +572,10 @@ class GAMSExporter(JSONPlugin):
 
             for attribute in attributes:
 
+                if(self.time_axis is None):
+                    raise HydraPluginError("MIssing time axis or start date, end date and time step or bad format")
+
+
                 attr_outputs.append('\n*'+attribute.name)
 
                 if islink:
@@ -765,11 +779,12 @@ class GAMSExporter(JSONPlugin):
         return years, months, days
 
     def write_time_index(self):
-
         """
             Using the time-axis determined in __init__, write the time
             axis to the output file.
         """
+        if(self.time_axis is None):
+            return
         log.info("Writing time index")
 
         self.times_table={}

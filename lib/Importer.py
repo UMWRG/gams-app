@@ -84,7 +84,7 @@ class GAMSImporter(JSONPlugin):
         for attr in attrslist:
             self.attrs.update({attr.id: attr.name})
 
-    def load_network(self, network_id=None, scenario_id=None):
+    def load_network(self, is_licensed, network_id=None, scenario_id=None):
         """
          Load network and scenario from the server. If the network
          has been set externally (to save getting it again) then simply
@@ -93,6 +93,7 @@ class GAMSImporter(JSONPlugin):
 
         # Use the network id specified by the user, if it is None, fall back to
         # the network id read from the gms file
+        self.is_licensed=is_licensed
         try:
             network_id = int(network_id)
         except (TypeError, ValueError):
@@ -114,13 +115,22 @@ class GAMSImporter(JSONPlugin):
                                              'template_id': None})
 
         self.res_scenario = self.network.scenarios[0].resourcescenarios
+        if(is_licensed is False):
+            if len(self.network.nodes)>20:
+                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+
     #####################################################
-    def set_network(self, network):
+    def set_network(self,is_licensed,  network):
         """
            Load network and scenario from the server.
         """
+        self.is_licensed=is_licensed
         self.network =network
         self.res_scenario = self.network.scenarios[0].resourcescenarios
+        if(is_licensed is False):
+            if len(self.network.nodes)>20:
+                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+
 
     #####################################################
     def open_gdx_file(self, filename):
@@ -234,6 +244,10 @@ class GAMSImporter(JSONPlugin):
                self.time_axis.update({idx: timestamp})
                i += 1
                line = self.gms_data[i]
+
+        if(self.is_licensed is False):
+            if len(self.time_axis)>20:
+                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
 
     def parse_variables(self, variable):
         """For all variables stored in the gdx file, check if these are time
@@ -491,7 +505,7 @@ class GAMSImporter(JSONPlugin):
         self.network.scenarios[0].resourcescenarios = self.res_scenario
         self.connection.call('update_scenario', {'scen':self.network.scenarios[0]})
 
-def set_gams_path():
+def set_gams_path_old():
     gams_path=get_gams_path()
     if gams_path is not None:
         gams_path = os.path.abspath(gams_path)

@@ -235,12 +235,12 @@ def get_input_file_name(gams_model):
     log.info("Exporting data to: %s", inputfilename)
     return inputfilename
 
-def export_network():
+def export_network(is_licensed):
     exporter = GAMSExporter(args)
    
     write_progress(2, steps)
 
-    exporter.get_network()
+    exporter.get_network(is_licensed)
 
     write_progress(3, steps)
 
@@ -291,7 +291,7 @@ def run_gams_model(args):
         if args.gdx_file is None:
               raise HydraPluginError('Result file is not provided/found.')
 
-def read_results(args, network, connection):
+def read_results(is_licensed, args, network, connection):
     """
         Instantiate a GAMSImport class, assign the network, read the 
         gdx and gms files, update the network's data and then save
@@ -304,7 +304,7 @@ def read_results(args, network, connection):
     gdximport.load_gams_file(args.gms_file)
     
     write_progress(12, steps)
-    gdximport.set_network(network)
+    gdximport.set_network(is_licensed, network)
     
     write_progress(13, steps)
     gdximport.parse_time_index()
@@ -352,16 +352,16 @@ def check_args(args):
 
 if __name__ == '__main__':
     try:
-        check_lic()
+        is_licensed=check_lic()
         steps=18
         write_progress(1, steps)
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
         check_args(args)
-        exporter=export_network()
+        exporter=export_network(is_licensed)
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
-        read_results(args, exporter.hydranetwork, exporter.connection)
+        read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
         message="Run successfully"
         errors = []
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+    #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 #\
@@ -95,20 +95,23 @@ if api_path not in sys.path:
 ##########################
 
 from HydraLib.HydraException import HydraPluginError
-from Importer import GAMSImporter, set_gams_path
+from  HydraGAMSlib import get_gams_path
+
 from HydraLib import PluginLib
 from HydraGAMSlib import check_lic
 
 from HydraLib.PluginLib import write_progress
 
+from Importer import GAMSImporter
+
 import logging
 log = logging.getLogger(__name__)
 
-def import_results(args):
+def import_results(is_licensed, args):
     write_progress(1, steps)
     gdximport = GAMSImporter(args)
     write_progress(2, steps)
-    gdximport.load_network()
+    gdximport.load_network(is_licensed)
 
     write_progress(3, steps)
     gdximport.load_gams_file(args.gms_file)
@@ -134,7 +137,6 @@ def import_results(args):
     
     write_progress(9, steps)
     gdximport.save()
-
 
 def commandline_parser():
     parser = ap.ArgumentParser(
@@ -179,26 +181,30 @@ def check_args(args):
         raise HydraPluginError('Gams file: '+args.gms_file+', does not exist')
 
 if __name__ == '__main__':
+    message=""
     try:
-        check_lic()
+        is_licensed=check_lic()
         steps=9
         parser = commandline_parser()
         args = parser.parse_args()
+        errors = []
 
-        if os.environ.get('LD_LIBRARY_PATH') in ('', None):
-            log.info("Setting LD_LIBRARY_PATH")
-            set_gams_path()
-            sysargs = [sys.executable]
-            if sys.argv[0] == sys.executable:
-                sysargs = sys.argv
-            else:
-                sysargs.extend(sys.argv)
+        if(args.gams_path==None):
+            args.gams_path=get_gams_path()
 
-            os.execv(sys.executable, sysargs)
-        else:
-            import_results(args)
-            errors = []
-            message="Import successful."
+        try:
+            real_path = os.path.realpath(os.path.abspath(args.gams_path))
+            api_path = os.path.join(real_path,'apifiles','Python','api')
+            if api_path not in sys.path:
+                sys.path.insert(0, api_path)
+
+
+        except Exception as e:
+            raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")
+
+        import_results(is_licensed, args)
+        errors = []
+        message="Import successful."
 
     except HydraPluginError, e:
         log.exception(e)
@@ -214,4 +220,4 @@ if __name__ == '__main__':
             errors = [e.message]
         write_progress(steps, steps)
 
-    print PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id], errors = errors)
+    print PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)

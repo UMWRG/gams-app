@@ -3,7 +3,7 @@ __author__ = 'Gust'
 from License import create_lic
 import sys
 
-def generate_license (argv):
+def generate_license_full (argv):
     #input file which sent by user, it contains his machine idenetitfications
     file_=argv[0]
     #outputfile which contains the Licence
@@ -15,10 +15,21 @@ def generate_license (argv):
     machine_id=file.read()
     file.close()
     try:
-        create_lic( machine_id, "Time limited", 12, lic_file, key)
+        create_lic("ultimate", 100000, lic_file, key)
         print "Done ", lic_file , "is genrated"
     except Exception, e:
         print e.message
+
+
+def generate_license (argv):
+     try:
+        lic_file=argv[0]
+        key=argv[1].strip()
+        print key
+        create_lic("ultimate",  key, lic_file)
+     except Exception, e:
+        print e.message
+
 
 if __name__ == "__main__":
    generate_license(sys.argv[1:])

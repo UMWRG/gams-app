@@ -271,7 +271,7 @@ def get_gams_path():
     else:
         return gams_path
 key="12/FfCHspo*&s}:QMwd><s?:"
-lic_file="gasm_lic.txt"
+lic_file="gasm_l.bin"
 REG_PATH="gams\lic"
 #lic_file, REG_PATH, key
 
@@ -280,7 +280,7 @@ def check_lic():
         err=""
         try:
             lic=License(lic_file, REG_PATH, key)
-            result=lic.is_valid()
+            return lic.is_licensed()
         except LicencePluginError, e:
             message="Licence error"
             errors = [e.message]
