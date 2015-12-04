@@ -367,7 +367,7 @@ if __name__ == '__main__':
         write_progress(steps, steps)
         errors = [e.message]
         message = "An error has occurred"
-    except Exception as e:
+            except Exception as e:
         errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):
