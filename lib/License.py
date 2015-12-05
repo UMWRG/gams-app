@@ -1,5 +1,7 @@
 __author__ = 'Gust'
-import _winreg as winreg
+import os
+if os.name == 'nt':
+    import _winreg as winreg
 import hashlib
 import os.path
 import datetime
@@ -49,7 +51,7 @@ class License(object):
          if(done is False):
              # set demo status
              self.type="demo"
-             log.info("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
+             raise LicencePluginError("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
              self.startdate=None
              if(period is None):
                  self.period=90

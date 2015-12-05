@@ -1,20 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
-#\
-# HydraGAMSLib is free software: you can redistribute it and/or modify\
-# it under the terms of the GNU General Public License as published by\
-# the Free Software Foundation, either version 3 of the License, or\
-# (at your option) any later version.\
-#\
-# HydraGAMSLib is distributed in the hope that it will be useful,\
-# but WITHOUT ANY WARRANTY; without even the implied warranty of\
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
-# GNU General Public License for more details.\
-# \
-# You should have received a copy of the GNU General Public License\
-# along with HydraGAMSLib.  If not, see <http://www.gnu.org/licenses/>\
-#
 
 import os
 import sys
@@ -25,10 +11,16 @@ from License import License
 from License import LicencePluginError
 from HydraLib import PluginLib
 
+import logging
+log = logging.getLogger(__name__)
+
 class GamsModel(object):
     def __init__(self, gamspath, working_directory):
         if(gamspath==None):
             gamspath=get_gams_path()
+
+        log.info("Using GAMS Path: %s", gamspath)
+
         try:
             real_path = os.path.realpath(os.path.abspath(gamspath))
             api_path = os.path.join(real_path,'apifiles','Python','api')
@@ -247,8 +239,8 @@ def get_gams_path():
                     #directories and picking the last one
                     gams_versions.sort()
                     if len(gams_versions) > 0:
-                        if float(gams_versions[-1]) < 23.8:
-                                raise HydraPluginError("Only GAMS versions of 23.8 and above are supported automatically."
+                        if float(gams_versions[-1]) < 24.1:
+                                raise HydraPluginError("Only GAMS versions of 24.1 and above are supported automatically."
                                             " Please download the newest GAMS from (http://www.gams.com/download/) or "
                                             " specify the folder containing gams API using --gams-path")
                         else:   

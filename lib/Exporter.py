@@ -1,21 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
-#\
-# Export is free software: you can redistribute it and/or modify\
-# it under the terms of the GNU General Public License as published by\
-# the Free Software Foundation, either version 3 of the License, or\
-# (at your option) any later version.\
-#\
-# Export is distributed in the hope that it will be useful,\
-# but WITHOUT ANY WARRANTY; without even the implied warranty of\
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
-# GNU General Public License for more details.\
-# \
-# You should have received a copy of the GNU General Public License\
-# along with Export.  If not, see <http://www.gnu.org/licenses/>\
-#
-
 
 from string import ascii_lowercase
 
@@ -26,6 +11,7 @@ from HydraLib.hydra_dateutil import reindex_timeseries
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
 
+from decimal import Decimal
 
 import json
 
@@ -249,17 +235,20 @@ class GAMSExporter(JSONPlugin):
 
     def export_resources_coordinates(self):
         ff='{0:<'+self.name_len+'}'
+        threeplaces = Decimal('0.001')
         self.output += ('\nParameter x (i)/\n')
 
         for node in self.network.nodes:
             self.output += (ff.format(node.name))
-            self.output += (ff.format(node.X))
+            x_coord = Decimal(node.X).quantize(threeplaces)
+            self.output += (ff.format(x_coord))
             self.output += ('\n')
 
         self.output += ('/;\n\nParameter y (i)/\n')
         for node in self.network.nodes:
             self.output += (ff.format(node.name))
-            self.output += (ff.format(node.Y))
+            y_coord = Decimal(node.Y).quantize(threeplaces)
+            self.output += (ff.format(y_coord))
             self.output += ('\n')
         self.output += ('/;\n\n');
 
