@@ -28,6 +28,7 @@ class License(object):
          self.REG_PATH=REG_PATH
          self.key=key
          #open lic file and get the required information from it
+         done=False
          if(os.path.exists(lic_file)):
              try:
                  file = open(lic_file, 'rb')
@@ -36,33 +37,24 @@ class License(object):
                  lic_string=decrypt(lic_string, self.key)
                  lic_=lic_string.split(',')
                  self.type=lic_[0]
-                 #self.startdate=lic_[1]
-                 #self.period= (lic_[2])
-                 #self.Id=lic_[3]
                  done=True
              except Exception, e:
-                 raise LicencePluginError("Reading licence file error: "+e.message)
-         #else:
-             #if there is no lic file, create a temp file which contrains the curremt machine id, this should be send to the software vendor to genarte
-             # licence file
-             #get_lic_id(lic_file+".tmp", self.key)
-             #log.info("No licence found, please send this file: "+lic_file+".tmp"+" to the software vendor if you want to get a licence")
-
+                 pass
+            # set demo status
          if(done is False):
-             # set demo status
              self.type="demo"
-             raise LicencePluginError("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
+             log.info("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
              self.startdate=None
              if(period is None):
                  self.period=90
              else:
-                 self.period=period
-             self.Id=None
+                self.period=period
+
+
 
     def is_licensed(self):
          cur=datetime.datetime.now()
-
-         if(self.type.lower() == "ultimate"):
+         if(self.type is not None and self.type.lower() == "ultimate"):
              log.info("ultimate licence is installed")
              return True
          else:
@@ -83,6 +75,7 @@ class License(object):
                      self.type="limited demo"
                      log.info("Machine time error")
                      log.info("The licence is limited demo (20 nodes, 20 times steps).  please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+                     return False
              set_reg(hash_name_method(self.REG_PATH+"last_date"), str(datetime.date.toordinal(cur)), "software\\")
              if(cur.date()> startdate+datetime.timedelta(days=int(self.period))):
                  self.type="limited demo"

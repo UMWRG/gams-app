@@ -301,7 +301,7 @@ from License import LicencePluginError
 from Exporter import GAMSExporter
 from HydraLib import PluginLib
 import argparse as ap
-from HydraLib.PluginLib import write_progress
+from HydraLib.PluginLib import write_progress, write_output
 
 
 import logging
@@ -435,11 +435,13 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-    err = PluginLib.create_xml_response('GAMSExport',
+    text = PluginLib.create_xml_response('GAMSExport',
                                             args.network_id,
                                             [args.scenario_id],
                                             errors = errors,
                                             message=message)
-    print err
+
+    log.info(text)
+    write_output( text)
 
 

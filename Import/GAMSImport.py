@@ -100,7 +100,7 @@ from  HydraGAMSlib import get_gams_path
 from HydraLib import PluginLib
 from HydraGAMSlib import check_lic
 
-from HydraLib.PluginLib import write_progress
+from HydraLib.PluginLib import write_progress, write_output
 
 from Importer import GAMSImporter
 
@@ -220,4 +220,6 @@ if __name__ == '__main__':
             errors = [e.message]
         write_progress(steps, steps)
 
-    print PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)
+    text= PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)
+    log.info(text)
+    write_output( text)

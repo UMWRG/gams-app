@@ -269,30 +269,8 @@ REG_PATH="gams\lic"
 
 def check_lic():
     if os.name == 'nt':
-        err=""
-        try:
-            lic=License(lic_file, REG_PATH, key)
-            return lic.is_licensed()
-        except LicencePluginError, e:
-            message="Licence error"
-            errors = [e.message]
-            err = PluginLib.create_xml_response('GAMS plugin',
-                                                "",
-                                                "",
-                                                errors = errors,
-                                                message=message)
-            print err
-            sys.exit(0)
+        lic=License(lic_file, REG_PATH, key)
+        return lic.is_licensed()
 
-        except Exception, e:
-            message="Licence error"
-            errors = ["Reading licence error", e.message]
-            err = PluginLib.create_xml_response('GAMS plugin',
-                                                "",
-                                                "",
-                                                errors = errors,
-                                                message=message)
-            print err
-            sys.exit(0)
 
 
