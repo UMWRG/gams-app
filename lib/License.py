@@ -27,7 +27,7 @@ class License(object):
          done=False
          self.REG_PATH=REG_PATH
          self.key=key
-         #open lic file and get the required information from it
+         #open lic file and get the required information from it`
          done=False
          if(os.path.exists(lic_file)):
              try:
@@ -36,13 +36,13 @@ class License(object):
                  file.close()
                  lic_string=decrypt(lic_string, self.key)
                  lic_=lic_string.split(',')
-                 self.type=lic_[0]
+                 self.lic_type=lic_[0]
                  done=True
              except Exception, e:
                  pass
             # set demo status
          if(done is False):
-             self.type="demo"
+             self.lic_type= "demo"
              log.info("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
              self.startdate=None
              if(period is None):
@@ -50,40 +50,36 @@ class License(object):
              else:
                 self.period=period
 
-
-
     def is_licensed(self):
          cur=datetime.datetime.now()
-         if(self.type is not None and self.type.lower() == "ultimate"):
+         if(self.lic_type is not None and self.lic_type.lower() == "ultimate"):
              log.info("ultimate licence is installed")
              return True
          else:
              st=get_reg(hash_name_method(self.REG_PATH+"startdate"),  "software\\")
-             st=datetime.date.fromordinal(int(st))
              if(st is None):
-                 if(self.startdate is None):
-                     st=cur
-                 else:
-                     st=parser.parse(self.startdate)
+                 st=cur.date()
                  set_reg(hash_name_method(self.REG_PATH+"startdate"), str( datetime.date.toordinal(st)), "software\\")
+             else:
+                 st=datetime.date.fromordinal(int(st))
 
              startdate=st
              lst=get_reg(hash_name_method(self.REG_PATH+"last_date"),  "software\\")
              if(lst is not None):
                  lst=datetime.date.fromordinal(int(lst))
                  if(lst>cur.date()):
-                     self.type="limited demo"
+                     self.lic_type= "limited demo"
                      log.info("Machine time error")
                      log.info("The licence is limited demo (20 nodes, 20 times steps).  please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
                      return False
              set_reg(hash_name_method(self.REG_PATH+"last_date"), str(datetime.date.toordinal(cur)), "software\\")
              if(cur.date()> startdate+datetime.timedelta(days=int(self.period))):
-                 self.type="limited demo"
+                 self.lic_type= "limited demo"
                  log.info("The licence is limited demo (20 nodes, 20 times steps) due to time restriction, please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
                  return False
              else:
-                 self.type="demo"
-                 log.info("Licence type: "+self.type+", will be limited to 20 nodes, and 20 times steps on: "+str(startdate+datetime.timedelta(days=int(self.period))))
+                 self.lic_type= "demo"
+                 log.info("Licence type: " + self.lic_type + ", will be limited to 20 nodes, and 20 times steps on: " + str(startdate + datetime.timedelta(days=int(self.period))))
                  return True
          return False
 
