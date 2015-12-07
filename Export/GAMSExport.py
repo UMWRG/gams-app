@@ -442,6 +442,6 @@ if __name__ == '__main__':
                                             message=message)
 
     log.info(text)
-    write_output( text)
+    print text
 
 

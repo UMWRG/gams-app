@@ -382,6 +382,6 @@ if __name__ == '__main__':
         write_progress(steps, steps)
     text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
     log.info(text);
-    write_output( text)
+    print text
 
 
