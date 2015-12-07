@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>GAMS Automatic run</plugin_name>
-    <plugin_dir>GAMSAutoRun.exe</plugin_dir>
+    <plugin_dir>GAMSAuto.bat</plugin_dir>
     <plugin_description>Automatically export input data file, Rum GAMS. then import  results file into Hydra.
 	</plugin_description>
 	<smallicon>icon16.png</smallicon>

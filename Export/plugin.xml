@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>Export to GAMS</plugin_name>
-    <plugin_dir>GAMSExport.exe</plugin_dir>
+    <plugin_dir>GAMSExport.bat</plugin_dir>
     <plugin_description>Export a network from Hydra to a gams input text file.
 	</plugin_description>
 	<smallicon>gams_icon16.png</smallicon>

@@ -1,6 +1,6 @@
 <plugin_info>
     <plugin_name>Import from GAMS</plugin_name>
-    <plugin_dir>GAMSImport.exe</plugin_dir>
+    <plugin_dir>GAMSImport.bat</plugin_dir>
     <plugin_description>
         Import a gdx results file into Hydra.
 	</plugin_description>

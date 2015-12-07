@@ -222,4 +222,4 @@ if __name__ == '__main__':
 
     text= PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)
     log.info(text)
-    write_output( text)
+    print text
