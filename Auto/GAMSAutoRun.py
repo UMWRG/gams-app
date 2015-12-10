@@ -1,20 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
-#\
-# GAMSAutoRun is free software: you can redistribute it and/or modify\
-# it under the terms of the GNU General Public License as published by\
-# the Free Software Foundation, either version 3 of the License, or\
-# (at your option) any later version.\
-#\
-# GAMSAutoRun is distributed in the hope that it will be useful,\
-# but WITHOUT ANY WARRANTY; without even the implied warranty of\
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\
-# GNU General Public License for more details.\
-# \
-# You should have received a copy of the GNU General Public License\
-# along with GAMSAutoRun.  If not, see <http://www.gnu.org/licenses/>\
-#
 '''
 
 plugin_name: GAMS
@@ -381,7 +365,7 @@ if __name__ == '__main__':
         message = "An unknown error has occurred"
         write_progress(steps, steps)
     text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
-    log.info(text);
-    print text
+    #log.info(text);
+    print (text)
 
 

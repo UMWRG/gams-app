@@ -1,4 +1,5 @@
-__author__ = 'Gust'
+
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
 
 from License import create_lic
 import sys

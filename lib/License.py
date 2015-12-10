@@ -1,4 +1,7 @@
-__author__ = 'Gust'
+
+# (c) Copyright 2013, 2014, 2015 University of Manchester\
+
+
 import os
 if os.name == 'nt':
     import _winreg as winreg
