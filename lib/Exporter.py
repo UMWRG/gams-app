@@ -67,7 +67,6 @@ class GAMSExporter(JSONPlugin):
                     self.scenario=s
 
 
-
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
@@ -163,12 +162,12 @@ class GAMSExporter(JSONPlugin):
         self.output += 'SETS\n\n'
         # Write all links ...
         if self.links_as_name:
-            self.output += 'links vector of all links /\n'
+            self.output += 'links (name, i, j) vector of all links /\n'
         else:
             self.output += 'links(i,j) vector of all links /\n'
         for link in self.network.links:
             if self.links_as_name:
-                self.output += link.name + '\n'
+                self.output += link.name +" . "+link.from_node+" . "+link.to_node  +'\n'
             else:
                 self.output += link.gams_name + '\n'
         self.output += '    /\n\n'
@@ -209,11 +208,14 @@ class GAMSExporter(JSONPlugin):
                 self.output += lstring
 
     def create_connectivity_matrix(self):
+        ff='{0:<'+self.name_len+'}'
+
         self.output += '* Connectivity matrix.\n'
-        self.output += 'Table Connect(i,j)\n          '
+        self.output += 'Table Connect(i,j)\n'
+        self.output +=ff.format('')
         node_names = [node.name for node in self.network.nodes]
         for name in node_names:
-            self.output += '%10s' % name
+            self.output += ff.format( name)
         self.output += '\n'
         conn = [[0 for node in node_names] for node in node_names]
         for link in self.network.links:
@@ -223,10 +225,10 @@ class GAMSExporter(JSONPlugin):
         connlen = len(conn)
         rows = []
         for i in range(connlen):
-            rows.append('%10s' % node_names[i])
+            rows.append(ff.format( node_names[i]))
             txt = []
             for j in range(connlen):
-                txt.append('%10s' % conn[i][j])
+                txt.append(ff.format( conn[i][j]))
             x = "".join(txt)
             rows.append("%s%s"%(x, '\n\n'))
 
@@ -562,7 +564,6 @@ class GAMSExporter(JSONPlugin):
 
                 if(self.time_axis is None):
                     raise HydraPluginError("MIssing time axis or start date, end date and time step or bad format")
-
 
                 attr_outputs.append('\n*'+attribute.name)
 

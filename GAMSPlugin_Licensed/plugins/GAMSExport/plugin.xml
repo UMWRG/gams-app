@@ -28,7 +28,7 @@
             <name>output</name>
             <switch>-o</switch>
             <multiple>N</multiple>
-            <allownew>N</allownew>
+            <allownew>Y</allownew>
             <argtype>file</argtype>
             <help>Filename of the output file.</help>
         </arg>
