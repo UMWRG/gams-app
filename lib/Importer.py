@@ -313,13 +313,14 @@ class GAMSImporter(JSONPlugin):
                         dataset['value'] = self.create_array(gdxvar.index,
                                                           gdxvar.data)
                     # Add data
-                    metadata={}
-                    dataset['metadata']=json.dumps(metadata)
-                    dataset['dimension']=attr.resourcescenario.value.dimension
-                    res_scen = dict(resource_attr_id = attr.id,
-                                    attr_id = attr.attr_id,
-                                    value = dataset)
-                    self.res_scenario.append(res_scen)
+                    if dataset.has_key('value'):
+                        metadata={}
+                        dataset['metadata']=json.dumps(metadata)
+                        dataset['dimension']=attr.resourcescenario.value.dimension
+                        res_scen = dict(resource_attr_id = attr.id,
+                                        attr_id = attr.attr_id,
+                                        value = dataset)
+                        self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
         for node in self.network.nodes:
@@ -348,15 +349,18 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = self.create_timeseries(index, data)
                         elif gdxvar.dim == 1:
                             for i, idx in enumerate(gdxvar.index):
+                                #print idx
                                 if node.name in idx:
                                     data = gdxvar.data[i]
                                     try:
+                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
                                         dataset['value'] = json.dumps(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = data
                                     break
+
                         elif gdxvar.dim > 1:
                             continue
                             dataset['type'] = 'array'
@@ -371,13 +375,14 @@ class GAMSImporter(JSONPlugin):
                                                               gdxvar.data)
 
                         metadata={}
-                        dataset['metadata']=json.dumps(metadata)
-                        dataset['dimension']=attr.resourcescenario.value.dimension
+                        if dataset.has_key('value'):
+                            dataset['metadata']=json.dumps(metadata)
+                            dataset['dimension']=attr.resourcescenario.value.dimension
 
-                        res_scen = dict(resource_attr_id = attr.id,
-                                        attr_id = attr.attr_id,
-                                        value = dataset)
-                        self.res_scenario.append(res_scen)
+                            res_scen = dict(resource_attr_id = attr.id,
+                                            attr_id = attr.attr_id,
+                                            value = dataset)
+                            self.res_scenario.append(res_scen)
 
         # Link attributes
         for link in self.network.links:
@@ -414,6 +419,7 @@ class GAMSImporter(JSONPlugin):
                                    idx.index(fromnode) < idx.index(tonode):
                                     data = gdxvar.data[i]
                                     try:
+                                        data_ = float(data)
                                         dataset['type'] = 'scalar'
                                         dataset['value'] = json.dumps(data)
                                     except ValueError:
@@ -433,14 +439,15 @@ class GAMSImporter(JSONPlugin):
                                     index.append(idx)
                                     data.append(gdxvar.data[i])
                             dataset['value'] = self.create_array(gdxvar.index,
-                                                              gdxvar.data)
-                        metadata={}
-                        dataset['metadata']=json.dumps(metadata)
-                        dataset['dimension']=attr.resourcescenario.value.dimension
-                        res_scen = dict(resource_attr_id = attr.id,
-                                        attr_id = attr.attr_id,
-                                        value = dataset)
-                        self.res_scenario.append(res_scen)
+                                                             gdxvar.data)
+                        if dataset.has_key('value'):
+                            metadata={}
+                            dataset['metadata']=json.dumps(metadata)
+                            dataset['dimension']=attr.resourcescenario.value.dimension
+                            res_scen = dict(resource_attr_id = attr.id,
+                                            attr_id = attr.attr_id,
+                                            value = dataset)
+                            self.res_scenario.append(res_scen)
 
     def create_timeseries(self, index, data):
         timeseries = {'0': {}}
