@@ -4,8 +4,8 @@
     <plugin_description>
         Import a gdx results file into Hydra.
 	</plugin_description>
-	<smallicon>gams_icon16.png</smallicon>
-    <largeicon>gams_icon32.png</largeicon>
+	<smallicon>gams_import16.png</smallicon>
+    <largeicon>gams_import.png</largeicon>
     <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
 	<mandatory_args>
         <arg>
