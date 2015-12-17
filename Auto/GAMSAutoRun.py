@@ -203,6 +203,8 @@ def get_input_file_name(gams_model):
     inputfilename=None
     gamsfile=open(gams_model, "r")
     for line in gamsfile:
+            if "include" not in line.lower():
+                continue
             sline = line.strip()
             if len(sline) > 0 and sline[0] == '$':
                 lineparts = sline.split()

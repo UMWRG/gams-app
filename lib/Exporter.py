@@ -162,7 +162,11 @@ class GAMSExporter(JSONPlugin):
         self.output += 'SETS\n\n'
         # Write all links ...
         if self.links_as_name:
-            self.output += 'links (name, i, j) vector of all links /\n'
+            self.output += 'link_name /\n'
+            for link in self.network.links:
+                self.output +=link.name+'\n'
+            self.output += '/\n\n'
+            self.output += 'links (link_name, i, j) vector of all links /\n'
         else:
             self.output += 'links(i,j) vector of all links /\n'
         for link in self.network.links:
@@ -408,9 +412,11 @@ class GAMSExporter(JSONPlugin):
             ff='{0:<'+self.name_len+'}'
 
             for attribute in attributes:
-
                 if islink:
-                    attr_outputs.append('\nParameter '+ attribute.name+'(i,j)\n')
+                    if self.links_as_name:
+                        attr_outputs.append('\nParameter '+ attribute.name+'(link_name, i,j)\n')
+                    else:
+                        attr_outputs.append('\nParameter '+ attribute.name+'(i,j)\n')
                 elif(res_type is 'NETWORK'):
                      attr_outputs.append('\nScalar '+ attribute.name+'\n')
                 else:
@@ -427,7 +433,11 @@ class GAMSExporter(JSONPlugin):
                         continue
 
                     if islink:
-                        attr_outputs.append(ff.format(resource.gams_name))
+                        if self.links_as_name:
+                            attr_outputs.append(ff.format(resource.name+ '.'+resource.from_node+'.'+resource.to_node))
+                            attr_outputs.append(ff.format('\t'))
+                        else:
+                             attr_outputs.append(ff.format(resource.gams_name))
                     elif(res_type is 'NETWORK'):
                          pass
                     else:
@@ -568,7 +578,10 @@ class GAMSExporter(JSONPlugin):
                 attr_outputs.append('\n*'+attribute.name)
 
                 if islink:
-                    attr_outputs.append('\nTable '+attribute.name + ' (i,j')
+                    if self.links_as_name:
+                        attr_outputs.append('\nTable '+attribute.name + ' (link_namei,j')
+                    else:
+                        attr_outputs.append('\nTable '+attribute.name + ' (i,j')
                 else:
                     attr_outputs.append('\nTable '+attribute.name + ' (i')
 
@@ -577,7 +590,13 @@ class GAMSExporter(JSONPlugin):
                 else:
                     attr_outputs.append(', t)\n')
 
-                attr_outputs.append('\n'+str(t_))
+                if self.links_as_name:
+                    attr_outputs.append('\n'+ff.format(''))
+                    attr_outputs.append(str(t_))
+                else:
+                    attr_outputs.append('\n'+str(t_))
+
+
 
                 #Identify the datasets that we need data for
                 for resource in resources:
@@ -599,7 +618,12 @@ class GAMSExporter(JSONPlugin):
                         raise HydraPluginError("Error finding value attribute %s on" 
                                               "resource %s"%(attr.name, resource.name))
                     if islink:
-                        attr_outputs.append('\n'+ff.format(resource.gams_name))
+                        if self.links_as_name:
+                            attr_outputs.append('\n'+ff.format(resource.name+ '.'+resource.from_node+'.'+resource.to_node))
+                            attr_outputs.append(ff.format('\t'))
+
+                        else:
+                            attr_outputs.append('\n'+ff.format(resource.gams_name))
                     else:
                         attr_outputs.append('\n'+ff.format(resource.name))
                     
@@ -614,7 +638,6 @@ class GAMSExporter(JSONPlugin):
                         else:
                             data=str(tmp)
                             data_str = ff.format(str(float(data)))
-
                         attr_outputs.append(data_str)
 
                 attr_outputs.append('\n')
