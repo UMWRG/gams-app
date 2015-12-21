@@ -89,7 +89,18 @@ class GAMSExporter(JSONPlugin):
 """ % (self.network.name, self.network.description,
             self.network.ID, self.network.scenario_id)
 
+    def check_links_between_nodes(self):
+        for link in self.network.links:
+            for link_ in self.network.links:
+                if(link== link_):
+                    continue
+                if(link_.to_node==link.to_node and link_.from_node==link.from_node):
+                    self.links_as_name = True
+                    break
+
     def export_network(self):
+        if self.links_as_name is False:
+            self.check_links_between_nodes()
         self.get_longest_node_link_name();
         self.output += '* Network definition\n\n'
         log.info("Exporting nodes")
