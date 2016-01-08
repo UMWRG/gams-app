@@ -32,7 +32,6 @@ class GAMSExporter(JSONPlugin):
         self.time_index = []
         self.time_axis =None
 
-
         
         self.connect(args)
         if args.time_axis is not None:
@@ -195,7 +194,10 @@ class GAMSExporter(JSONPlugin):
             else:
                 self.output += '(i,j) /\n'
             for link in self.network.get_link(link_type=object_type):
-                self.output += link.gams_name + '\n'
+                if self.links_as_name:
+                    self.output += link.name + '\n'
+                else:
+                    self.output += link.gams_name + '\n'
             self.output += '/\n\n'
 
     def export_link_groups(self):

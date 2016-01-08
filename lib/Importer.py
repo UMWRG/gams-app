@@ -399,7 +399,6 @@ class GAMSImporter(JSONPlugin):
                             dataset['unit'] = self.gams_units[gdxvar.name]
                         else:
                             dataset['unit'] ='-'
-
                         if gdxvar.name in self.gdx_ts_vars.keys():
                             dataset['type'] = 'timeseries'
                             index = []
@@ -427,19 +426,34 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = json.dumps(data)
                                     break
                         elif gdxvar.dim > 2:
-                            continue
-                            dataset['type'] = 'array'
-                            index = []
-                            data = []
-                            for i, idx in enumerate(gdxvar.index):
-                                if fromnode in idx and tonode in idx and \
-                                   idx.index(fromnode) < idx.index(tonode):
-                                    idx.pop(idx.index(fromnode))
-                                    idx.pop(idx.index(tonode))
-                                    index.append(idx)
-                                    data.append(gdxvar.data[i])
-                            dataset['value'] = self.create_array(gdxvar.index,
-                                                             gdxvar.data)
+                            is_in=False
+                            if gdxvar.dim  == 3:
+                                for i, idx in enumerate(gdxvar.index):
+                                    if idx[0] == link.name and fromnode in idx and tonode in idx:
+                                        data = gdxvar.data[i]
+                                        try:
+                                            data_ = float(data)
+                                            dataset['type'] = 'scalar'
+                                            dataset['value'] = json.dumps(data)
+                                        except ValueError:
+                                            dataset['type'] = 'descriptor'
+                                            dataset['value'] = json.dumps(data)
+                                        is_in=True
+                                        break
+                            if is_in is False:
+                                continue
+                                dataset['type'] = 'array'
+                                index = []
+                                data = []
+                                for i, idx in enumerate(gdxvar.index):
+                                    if fromnode in idx and tonode in idx and \
+                                       idx.index(fromnode) < idx.index(tonode):
+                                        idx.pop(idx.index(fromnode))
+                                        idx.pop(idx.index(tonode))
+                                        index.append(idx)
+                                        data.append(gdxvar.data[i])
+                                dataset['value'] = self.create_array(gdxvar.index,
+                                                                 gdxvar.data)
                         if dataset.has_key('value'):
                             metadata={}
                             dataset['metadata']=json.dumps(metadata)

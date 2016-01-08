@@ -40,7 +40,6 @@ class GamsModel(object):
        with open (model_file, "r") as myfile:
             model=myfile.read()
        self.model_name=self.get_model_name(model)
-       print "================================================.",self.model_name
        if self.model_name is not None:
            self.model_name=self.model_name.replace(";", "")
            model=model+"\nscalar ms; \nms="+self.model_name.strip()+".Modelstat; "
@@ -48,19 +47,7 @@ class GamsModel(object):
 
        self.job = self.ws.add_job_from_string(model)
 
-    def get_model_name_2(self, model):
-        '''
-        get the model name from the GAMS model string
-        '''
-        lines=model.split("\n")
-        for line in lines:
-            line=line.lower()
-            if line.startswith("model"):
-                line=line.replace("model","")
-                line=line.replace("/all/","")
-                model_name=line.replace(";","").strip()
-                return model_name
-        return None
+
 
     def get_model_name(self, model):
         '''
