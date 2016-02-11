@@ -254,7 +254,7 @@ class GAMSExporter(JSONPlugin):
     def export_resources_coordinates(self):
         ff='{0:<'+self.name_len+'}'
         threeplaces = Decimal('0.001')
-        self.output += ('\nParameter x (i)/\n')
+        self.output += ('\nParameter x_coord (i)/\n')
 
         for node in self.network.nodes:
             self.output += (ff.format(node.name))
@@ -262,14 +262,13 @@ class GAMSExporter(JSONPlugin):
             self.output += (ff.format(x_coord))
             self.output += ('\n')
 
-        self.output += ('/;\n\nParameter y (i)/\n')
+        self.output += ('/;\n\nParameter y_coord (i)/\n')
         for node in self.network.nodes:
             self.output += (ff.format(node.name))
             y_coord = Decimal(node.Y).quantize(threeplaces)
             self.output += (ff.format(y_coord))
             self.output += ('\n')
         self.output += ('/;\n\n');
-
 
     def export_data_using_types(self):
         log.info("Exporting data")
@@ -586,7 +585,7 @@ class GAMSExporter(JSONPlugin):
             for attribute in attributes:
 
                 if(self.time_axis is None):
-                    raise HydraPluginError("MIssing time axis or start date, end date and time step or bad format")
+                    raise HydraPluginError("Missing time axis or start date, end date and time step or bad format")
 
                 attr_outputs.append('\n*'+attribute.name)
 
@@ -708,6 +707,7 @@ class GAMSExporter(JSONPlugin):
         attributes = []
         attr_names = []
         attr_outputs = []
+        ff='{0:<'+self.name_len+'}'
         for resource in resources:
             for attr in resource.attributes:
                 if attr.dataset_type == 'array' and attr.is_var is False:
@@ -718,65 +718,92 @@ class GAMSExporter(JSONPlugin):
         if len(attributes) > 0:
             # We have to write the complete array information for every single
             # node, because they might have different sizes.
-            for resource in resources:
+             att_res_dims={}
+             for attribute in attributes:
                 # This exporter only supports 'rectangular' arrays
-                for attribute in attributes:
+                dim_=None
+                for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
                     if attr is not None and attr.value is not None:
-                        
                         array=json.loads(attr.value)
                         dim = self.get_dim(array)
-                        attr_outputs.append('* Array %s for node %s, ' % \
-                            (attr.name, resource.name))
-                        attr_outputs.append('dimensions are %s\n\n' % dim)
-                        # Generate array indices
-                        attr_outputs.append('SETS\n\n')
-                        indexvars = list(ascii_lowercase)
-                        for i, n in enumerate(dim):
-                            attr_outputs.append(indexvars[i] + '_' + \
-                                resource.name + '_' + attr.name +"_"+ str(i)+\
-                                ' array_'+str(i)+' index /\n')
-                            for idx in range(n):
-                                attr_outputs.append(str(idx) + '\n')
-                            attr_outputs.append('/\n\n')
+                        if (dim_ is None):
+                            dim_=dim
+                        elif(dim > dim_):
+                            dim_=dim
+                att_res_dims[attribute]=dim
+             for attribute in attributes:
+                # This exporter only supports 'rectangular' arrays
+                dim=att_res_dims[attribute]
+                if len(dim) is not 1:
+                    continue
 
-                        attr_outputs.append('Table ' + resource.name + '_' + \
-                            attr.name + '(')
+                attr_outputs.append('* Array for attribute %s, ' % \
+                            (attribute.name))
+                attr_outputs.append('dimensions are %s\n\n' % dim)
+                        # Generate array indices
+                attr_outputs.append('SETS\n\n')
+                indexvars = list(ascii_lowercase)
+                attr_outputs.append(attribute.name +"_index"+'/\n')
+                if(len(dim)==1):
+                    for idx in range(dim[0]):
+                        attr_outputs.append(str(idx+1) + '\n')
+                attr_outputs.append('/\n')
+                attr_outputs.append('Table '+  attribute.name + ' (i,'+attribute.name+'_index)\n\n')
+                attr_outputs.append(ff.format(''))
+                for k  in range (dim[0]):
+                    attr_outputs.append(ff.format(str(k+1)))
+                attr_outputs.append('\n')
+
+                for resource in resources:
+                    attr = resource.get_attribute(attr_name=attribute.name)
+                    if attr is not None and attr.value is not None:
+                        array=json.loads(attr.value)
+                        #dim = self.get_dim(array)
+                        '''
                         for i, n in enumerate(dim):
                             attr_outputs.append(indexvars[i] + '_' + resource.name \
                                 + '_' + attr.name+"_"+str(i))
                             if i < (len(dim) - 1):
                                 attr_outputs.append(',')
                         attr_outputs.append(') \n\n')
+
                         ydim = dim[-1]
 
                         if len(dim)>1:
                             for y in range(ydim):
                                 attr_outputs.append('{0:20}'.format(y))
                             attr_outputs.append('\n')
-                        i=0  
-                        for item in array:
-                            attr_outputs.append("\n")
-                            c=0
-                            if type(item) is list:
-                                attr_outputs.append(format(str(i) + " . " + str(c)))
-                                i+=1
-                                for value in item:
-                                    if c is 0:
-                                       attr_outputs.append('{0:15}'.format(value))
-                                    else:
-                                         attr_outputs.append('{0:20}'.format(value))
-                                    c+=1
-                            else:
-                                attr_outputs.append(format(str(i)))
-                                i+=1
-                                if c is 0:
-                                    attr_outputs.append('{0:15}'.format(value))
+                        '''
+                        i=0
+                        attr_outputs.append(ff.format(resource.name))
+                        if(len(dim) is 1):
+                            for k  in range (dim[0]):
+                                item=array[k]
+
+                                ##attr_outputs.append("\n")
+                                c=0
+                                if(item is None):
+                                    pass
+                                elif type(item) is list:
+                                    attr_outputs.append(format(str(i) + " . " + str(c)))
+                                    i+=1
+                                    for value in item:
+                                        if c is 0:
+                                           attr_outputs.append('{0:15}'.format(value))
+                                        else:
+                                             attr_outputs.append('{0:20}'.format(value))
+                                        c+=1
                                 else:
-                                    attr_outputs.append('{0:20}'.format(item))
-                                c+=1
-                        attr_outputs.append('\n')
-                        attr_outputs.append('\n\n')
+                                    #attr_outputs.append(format(str(i)))
+                                    i+=1
+                                    if c is 0:
+                                        attr_outputs.append(ff.format(item))
+                                    else:
+                                        attr_outputs.append(ff.format(item))
+                                    c+=1
+                            attr_outputs.append('\n')
+        attr_outputs.append('\n\n')
         return attr_outputs
 
 
