@@ -8,6 +8,7 @@ from HydraLib import PluginLib
 import re
 import logging
 import json
+import copy
 
 from operator import mul
 
@@ -140,6 +141,7 @@ class GAMSImporter(JSONPlugin):
     def read_gdx_data(self):
         """Read variables and data from GDX file.
         """
+        print ""
         for i in range(self.symbol_count):
             gdx_variable = GDXvariable()
             
@@ -155,6 +157,9 @@ class GAMSImporter(JSONPlugin):
                 gdx_variable.index.append(idx)
                 gdx_variable.data.append(data[0])
             self.gdx_variables.update({gdx_variable.name: gdx_variable})
+            #print "name ====>", gdx_variable.name
+            #print "index====>", gdx_variable.index
+            #print "data ====>", gdx_variable,data
 
     def load_gams_file(self, gms_file):
         """Read in the .gms file.
@@ -362,17 +367,21 @@ class GAMSImporter(JSONPlugin):
                                     break
 
                         elif gdxvar.dim > 1:
-                            continue
                             dataset['type'] = 'array'
                             index = []
                             data = []
-                            for i, idx in enumerate(gdxvar.index):
+                            inx=copy.deepcopy(gdxvar.index)
+                            dat=copy.deepcopy(gdxvar.data)
+                            for i, idx in enumerate(inx):
                                 if node.name in idx:
                                     idx.pop(idx.index(node.name))
                                     index.append(idx)
-                                    data.append(gdxvar.data[i])
-                            dataset['value'] = self.create_array(gdxvar.index,
-                                                              gdxvar.data)
+                                    data.append(dat[i])
+                            #print "index: ",index
+
+                            #self.arrange_array(gdxvar.index, gdxvar.data)
+                            dataset['value'] = self.create_array(inx,
+                                                              dat)
 
                         metadata={}
                         if dataset.has_key('value'):
@@ -463,6 +472,22 @@ class GAMSImporter(JSONPlugin):
                                             value = dataset)
                             self.res_scenario.append(res_scen)
 
+    def create_array(self, index, data):
+        elements={}
+        i=0;
+        for key in index:
+            if type (key) is list and len(key) is 1:
+                try:
+                    elements[int (key[0])]=data[i]
+                except Exception:
+                    elements[key[0]]=data[i]
+            i+=1
+        values=[]
+        sss=sorted(elements.keys())
+        for s in sss:
+            values.append(elements[s])
+        return json.dumps(values)
+
     def create_timeseries(self, index, data):
         timeseries = {'0': {}}
         for i, idx in enumerate(index):
@@ -473,7 +498,7 @@ class GAMSImporter(JSONPlugin):
 
         return json.dumps(timeseries)
 
-    def create_array(self, index, data):
+    def create_array_(self, index, data):
         dimension = len(index[0])
         extent = []
         for n in range(dimension):
@@ -502,7 +527,9 @@ class GAMSImporter(JSONPlugin):
                 outer_array.append(inner_array)
             array = outer_array
             extent = extent[0:-1]
-
+        print array
+        print len(array)
+        print type(array)
         hydra_array = dict(arr_data = PluginLib.create_dict(array))
 
         return hydra_array
