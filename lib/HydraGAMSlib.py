@@ -19,14 +19,13 @@ class GamsModel(object):
             gamspath=get_gams_path()
 
         log.info("Using GAMS Path: %s", gamspath)
-
         try:
             real_path = os.path.realpath(os.path.abspath(gamspath))
             api_path = os.path.join(real_path,'apifiles','Python','api')
             if api_path not in sys.path:
                 sys.path.insert(0, api_path)
             from gams import  workspace
-            self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 3)
+            self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 1)
 
         except Exception as e:
             raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")

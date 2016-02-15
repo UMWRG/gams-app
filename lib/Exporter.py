@@ -749,7 +749,7 @@ class GAMSExporter(JSONPlugin):
                     for idx in range(dim[0]):
                         attr_outputs.append(str(idx+1) + '\n')
                 attr_outputs.append('/\n')
-                attr_outputs.append('Table '+  attribute.name + ' (i,'+attribute.name+'_index)\n\n')
+                attr_outputs.append('Table '+  attribute.name + ' (i, *)\n\n')#+attribute.name+'_index)\n\n')
                 attr_outputs.append(ff.format(''))
                 for k  in range (dim[0]):
                     attr_outputs.append(ff.format(str(k+1)))

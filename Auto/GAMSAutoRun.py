@@ -206,7 +206,8 @@ def get_input_file_name(gams_model):
             if "include" not in line.lower():
                 continue
             sline = line.strip()
-            if len(sline) > 0 and sline[0] == '$':
+            print sline
+            if len(sline) > 0 and sline[0].startswith('$'):
                 lineparts = sline.split()
                 if lineparts[1] == 'include':
                     name=sline
@@ -217,6 +218,16 @@ def get_input_file_name(gams_model):
                     name=name.strip()
                     inputfilename=os.path.join(os.path.dirname(gams_model),name)
                     break
+                elif lineparts[0] == '$include':
+                    name=sline
+                    name=name.replace('$','')
+                    name=name.replace('"','')
+                    name=name.replace(';','')
+                    name=name.replace('include','')
+                    name=name.strip()
+                    inputfilename=os.path.join(os.path.dirname(gams_model),name)
+                    break
+
     gamsfile.close()
     log.info("Exporting data to: %s", inputfilename)
     return inputfilename
