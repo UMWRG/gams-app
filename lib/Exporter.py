@@ -72,7 +72,7 @@ class GAMSExporter(JSONPlugin):
         if(is_licensed is False):
             if len(self.network.nodes)>20:
                 raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
-            if len (self.time_axis)>20:
+            if self.time_axis is not None and len (self.time_axis)>20:
                 raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
         log.info("Gams network loaded")
         self.network.gams_names_for_links(use_link_name=self.links_as_name)
