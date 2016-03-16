@@ -1,17 +1,16 @@
-# GAMSApp
+#GAMSApp
 
-plugin_name: GAMSExporter
---------------------------
+##plugin name: GAMSExporter
+
 The plug-in provides an easy to use tool for exporting data from
 HydraPlatform to custom GAMS models. The basic idea is that this plug-in
 exports a network and associated data from HydraPlatform to a text file which
 can be imported into an existing GAMS model using the ``$ import`` statement.
 
-Using the commandline tool
---------------------------
+###Using the command line tool
 
 
-**Mandatory arguments:**
+####Mandatory arguments:
 
 
 Option                | Short |  Parameter | Description
@@ -21,7 +20,7 @@ Option                | Short |  Parameter | Description
 --template-id    |      -tp   |  TEMPLATE   |ID of the template used for exporting resources. Attributes that don't belong to this template are ignored.
 --output        |       -o   |   OUTPUT |    Filename of the output file.
 
-**Optional arguments:**
+####Optional arguments:
 
 Option                | Short |  Parameter | Description
 -------------------- | -------- | ---------- | -------------------------------------------
@@ -29,19 +28,16 @@ Option                | Short |  Parameter | Description
 --group_links-by    |   -gl  |   GROUP_ATTR | Group links by this attribute(s).
 
 
-**Switches:**
+####Switches:
 
 Option                | Short |   Description
 -------------------- | ---------- | -------------------------------------------
 --export_by_type    |   -et   | Set export data based on types or based  on attributes only, default is export data by attributes unless this option is set.
 
 
+####Specifying the time axis
 
-Specifying the time axis
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-One of the following two options for specifying the time domain of the model is
-mandatory:
+One of the following two options for specifying the time domain of the model is mandatory. 
 
 **Option 1:**
 
@@ -49,7 +45,7 @@ Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
 --start-date    |       -st |    START_DATE | Start date of the time period used for simulation.
 --end-date      |       -en |    END_DATE |  End date of the time period used for simulation.
---time-step       |     -dt |    TIME_STEP |  Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)
+--time-step       |     -dt |    TIME_STEP |  Time step used for simulation. The time step needs to be specified as a valid time length as supported by Hydra's unit conversion function (e.g. 1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr).
 
 **Option 2:**
 
@@ -57,8 +53,8 @@ Option                | Short |  Parameter | Description
 -------------------- | -------- | ---------- | -------------------------------------------
 --time-axis  |          -tx |    TIME_AXIS  |Time axis for the modelling period (a list of comma separated time stamps).
 
-plugin_name: GAMSAuto
-----------------------
+##plugin name: GAMSAuto
+
 The GAMSAutoRun plug-in provides an easy to:
 
             - Export a network from Hydra to a gams input text file.
@@ -66,7 +62,9 @@ The GAMSAutoRun plug-in provides an easy to:
             - Import a gdx results file into Hydra.
 
 
-**Mandatory Args:**
+###Using the command line tool
+
+####Mandatory Args:
 
 Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
@@ -77,7 +75,7 @@ Option                | Short |  Parameter | Description
 --gams-model|           -m|      GMS_FILE|   Full path to the GAMS model (*.gms) used for the simulation.
 
 
-**Server-based arguments**
+####Server-based arguments
 
 Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
@@ -86,7 +84,7 @@ Option                | Short |  Parameter | Description
 --gams-path|            -G|     GAMS_PATH  |File path of the GAMS installation.
 --gdx-file|             -f|     GDX_FILE   |GDX file containing GAMS results
 
-**Optional arguments:**
+####Optional arguments:
 
 Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
@@ -94,21 +92,16 @@ Option                | Short |  Parameter | Description
 --group_links-by       -gl|    GROUP_ATTR |Group links by this attribute(s).
 
 
-**Switches:**
+####Switches:
 
 Option                | Short |Description
 ------------------- | -------- | -------------------------------------------
 --export_by_type|       -et|    Set export data based on types or based on attributes only, default is export data by attributes unless this option  is set.
 
 
-For Export function:
-====================
+####Specifying the time axis
 
-Specifying the time axis
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-One of the following two options for specifying the time domain of the model is
-mandatory:
+One of the following two options for specifying the time domain of the model is mandatory:
 
 **Option 1:**
 
@@ -126,15 +119,14 @@ Option                | Short |  Parameter | Description
 --time-axis|             -tx|    TIME_AXIS|  Time axis for the modelling period (a list of comma separated time stamps).
  
 
-plugin_name: GAMSImporter	          
+#plugin name: GAMSImporter	          
 
 This plug-in imports results after running a GAMS model. All results need to
 be stored in a *.gdx file (the GAMS proprietary binary format). Also, variables
 that will be imported need to be present in HydraPlatform, before results can
 be loaded. We strongly recommend the use of a template.
 
-Basics
-~~~~~~
+##Basics
 
 The GAMS import plug-in provides an easy to use tool to import results from a
 model run back into HydraPlatform. It is recommended that the input data for
@@ -144,7 +136,7 @@ presence of variables (attributes) in HydraPlatform that will hold the results
 after import.
 
 
-**Mandatory Arguments:**
+####Mandatory Arguments:
 
 
 Option                | Short |  Parameter | Description
@@ -155,14 +147,14 @@ Option                | Short |  Parameter | Description
 --gdx-file|            -f|     GDX_FILE|   GDX file containing GAMS results
 
 
-**Server-based arguments:**
+####Server-based arguments:
 
 Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
 --server_url|           -u|     SERVER_URL| Url of the server the plugin will connect to Defaults to localhost.
 --session_id|           -c|     SESSION_ID| Session ID used by the calling software If left empty, the plugin will attempt to log in itself.
 
-**Manually specifying the gams path:**
+####Manually specifying the gams path:
 
 Option                | Short |  Parameter | Description
 ------------------- | -------- | ---------- | -------------------------------------------
