@@ -176,12 +176,16 @@ if __name__ == '__main__':
 
         if(args.gams_path==None):
             args.gams_path=get_gams_path()
-
+            log.info ("1===================>"+ args.gams_path)
+        else:
+            log.info("2===================>"+ args.gams_path)
         try:
             real_path = os.path.realpath(os.path.abspath(args.gams_path))
             api_path = os.path.join(real_path,'apifiles','Python','api')
             if api_path not in sys.path:
                 sys.path.insert(0, api_path)
+                log.info ("real_path: "+ real_path)
+            log.info("api_path: "+ api_path)
 
 
         except Exception as e:

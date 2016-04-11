@@ -777,9 +777,18 @@ class GAMSExporter(JSONPlugin):
                         '''
                         i=0
                         attr_outputs.append(ff.format(resource.name))
+                        #print "len(dim): ", len(dim)
+                        #print "array len: ", len(array)
+                        #print array
                         if(len(dim) is 1):
+                            #print "dime[0]: ", dim[0]
                             for k  in range (dim[0]):
-                                item=array[k]
+                                #print k, "It is ", len(array)
+                                if len(array)==dim[0]:
+                                    item=array[k]
+                                elif len(array[0])==dim[0]:
+                                     item=array[0][k]
+
 
                                 ##attr_outputs.append("\n")
                                 c=0
