@@ -42,11 +42,10 @@ class GamsModel(object):
        if self.model_name is not None:
            self.model_name=self.model_name.replace(";", "")
            model=model+"\nscalar ms; \nms="+self.model_name.strip()+".Modelstat; "
-
+           model = model + "\nscalar Sos; \nSos=" + self.model_name.strip() + ".Solvestat; "
+           #model = model + "\nscalar TSos; \nTSos=" + self.model_name.strip() + ".Tsolstat; "
 
        self.job = self.ws.add_job_from_string(model)
-
-
 
     def get_model_name(self, model):
         '''
@@ -65,6 +64,78 @@ class GamsModel(object):
                 return model_name
         return None
 
+    def get_dict(self, obj):
+        if not hasattr(obj, "__dict__"):
+            return obj
+        result = {}
+        for key, val in obj.__dict__.items():
+
+           # if key.startswith("_"):
+              #  continue
+            if isinstance(val, list):
+                element = []
+                for item in val:
+                    element.append(self.get_dict(item))
+            else:
+                element = self.get_dict(obj.__dict__[key])
+            result[key] = element
+        return result
+
+    def check_model_status(self, status_key):
+        error=None
+        if (status_key == 4):
+            error='Infeasible model found.'
+        elif status_key == 5:
+            error=('locally infeasible model found.')
+        elif status_key == 6:
+            error='Solver terminated early and model was still infeasible.'
+        elif status_key == 7:
+            error='Solver terminated early and model was feasible but not yet optimal.'
+        elif status_key == 11:
+            error='GAMS and/or solver licensing problem.'
+        elif status_key == 12:
+            error='Error - No cause known.'
+        elif status_key == 13:
+            error='Error - No solution attained.'
+        elif status_key == 14:
+            error='No solution returned.'
+        elif status_key == 18:
+            error='Unbounded - no solution.'
+        elif status_key == 19:
+            error='Infeasible - no solution.'
+        return error
+
+    def check_solver_status(self,s_status):
+        error = None
+        if(s_status== 2):
+            error="Solver ran out of iterations"
+        elif (s_status == 3):
+            error="Solver exceeded time limit"
+        elif (s_status == 4):
+            error="Solver quit with a problem"
+        elif (s_status == 5):
+            error="Solver quit with nonlinear term evaluation errors"
+        elif(s_status == 6):
+            error="Solver terminated because the model is beyond the solvers capabilities"
+        elif (s_status == 7):
+            error="solver terminated with a license error"
+        elif (s_status == 8):
+            error="olver terminated on users request(e.g.Ctrl - C)"
+        elif (s_status == 9):
+            error="Solver terminated on setup error"
+        elif (s_status == 10):
+            error="Solver terminated with error"
+        elif (s_status == 11):
+            error="Solver terminated with error"
+        elif (s_status == 12):
+            error="Solve skipped"
+        elif (s_status == 13):
+            error="Other error"
+        elif (s_status> 14):
+            error="Undefined condition"
+        return error
+
+
     def run(self):
         '''
         run the GAMS model
@@ -74,35 +145,18 @@ class GamsModel(object):
         if self.model_name is not None:
             try:
                 status=self.job.out_db["ms"].find_record().value
+                s_status = self.job.out_db["Sos"].find_record().value
+                #t_status=self.job.out_db["TSos"].find_record().value
+
             except:
                 log.warn("Could not check solver and model termination status.")
                 return
 
             log.warn("status: " + str(status))
-            if (status == 4):
-                raise HydraPluginError('Infeasible model found.')
-            elif status == 5:
-                raise HydraPluginError('locally infeasible model found.')
-            elif status == 6:
-                raise HydraPluginError('Solver terminated early and model was still infeasible.')
-            elif status == 7:
-                raise HydraPluginError('Solver terminated early and model was feasible but not yet optimal.')
-            elif status == 11:
-                raise HydraPluginError('GAMS and/or solver licensing problem.')
-            elif status == 12:
-                raise HydraPluginError('Error - No cause known.')
-            elif status == 13:
-                raise HydraPluginError('Error - No solution attained.')  #
-            elif status == 14:
-                raise HydraPluginError('No solution returned.')
-            elif status == 18:
-                raise HydraPluginError('Unbounded - no solution.')
-            elif status == 19:
-                raise HydraPluginError('Infeasible - no solution.')
-
-
-
-
+            modelerror=self.check_model_status(status)
+            solvererror=self.check_solver_status(s_status)
+            if(modelerror is not None or solvererror is not None):
+                raise HydraPluginError("Model error: "+str(modelerror)+"\nSolver error: "+str(solvererror))
 
 class GAMSnetwork(HydraNetwork):
     def gams_names_for_links(self, use_link_name=False):
@@ -238,7 +292,7 @@ def get_gams_path():
                                 raise HydraPluginError("Only GAMS versions of 24.1 and above are supported automatically."
                                             " Please download the newest GAMS from (http://www.gams.com/download/) or "
                                             " specify the folder containing gams API using --gams-path")
-                        else:   
+                        else:
                             gams_path = gams_win_dir + gams_versions[-1]
         else:
             base = '/opt/gams/'
@@ -253,10 +307,12 @@ def get_gams_path():
 
         if gams_path is not None:
             return gams_path
-        else:  
+        else:
             raise HydraPluginError("Unable to find GAMS installation. Please specify folder containing gams executable.")
     else:
         return gams_path
+
+
 key="12/FfCHspo*&s}:QMwd><s?:"
 lic_file="gasm_l.bin"
 REG_PATH="gams\lic"
