@@ -43,10 +43,12 @@ class GAMSImporter(JSONPlugin):
 
     def __init__(self, args, connection=None):
         import gdxcc
+        print "========================>>>>>>", gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
+        log.info("1 =========================>"+str(self.gdx_handle))
         rc = gdxcc.gdxCreate(self.gdx_handle, gdxcc.GMS_SSSIZE)
-        log.info("=============================>"+ str(rc))
+        log.info("2 =============================>"+ str(rc))
         if rc[0] == 0:
             raise HydraPluginError('Could not find GAMS installation.')
         self.symbol_count = 0

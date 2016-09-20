@@ -1,5 +1,5 @@
 
-# (c) Copyright 2013, 2014, 2015 University of Manchester\
+# (c) Copyright 2013, 2014, 2015, 2016 University of Manchester\
 
 from string import ascii_lowercase
 
@@ -18,9 +18,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class GAMSExporter(JSONPlugin):
-
     def __init__(self, args):
-
         if args.template_id is not None:
             self.template_id = int(args.template_id)
 
@@ -31,6 +29,9 @@ class GAMSExporter(JSONPlugin):
         self.filename = args.output
         self.time_index = []
         self.time_axis =None
+        self.sets=[]
+        self.hashtables_keys={}
+        self.output=''
 
         
         self.connect(args)
@@ -47,8 +48,6 @@ class GAMSExporter(JSONPlugin):
         else:
             self.links_as_name = False
 
-
-
         self.attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(self.attrs))
 
@@ -57,6 +56,7 @@ class GAMSExporter(JSONPlugin):
                                                    'include_data': 'Y',
                                                    'template_id':self.template_id,
                                                    'scenario_ids':[self.scenario_id]})
+
         self.hydranetwork=net
         log.info("Network retrieved")
 
@@ -65,7 +65,7 @@ class GAMSExporter(JSONPlugin):
                 if s.id == self.scenario_id:
                     self.scenario=s
 
-
+        self.resourcescenarios_ids=get_resourcescenarios_ids(net.scenarios[0].resourcescenarios)
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
@@ -77,7 +77,7 @@ class GAMSExporter(JSONPlugin):
         log.info("Gams network loaded")
         self.network.gams_names_for_links(use_link_name=self.links_as_name)
         log.info("Names for links retrieved")
-        self.output = """* Data exported from Hydra using GAMSplugin.
+        self.sets = """* Data exported from Hydra using GAMSplugin.
 * (c) Copyright 2015, University of Manchester
 *
 * %s: %s
@@ -101,7 +101,7 @@ class GAMSExporter(JSONPlugin):
         if self.links_as_name is False:
             self.check_links_between_nodes()
         self.get_longest_node_link_name();
-        self.output += '* Network definition\n\n'
+        self.sets += '* Network definition\n\n'
         log.info("Exporting nodes")
         self.export_nodes()
         log.info("Exporting node groups")
@@ -126,23 +126,23 @@ class GAMSExporter(JSONPlugin):
         self.array_len=str(node_name_len*2+15)
 
     def export_nodes(self):
-        self.output += 'SETS\n\n'
+        self.sets += 'SETS\n\n'
         # Write all nodes ...
-        self.output += 'i vector of all nodes /\n'
+        self.sets += 'i vector of all nodes /\n'
         for node in self.network.nodes:
-            self.output += node.name + '\n'
-        self.output += '    /\n\n'
+            self.sets += node.name + '\n'
+        self.sets += '    /\n\n'
         # ... and create an alias for the index i called j:
-        self.output += 'Alias(i,j)\n\n'
+        self.sets += 'Alias(i,j)\n\n'
         # After an 'Alias; command another 'SETS' command is needed
-        self.output += '* Node types\n\n'
-        self.output += 'SETS\n\n'
+        self.sets += '* Node types\n\n'
+        self.sets += 'SETS\n\n'
         # Group nodes by type
         for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.output += object_type + '(i) /\n'
+            self.sets += object_type + '(i) /\n'
             for node in self.network.get_node(node_type=object_type):
-                self.output += node.name + '\n'
-            self.output += '/\n\n'
+                self.sets += node.name + '\n'
+            self.sets += '/\n\n'
 
     def export_node_groups(self):
         "Export node groups if there are any."
@@ -160,45 +160,45 @@ class GAMSExporter(JSONPlugin):
                 group_strings.append(gstring)
 
         if len(node_groups) > 0:
-            self.output += '* Node groups\n\n'
-            self.output += 'node_groups vector of all node groups /\n'
+            self.sets += '* Node groups\n\n'
+            self.sets += 'node_groups vector of all node groups /\n'
             for group in node_groups:
-                self.output += group.name + '\n'
-            self.output += '/\n\n'
+                self.sets += group.name + '\n'
+            self.sets += '/\n\n'
             for gstring in group_strings:
-                self.output += gstring
+                self.sets += gstring
 
     def export_links(self):
-        self.output += 'SETS\n\n'
+        self.sets += 'SETS\n\n'
         # Write all links ...
         if self.links_as_name:
-            self.output += 'link_name /\n'
+            self.sets += 'link_name /\n'
             for link in self.network.links:
-                self.output +=link.name+'\n'
-            self.output += '/\n\n'
-            self.output += 'links (link_name, i, j) vector of all links /\n'
+                self.sets +=link.name+'\n'
+            self.sets += '/\n\n'
+            self.sets += 'links (link_name, i, j) vector of all links /\n'
         else:
-            self.output += 'links(i,j) vector of all links /\n'
+            self.sets += 'links(i,j) vector of all links /\n'
         for link in self.network.links:
             if self.links_as_name:
-                self.output += link.name +" . "+link.from_node+" . "+link.to_node  +'\n'
+                self.sets += link.name +" . "+link.from_node+" . "+link.to_node  +'\n'
             else:
-                self.output += link.gams_name + '\n'
-        self.output += '    /\n\n'
+                self.sets += link.gams_name + '\n'
+        self.sets += '    /\n\n'
         # Group links by type
-        self.output += '* Link types\n\n'
+        self.sets += '* Link types\n\n'
         for object_type in self.network.get_link_types(template_id=self.template_id):
-            self.output += object_type
+            self.sets += object_type
             if self.links_as_name:
-                self.output += ' /\n'
+                self.sets += ' /\n'
             else:
-                self.output += '(i,j) /\n'
+                self.sets += '(i,j) /\n'
             for link in self.network.get_link(link_type=object_type):
                 if self.links_as_name:
-                    self.output += link.name + '\n'
+                    self.sets += link.name + '\n'
                 else:
-                    self.output += link.gams_name + '\n'
-            self.output += '/\n\n'
+                    self.sets += link.gams_name + '\n'
+            self.sets += '/\n\n'
 
     def export_link_groups(self):
         "Export link groups if there are any."
@@ -217,12 +217,12 @@ class GAMSExporter(JSONPlugin):
 
         if len(link_groups) > 0:
             self.output += '* Link groups\n\n'
-            self.output += 'link_groups vector of all link groups /\n'
+            self.sets += 'link_groups vector of all link groups /\n'
             for group in link_groups:
-                self.output += group.name + '\n'
-            self.output += '/\n\n'
+                self.sets += group.name + '\n'
+            self.sets += '/\n\n'
             for lstring in link_strings:
-                self.output += lstring
+                self.sets += lstring
 
     def create_connectivity_matrix(self):
         ff='{0:<'+self.name_len+'}'
@@ -282,7 +282,8 @@ class GAMSExporter(JSONPlugin):
             data.extend(self.export_parameters_using_type(nodes, node_type, 'scalar'))
             data.extend(self.export_parameters_using_type(nodes, node_type, 'descriptor'))
             data.extend(self.export_timeseries_using_type(nodes, node_type))
-            data.extend(self.export_arrays(nodes))
+            # data.extend(self.export_arrays(nodes))
+            data.extend(self.export_hashtable(nodes))
 
         # Export link data for each node type
         data.append('* Link data\n\n')
@@ -292,7 +293,8 @@ class GAMSExporter(JSONPlugin):
             data.extend(self.export_parameters_using_type(links, link_type, 'scalar', res_type='LINK'))
             data.extend(self.export_parameters_using_type(links, link_type,'descriptor', res_type='LINK'))
             data.extend(self.export_timeseries_using_type(links, link_type, res_type='LINK'))
-            self.export_arrays(links)
+            #self.export_arrays(links)
+            data.extend(self.export_hashtable(links))
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
@@ -301,21 +303,25 @@ class GAMSExporter(JSONPlugin):
         # Export node data for each node
 
         self.time_table={}
-        data = ['* Network data\n']
+        data = ['\n* Network data\n']
         data.extend(self.export_parameters_using_attributes([self.network],'scalar',res_type='NETWORK'))
-        data.append('\n* Nodes data\n')
+        data.extend(self.export_hashtable([self.network],res_type='NETWORK'))
+
+        data.append('\n\n\n* Nodes data\n')
         data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
         data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
         data.extend(self.export_timeseries_using_attributes (self.network.nodes))
-        data.extend(self.export_arrays(self.network.nodes)) #?????
+        #data.extend(self.export_arrays(self.network.nodes)) #?????
+        data.extend(self.export_hashtable(self.network.nodes))
 
         # Export link data for each node
-        data.append('* Links data\n')
+        data.append('\n\n\n* Links data\n')
         #links = self.network.get_link(link_type=link_type)
         data.extend(self.export_parameters_using_attributes (self.network.links,'scalar', res_type='LINK'))
         data.extend(self.export_parameters_using_attributes (self.network.links, 'descriptor', res_type='LINK'))
         data.extend(self.export_timeseries_using_attributes (self.network.links, res_type='LINK'))
         self.export_arrays(self.network.links) #??????
+        data.extend(self.export_hashtable(self.network.links, res_type = 'LINK'))
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
@@ -403,7 +409,6 @@ class GAMSExporter(JSONPlugin):
                             pass
                         else:
                             length += 1
-
 
     def export_parameters_using_attributes (self, resources, datatype, res_type=None):
             """Export scalars or descriptors.
@@ -698,8 +703,189 @@ class GAMSExporter(JSONPlugin):
                     break
         else:
              dim.append(len(arr))
-
         return dim
+
+
+    def export_hashtable (self, resources,res_type=None):
+        """Export hashtable which includes seasonal data .
+                    """
+        islink = res_type == 'LINK'
+        attributes = []
+        attr_names = []
+        attr_outputs = []
+        ids={}
+        data_types={}
+        sets_namess={}
+        # Identify all the timeseries attributes and unique attribute
+        # names
+        for resource in resources:
+            for attr in resource.attributes:
+                if attr.dataset_type == 'array' and attr.is_var is False:
+                    attr.name = translate_attr_name(attr.name)
+                    if attr.name  in ids.keys():
+                        ar=ids[attr.name ]
+                    else:
+                        ar=[]
+                        ids[attr.name ]=ar
+                    ar.append({resource:self.resourcescenarios_ids[attr.resource_attr_id]})
+                    if attr.name not in data_types.keys():
+                        type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
+                        if "type" in type_.keys():
+                            data_types[attr.name]=type_["type"].lower()
+                    if attr.name not in sets_namess.keys():
+                        if "key" in type_.keys():
+                            sets_namess[attr.name] = type_["key"].lower()
+
+                    if "sub_key" in type_.keys():
+                        if attr.name+"_sub_key" not in sets_namess.keys():
+                            sets_namess[attr.name+"_sub_key"] = type_["sub_key"].lower()
+
+        for attribute_name in ids.keys():
+            attr_outputs.append('\n\n\n*' + attribute_name)
+            ff = '{0:<' + self.array_len + '}'
+            t_ = ff.format('')
+            counter=0
+            type_= data_types[attribute_name]
+            if attribute_name in sets_namess.keys():
+                set_name=sets_namess[attribute_name]
+            else:
+                set_name=attribute_name+"_index"
+            if(type_ == "hashtable" or type_ == "seasonal" ):
+                for res in ids[attribute_name]:
+                    resource=res.keys()[0]
+                    value_=json.loads(res.values()[0].value.value)
+
+                    keys=value_[0]
+                    if (set_name not in self.hashtables_keys.keys()):
+                        self.hashtables_keys[set_name]=keys
+
+                    values=value_[1]
+                    for key in keys:
+                        t_ = t_ + ff.format(key)
+                    if(counter ==0):
+                        if islink:
+                            if self.links_as_name:
+                                attr_outputs.append('\n\nnTable ' + attribute_name + ' (link_namei,j, '+set_name+')')
+                            else:
+                                attr_outputs.append('\n\nTable ' + attribute_name + ' (i,j, '+set_name+')')
+                        elif res_type == "NETWORK":
+                            attr_outputs.append('\n\nParameter '+ attribute_name + ' ('+ set_name + ')')
+
+                        else:
+                            attr_outputs.append('\n\nTable ' + attribute_name + ' (i, '+set_name+')')
+
+                        if self.links_as_name:
+                            attr_outputs.append('   \n' + ff.format(''))
+                            attr_outputs.append(str(t_))
+                        elif res_type != "NETWORK":
+                            attr_outputs.append('\n' + str(t_))
+                    counter+=1
+
+                    if islink:
+                        if self.links_as_name:
+                            attr_outputs.append(
+                                '\n' + ff.format(resource.name + '.' + resource.from_node + '.' + resource.to_node))
+                            attr_outputs.append(ff.format('\t'))
+
+                        else:
+                            attr_outputs.append('\n' + ff.format(resource.from_node + '.' + resource.to_node))
+
+                    elif res_type == "NETWORK":
+                        attr_outputs.append('\n' + ff.format('/')+'\n')
+
+                    else:
+                        attr_outputs.append('\n' + ff.format(resource.name))
+
+
+                    for i in xrange(len(values)):
+                        data=values[i]
+                        if res_type != "NETWORK":
+                            data_str = ff.format(str((data)))
+                            attr_outputs.append(data_str)
+                        else:
+                            data_str = ff.format(keys[i])+ff.format(str(float(data)))
+                            attr_outputs.append(data_str+'\n')
+            elif type_ =="hashtable_seasonal":
+                for res in ids[attribute_name]:
+                    resource = res.keys()[0]
+                    value_ = json.loads(res.values()[0].value.value)
+                    keys = value_[0]
+                    if (set_name not in self.hashtables_keys.keys()):
+                        self.hashtables_keys[set_name] = keys
+                    values_=value_[1]
+
+                    sub_key =value_[1][0]
+                    values=value_[1][1]
+                    if attribute_name+"_sub_key" in sets_namess.keys():
+                        sub_set_name = sets_namess[attribute_name+"_sub_key" ]
+                    else:
+                        sub_set_name = attribute_name + "sub_set__index"
+
+                    values= (json.loads(values))
+                    list=[]
+                    for key in sorted(values.keys()):
+                        list.append(int(key))
+
+                    for key in sorted(list):
+                        t_ = t_ + ff.format(key)
+
+                    if (counter == 0):
+                        if islink:
+                            if self.links_as_name:
+                                attr_outputs.append(
+                                    '\n\nnTable ' + attribute_name + ' (link_namei,j, ' + set_name +','+sub_set_name+ ')')
+                            else:
+                                attr_outputs.append('\n\nTable ' + attribute_name + ' ('+set_name +', i,j, ' +sub_set_name+ ')')
+                        elif res_type == "NETWORK":
+                            attr_outputs.append('\n\nTable ' + attribute_name + ' (' + set_name +','+sub_set_name+ ')')
+
+                        else:
+                            attr_outputs.append('\n\nTable ' + attribute_name + ' ('+set_name+', i, '+sub_set_name+ ')')
+                        if self.links_as_name:
+                            attr_outputs.append('   \n' + ff.format(''))
+                            attr_outputs.append(str(t_))
+                        elif res_type != "NETWORK":
+                            attr_outputs.append('\n' + str(t_))
+                    counter += 1
+
+                    for i in xrange(len(keys)):
+                        key=keys[i]
+                        value_[1][i]
+
+                        if islink:
+                            if self.links_as_name:
+                                attr_outputs.append(
+                                    '\n' + ff.format(key+'.'+resource.name + '.' + resource.from_node + '.' + resource.to_node))
+                                attr_outputs.append(ff.format('\t'))
+
+                            else:
+                                attr_outputs.append('\n' + ff.format(key+'.'+resource.from_node + '.' + resource.to_node))
+
+                        elif res_type == "NETWORK":
+                            attr_outputs.append('\n' + ff.format(key) + '\n')
+
+                        else:
+                            attr_outputs.append('\n' + ff.format(key+'.'+resource.name))
+
+                        for i in xrange(len(keys)):
+                            key=keys[i]
+                            all_data = json.loads(value_[1][i])
+                            for j in xrange(len(list)):
+                                su_key=str(list[i])
+                                if res_type != "NETWORK":
+                                    data_str = ff.format(str((all_data[su_key])))
+                                    attr_outputs.append(data_str)
+                                else:
+                                    data_str = ff.format(keys[i]) + ff.format(str(float(all_data[su_key])))
+                                    attr_outputs.append(data_str + '\n')
+            if res_type == "NETWORK":
+                attr_outputs.append('/;')
+
+        return attr_outputs
+
+
+    def prepare_hashtable_date(selfself):
+        pass
 
     def export_arrays(self, resources):
         """Export arrays.
@@ -788,7 +974,6 @@ class GAMSExporter(JSONPlugin):
                                     item=array[k]
                                 elif len(array[0])==dim[0]:
                                      item=array[0][k]
-
 
                                 ##attr_outputs.append("\n")
                                 c=0
@@ -907,8 +1092,14 @@ class GAMSExporter(JSONPlugin):
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
+        for key in self.hashtables_keys.keys():
+            self.sets +=('\n'+key+'\n/')
+            for val in self.hashtables_keys[key]:
+                self.sets +=('\n' + val)
+            self.sets += ('\n/\n\n')
+
         with open(self.filename, 'w') as f:
-            f.write(self.output)
+            f.write(self.sets+self.output)
 
 def translate_attr_name(name):
     """Replace non alphanumeric characters with '_'. This function throws an
@@ -936,3 +1127,36 @@ class UnicodeTranslate(dict):
             repl = char
         self[item] = repl
         return repl
+
+
+
+def get_dict(obj):
+    if type(obj) is list:
+        list_results=[]
+        for item in obj:
+            list_results.append(get_dict(item))
+        return list_results
+
+    if not hasattr(obj, "__dict__"):
+        return obj
+
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("_"):
+            continue
+        if isinstance(val, list):
+            element = []
+            for item in val:
+                element.append(get_dict(item))
+        else:
+            element = get_dict(obj.__dict__[key])
+        result[key] = element
+    return result
+
+def get_resourcescenarios_ids(resourcescenarios):
+    resourcescenarios_ids={}
+    for res in resourcescenarios:
+        #print "==============================>", get_dict(res)
+        #print type(res)
+        resourcescenarios_ids[res.resource_attr_id]=res
+    return resourcescenarios_ids

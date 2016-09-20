@@ -327,19 +327,15 @@ def commandline_parser():
                         comma separated time stamps).''')
     parser.add_argument('-et', '--export_by_type', action='store_true',
                         help='''to export data based on types, set this otion to 'y' or 'yes', default is export data by attributes.''')
-
     parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
                         help='''Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)''')
-
     parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
                         plug-in connects.''')
-
     parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
     return parser
-
 
 def export_network(args, is_licensed):
 
@@ -423,7 +419,6 @@ if __name__ == '__main__':
                                             [args.scenario_id],
                                             errors = errors,
                                             message=message)
-
     #log.info(text)
     print (text)
 

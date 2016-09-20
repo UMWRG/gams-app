@@ -49,7 +49,7 @@ class License(object):
              log.info("No licence found, contact software vendor (hydraplatform1@gmail.com) if you want to get a licence")
              self.startdate=None
              if(period is None):
-                 self.period=90
+                 self.period=191
              else:
                 self.period=period
 

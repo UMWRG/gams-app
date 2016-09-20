@@ -93,18 +93,23 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(is_licensed, args):
+    print ("=================================================================================================")
     write_progress(1, steps)
+    print ("=================================================================================================")
     gdximport = GAMSImporter(args)
+    print ("=================================================================================================")
     write_progress(2, steps)
     gdximport.load_network(is_licensed)
-
+    log.info("<=====>")
     write_progress(3, steps)
     gdximport.load_gams_file(args.gms_file)
+    log.info("<=====>")
    
     write_progress(4, steps)
     gdximport.parse_time_index()
     
     write_progress(5, steps)
+    log.info ("<================================>"+args.gdx_file)
     gdximport.open_gdx_file(args.gdx_file)
     
     write_progress(6, steps)
@@ -173,7 +178,6 @@ if __name__ == '__main__':
         parser = commandline_parser()
         args = parser.parse_args()
         errors = []
-
         if(args.gams_path==None):
             args.gams_path=get_gams_path()
             log.info ("1===================>"+ args.gams_path)
@@ -186,7 +190,6 @@ if __name__ == '__main__':
                 sys.path.insert(0, api_path)
                 log.info ("real_path: "+ real_path)
             log.info("api_path: "+ api_path)
-
 
         except Exception as e:
             raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")
