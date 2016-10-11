@@ -596,7 +596,7 @@ class GAMSExporter(JSONPlugin):
 
                 if islink:
                     if self.links_as_name:
-                        attr_outputs.append('\nTable '+attribute.name + ' (link_namei,j')
+                        attr_outputs.append('\nTable '+attribute.name + ' (link_name,i,j')
                     else:
                         attr_outputs.append('\nTable '+attribute.name + ' (i,j')
                 else:
@@ -706,6 +706,14 @@ class GAMSExporter(JSONPlugin):
         return dim
 
 
+    def compare_sets(self, key, key_):
+        for item in key_:
+            if not item in key:
+                key.append(item)
+
+        return key
+
+
     def export_hashtable (self, resources,res_type=None):
         """Export hashtable which includes seasonal data .
                     """
@@ -758,14 +766,16 @@ class GAMSExporter(JSONPlugin):
                     keys=value_[0]
                     if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
-
+                    else:
+                        keys_=self.hashtables_keys[set_name]
+                        self.hashtables_keys[set_name]=self.compare_sets(keys, keys_)
                     values=value_[1]
                     for key in keys:
                         t_ = t_ + ff.format(key)
                     if(counter ==0):
                         if islink:
                             if self.links_as_name:
-                                attr_outputs.append('\n\nnTable ' + attribute_name + ' (link_namei,j, '+set_name+')')
+                                attr_outputs.append('\n\nTable ' + attribute_name + ' (link_name, '+set_name+')')
                             else:
                                 attr_outputs.append('\n\nTable ' + attribute_name + ' (i,j, '+set_name+')')
                         elif res_type == "NETWORK":
@@ -775,7 +785,7 @@ class GAMSExporter(JSONPlugin):
                             attr_outputs.append('\n\nTable ' + attribute_name + ' (i, '+set_name+')')
 
                         if self.links_as_name:
-                            attr_outputs.append('   \n' + ff.format(''))
+                            attr_outputs.append('\n')# + ff.format(''))
                             attr_outputs.append(str(t_))
                         elif res_type != "NETWORK":
                             attr_outputs.append('\n' + str(t_))
@@ -784,7 +794,7 @@ class GAMSExporter(JSONPlugin):
                     if islink:
                         if self.links_as_name:
                             attr_outputs.append(
-                                '\n' + ff.format(resource.name + '.' + resource.from_node + '.' + resource.to_node))
+                                '\n' + ff.format(resource.name))
                             attr_outputs.append(ff.format('\t'))
 
                         else:
@@ -820,11 +830,13 @@ class GAMSExporter(JSONPlugin):
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
-
                     values= (json.loads(values))
                     list=[]
                     for key in sorted(values.keys()):
-                        list.append(int(key))
+                        try:
+                            list.append(int(key))
+                        except:
+                            list.append(key)
 
                     for key in sorted(list):
                         t_ = t_ + ff.format(key)
@@ -833,7 +845,7 @@ class GAMSExporter(JSONPlugin):
                         if islink:
                             if self.links_as_name:
                                 attr_outputs.append(
-                                    '\n\nnTable ' + attribute_name + ' (link_namei,j, ' + set_name +','+sub_set_name+ ')')
+                                    '\n\nTable ' + attribute_name + ' (link_name,' + set_name +','+sub_set_name+ ')')
                             else:
                                 attr_outputs.append('\n\nTable ' + attribute_name + ' ('+set_name +', i,j, ' +sub_set_name+ ')')
                         elif res_type == "NETWORK":
@@ -842,20 +854,18 @@ class GAMSExporter(JSONPlugin):
                         else:
                             attr_outputs.append('\n\nTable ' + attribute_name + ' ('+set_name+', i, '+sub_set_name+ ')')
                         if self.links_as_name:
-                            attr_outputs.append('   \n' + ff.format(''))
+                            attr_outputs.append('\n' )#+ ff.format(''))
                             attr_outputs.append(str(t_))
                         elif res_type != "NETWORK":
                             attr_outputs.append('\n' + str(t_))
                     counter += 1
-
                     for i in xrange(len(keys)):
                         key=keys[i]
                         value_[1][i]
-
                         if islink:
                             if self.links_as_name:
                                 attr_outputs.append(
-                                    '\n' + ff.format(key+'.'+resource.name + '.' + resource.from_node + '.' + resource.to_node))
+                                    '\n' + ff.format(key+'.'+resource.name ))
                                 attr_outputs.append(ff.format('\t'))
 
                             else:
@@ -871,7 +881,7 @@ class GAMSExporter(JSONPlugin):
                             key=keys[i]
                             all_data = json.loads(value_[1][i])
                             for j in xrange(len(list)):
-                                su_key=str(list[i])
+                                su_key=str(list[j])
                                 if res_type != "NETWORK":
                                     data_str = ff.format(str((all_data[su_key])))
                                     attr_outputs.append(data_str)
