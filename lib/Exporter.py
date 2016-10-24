@@ -360,6 +360,8 @@ class GAMSExporter(JSONPlugin):
         self.time_table={}
         data = ['\n* Network data\n']
         data.extend(self.export_parameters_using_attributes([self.network],'scalar',res_type='NETWORK'))
+        self.export_descriptor_parameters_using_attributes([self.network])
+
         data.extend(self.export_hashtable([self.network],res_type='NETWORK'))
 
         data.append('\n\n\n* Nodes data\n')
@@ -581,7 +583,7 @@ class GAMSExporter(JSONPlugin):
 
 
             if (list > 0):
-                self.hashtables_keys[attr.name]=list
+                self.hashtables_keys[attribute.name]=list
 
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
@@ -844,7 +846,9 @@ class GAMSExporter(JSONPlugin):
         attributes = []
         attr_names = []
         attr_outputs = []
+        id='default'
         ids={}
+        ids_key={}
         data_types={}
         sets_namess={}
         # Identify all the timeseries attributes and unique attribute
@@ -863,6 +867,10 @@ class GAMSExporter(JSONPlugin):
                         type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
                         if "type" in type_.keys():
                             data_types[attr.name]=type_["type"].lower()
+                        if 'id' in type_.keys():
+                            id_=type_['id']
+                            print "Found id and it -------------->", id_, attr.name
+                            ids_key[attr.name]=id_
                     if attr.name not in sets_namess.keys():
                         if "key" in type_.keys():
                             sets_namess[attr.name] = type_["key"].lower()
@@ -903,10 +911,22 @@ class GAMSExporter(JSONPlugin):
                             if self.links_as_name:
                                 attr_outputs.append('\n\nTable ' + attribute_name + ' (link_name, '+set_name+')')
                             else:
-                                if self.use_jun ==False:
-                                    attr_outputs.append('\n\nTable ' + attribute_name + ' (i,j, '+set_name+')')
+                                '''
+                                id default is links start and end nodes and junction if have any
+                                 if id is defined them it will be used to be the link id
+                                '''
+                                if attribute_name in ids_key.keys():
+                                    id=ids_key[attribute_name]
                                 else:
-                                    attr_outputs.append('\n\nTable ' + attribute_name + ' (i,jun_set,j, ' + set_name + ')')
+                                    id= 'default'
+                                if(id=='default'):
+                                    if self.use_jun ==False:
+                                        attr_outputs.append('\n\nTable ' + attribute_name + ' (i,j, '+set_name+')')
+                                    else:
+                                        attr_outputs.append('\n\nTable ' + attribute_name + ' (i,jun_set,j, ' + set_name + ')')
+                                else:
+                                    attr_outputs.append(
+                                        '\n\nTable ' + attribute_name + ' ('+ id +', '+ set_name + ')')
                         elif res_type == "NETWORK":
                             attr_outputs.append('\n\nParameter '+ attribute_name + ' ('+ set_name + ')')
 
@@ -927,11 +947,18 @@ class GAMSExporter(JSONPlugin):
                             #attr_outputs.append(ff.format('\t'))
 
                         else:
-                            if self.use_jun ==False:
-                                attr_outputs.append('\n' + ff.format(resource.from_node + '.' + resource.to_node))
+                            if(id == 'default'):
+                                if self.use_jun ==False:
+                                    attr_outputs.append('\n' + ff.format(resource.from_node + '.' + resource.to_node))
+                                else:
+                                    jun = self.junc_node[resource.name]
+                                    attr_outputs.append('\n' + ff.format(resource.from_node + '.' + jun+' . '+resource.to_node))
                             else:
-                                jun = self.junc_node[resource.name]
-                                attr_outputs.append('\n' + ff.format(resource.from_node + '.' + jun+' . '+resource.to_node))
+
+                                id_value = resource.get_attribute(attr_name=id)
+                                if id_value.value == None:
+                                    break
+                                attr_outputs.append('\n' + ff.format(id_value.value))
 
                     elif res_type == "NETWORK":
                         attr_outputs.append('\n' + ff.format('/')+'\n')
@@ -1087,17 +1114,31 @@ class GAMSExporter(JSONPlugin):
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
+                    if attribute_name in ids_key.keys():
+                        id=ids_key[attribute_name]
+                    else:
+                        id='default'
 
                     attr_outputs.extend(
-                        self.get_resourcess_set_collection(self.network.links, attribute_name, keys,
+                        self.get_resourcess_set_collection(self.network.links, attribute_name, keys,id,
                                                                    True))
+            elif type_ == "set_collection" and res_type == "NETWORK":
+                for res in ids[attribute_name]:
+                    resource = res.keys()[0]
+                    value_ = json.loads(res.values()[0].value.value)
+                    keys = value_[0]
+                    if attribute_name not in self.hashtables_keys.keys():
+                        self.hashtables_keys[attribute_name]=keys
+
+
             if res_type == "NETWORK":
                 attr_outputs.append('/;')
         return attr_outputs
 
+
     def prepare_hashtable_date(selfself):
         pass
-     
+
     def is_it_in_list(self, item, list):
         for item_ in list:
             if item.lower().strip() == item_.lower().strip():
@@ -1339,11 +1380,12 @@ class GAMSExporter(JSONPlugin):
         return '\n'.join(attr_outputs)
 
 
-    def get_resourcess_set_collection(self, resources, set_title_, set_collections,
+    ###########################
+    def get_resourcess_set_collection(self, resources, set_title_, set_collections, id,
                                       islink=False):
-        print set_title_
+        print id, set_title_
         print set_collections
-
+        print "=====================================>"
         attr_outputs = []
         ids = {}
 
@@ -1352,58 +1394,86 @@ class GAMSExporter(JSONPlugin):
         else:
             res_type = 'node'
         title=''
-        if (islink == True):
-            if self.links_as_name:
-                title='set ' + set_title_ + ' ( link_name '
-            else:
-                if self.use_jun == False:
-                    title='set ' + set_title_ + ' (i, j '
+        if id == 'default':
+            if (islink == True):
+                if self.links_as_name:
+                    title='set ' + set_title_ + ' ( link_name '
                 else:
-                    title='set ' + set_title_ + ' (i, jun_set, j '
-        else:
-            title='set ' + set_title_ + ' (i'
+                    if self.use_jun == False:
+                        title='set ' + set_title_ + ' (i, j '
+                    else:
+                        title='set ' + set_title_ + ' (i, jun_set, j '
+            else:
+                title='set ' + set_title_ + ' (i'
+        elif id == 'none':
+            title='set '+set_title_ + ' ('
 
         for set in set_collections:
-            if set =='to_NODE_type' or set=='from_NODE_type':
-                title=title+',nodes_types'
+            if(title.endswith('(') ):
+                if set == 'to_NODE_type' or set == 'from_NODE_type':
+                    title = title + 'nodes_types'
+                else:
+                    title = title + set
             else:
-                title = title +','+set
+
+                if set =='to_NODE_type' or set=='from_NODE_type':
+                    title=title+',nodes_types'
+                else:
+                    title = title +','+set
         title=title+')\n/'
         attr_outputs.append('')
         attr_outputs.append(title)
         for resource in resources:
             line=''
-            if islink:
-                if self.links_as_name:
-                    line=resource.name
-                else:
-                    if self.use_jun == False:
-                        line=resource.from_node + ' . ' + resource.to_node
+            if id == 'default':
+                if islink:
+                    if self.links_as_name:
+                        line=resource.name
                     else:
-                        jun = self.junc_node[resource.name]
-                        line=resource.from_node + ' . ' + jun + ' . ' + resource.to_node
-            else:
-                line=resource.name
+                        if self.use_jun == False:
+                            line=resource.from_node + ' . ' + resource.to_node
+                        else:
+                            jun = self.junc_node[resource.name]
+                            line=resource.from_node + ' . ' + jun + ' . ' + resource.to_node
+                else:
+                    line=resource.name
             for set in set_collections:
                 if(islink ==True):
                     if set== 'to_NODE_type':
-                        print "======================== ========================"
-                        print "name===>", resource.to_node
-                        line = line + ' . '+self.network.get_node(node_name=resource.to_node).template[1][0]
-                        print line, "\n================================================", set_title_
+                        tt=self.network.get_node(node_name=resource.to_node).template[1][0]
+                        if line:
+                            line = line + ' . '+tt
+                        else:
+                            line=tt
                     elif  set == 'from_NODE_type':
-                        line = line + ' . '+self.network.get_node(node_name=resource.from_node).template[1][0]
-                    else:
-                        line=line+' . '+resource.get_attribute(attr_name=set).value
+                        tt=self.network.get_node(node_name=resource.from_node).template[1][0]
+                        if line:
+                            line = line + ' . '+tt
+                        else:
+                            line=tt
+                    elif set == 'links_types':
+                        tt=self.network.get_link(link_name=resource.name).template[1][0]
+                        if line:
+                            line = line + ' . ' + tt
+                        else:
+                            line = tt
 
-            attr_outputs.append(line)
+                    else:
+                        tt=resource.get_attribute(attr_name=set)
+                        if tt==None:
+                            break
+                        if line:
+                            line=line+' . '+tt.value
+                        else:
+                            line =  tt.value
+            if(line):
+                 attr_outputs.append(line)
 
         #attr_outputs.append('/;')
         # attr_outputs.append('/;')
         # ss = '\n'.join(attr_outputs)
         # with open("c:\\temp\\" + attribute_name_ + ".txt", 'w') as f:
         #    f.write(ss)
-        print '\n'.join(attr_outputs)
         return '\n'.join(attr_outputs)
 
     ##########################
