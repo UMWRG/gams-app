@@ -72,6 +72,17 @@ class GAMSExporter(JSONPlugin):
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
+        if (self.time_axis == None):
+            if ('start_time' in net.scenarios[0] and 'time_step' in net.scenarios[0] and 'end_time' in net.scenarios[
+                0]):
+                self.time_axis = self.get_time_axis(net.scenarios[0]['start_time'],
+                                               net.scenarios[0]['end_time'],
+                                               net.scenarios[0]['time_step'],
+                                               time_axis=None)
+        if (self.time_axis is None):
+            self.get_time_axix_from_attributes_values(self.network.nodes)
+        if (self.time_axis is None):
+            self.get_time_axix_from_attributes_values(self.network.links)
         self.get_junc_link()
         if (len(self.junc_node) > 0):
             self.use_jun = True
@@ -681,6 +692,34 @@ class GAMSExporter(JSONPlugin):
             attr_outputs.append('\n')
         return attr_outputs
 
+    def get_time_axix_from_attributes_values(self, resources):
+        attributes = []
+        attr_names = []
+        t_axis = []
+        for resource in resources:
+            for attr in resource.attributes:
+                if attr.dataset_type == 'timeseries' and attr.is_var is False:
+                    attr.name = translate_attr_name(attr.name)
+                    if attr.name not in attr_names:
+                        attributes.append(attr)
+                        attr_names.append(attr.name)
+
+        for attribute in attributes:
+            for resource in resources:
+                attr = resource.get_attribute(attr_name=attribute.name)
+                if (attr != None):
+                    vv = json.loads(attr.value)
+                    for key in vv.keys():
+                        for date in vv[key].keys():
+                            if '9999' in date:
+                                break
+                            t_axis.append(date)
+                if len(t_axis) > 0:
+                    self.time_axis = self.get_time_axis(None,
+                                                        None,
+                                                        None,
+                                                        time_axis=t_axis)
+                    return
 
     def export_timeseries_using_attributes(self, resources, res_type=None):
             """Export time series.
@@ -689,10 +728,10 @@ class GAMSExporter(JSONPlugin):
             attributes = []
             attr_names = []
             attr_outputs = []
-            counter_=0
-            
-            #Identify all the timeseries attributes and unique attribute
-            #names
+            counter_ = 0
+
+            # Identify all the timeseries attributes and unique attribute
+            # names
             for resource in resources:
                 for attr in resource.attributes:
                     if attr.dataset_type == 'timeseries' and attr.is_var is False:
@@ -701,14 +740,13 @@ class GAMSExporter(JSONPlugin):
                             attributes.append(attr)
                             attr_names.append(attr.name)
 
-            ff='{0:<'+self.name_len+'}'
-            t_=ff.format('')
+            ff = '{0:<' + self.name_len + '}'
+            t_ = ff.format('')
 
             for timestamp in self.time_index:
-                t_=t_+ff.format(self.times_table[timestamp])
+                t_ = t_ + ff.format(self.times_table[timestamp])
 
             for attribute in attributes:
-
                 if(self.time_axis is None):
                     raise HydraPluginError("Missing time axis or start date, end date and time step or bad format")
 
@@ -737,7 +775,6 @@ class GAMSExporter(JSONPlugin):
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
 
-
                     #Only interested in attributes with data and that are timeseries
                     if attr is None or attr.dataset_id is None or attr.dataset_type != "timeseries":
                         continue
@@ -755,7 +792,7 @@ class GAMSExporter(JSONPlugin):
                         all_data = None
                     
                     if all_data is None:
-                        raise HydraPluginError("Error finding value attribute %s on" 
+                        raise HydraPluginError("Error finding value attribute %s on"
                                               "resource %s"%(attr.name, resource.name))
                     if islink:
                         if self.links_as_name:
@@ -798,7 +835,7 @@ class GAMSExporter(JSONPlugin):
             return None if no data is found
         '''
         converted_ts = reindex_timeseries(value, timestamps)
-  
+
         #For simplicity, turn this into a standard python dict with
         #no columns. 
         value_dict = {}
@@ -1705,7 +1742,6 @@ def translate_attr_name(name):
         translator = UnicodeTranslate()
 
     name = name.translate(translator)
-
     return name
 
 
@@ -1730,7 +1766,7 @@ def get_dict(obj):
         return list_results
 
     if not hasattr(obj, "__dict__"):
-        return obj
+         return obj
 
     result = {}
     for key, val in obj.__dict__.items():
