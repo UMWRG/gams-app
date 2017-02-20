@@ -1009,6 +1009,7 @@ class GAMSExporter(JSONPlugin):
                             data_str = ff.format(str((data)))
                             attr_outputs.append(data_str)
                         else:
+                            print "=========>", data, attribute_name, "----------------------->"
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="hashtable_seasonal":

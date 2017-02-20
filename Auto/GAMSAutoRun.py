@@ -287,6 +287,8 @@ def run_gams_model(args):
                 args.gdx_file = os.path.join(working_directory, file_)
         if args.gdx_file is None:
               raise HydraPluginError('Result file is not provided/found.')
+        else:
+            print "Results file: ", args.gdx_file
 
 def read_results(is_licensed, args, network, connection):
     """

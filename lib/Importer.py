@@ -285,9 +285,16 @@ class GAMSImporter(JSONPlugin):
         """Assign data to all variable attributes in the network.
         """
         # Network attributes
+        print "========================================================"
+        print len(self.gdx_variables)
+        #print self.gdx_variables.keys()
+        print  "======================================================"
         for attr in self.network.attributes:
+            #print attr.attr_id,  attr.attr_is_var
+            print  "======================================================"
             if attr.attr_is_var == 'Y':
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                    metadata = {}
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                     dataset = dict(name='GAMS import - ' + gdxvar.name,)
                     if(gdxvar.name in self.gams_units):
@@ -322,7 +329,6 @@ class GAMSImporter(JSONPlugin):
                                                           gdxvar.data)
                     # Add data
                     if dataset.has_key('value'):
-                        metadata={}
                         dataset['metadata']=json.dumps(metadata)
                         dataset['dimension']=attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id = attr.id,
@@ -335,10 +341,14 @@ class GAMSImporter(JSONPlugin):
             nodes.update({node.id: node.name})
             for attr in node.attributes:
                 if attr.attr_is_var == 'Y':
+
+
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        metadata = {}
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         dataset = dict(name = 'GAMS import - ' + node.name + ' ' \
                             + gdxvar.name)
+
                         if(gdxvar.name in self.gams_units):
                             dataset['unit'] = self.gams_units[gdxvar.name]
                         else:
@@ -373,6 +383,8 @@ class GAMSImporter(JSONPlugin):
                             dataset['type'] = 'array'
                             index = []
                             data = []
+                            #print  gdxvar.index
+                            #print  gdxvar.data
                             inx=copy.deepcopy(gdxvar.index)
                             dat=copy.deepcopy(gdxvar.data)
                             for i, idx in enumerate(inx):
@@ -382,11 +394,16 @@ class GAMSImporter(JSONPlugin):
                                     data.append(dat[i])
                             #print "index: ",index
 
-                            #self.arrange_array(gdxvar.index, gdxvar.data)
-                            dataset['value'] = self.create_array(inx,
-                                                              dat)
+                            #self.arrange_array(inx, gdxvar.data)
+                            #dataset['value'] = self.create_array(inx,
+                              #                                dat, node.name)
 
-                        metadata={}
+                            dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, node.name)
+                            dataset['type'] = 'descriptor'
+                            metadata["data_type"]="hashtable"
+
+
+
                         if dataset.has_key('value'):
                             dataset['metadata']=json.dumps(metadata)
                             dataset['dimension']=attr.resourcescenario.value.dimension
@@ -400,10 +417,15 @@ class GAMSImporter(JSONPlugin):
         for link in self.network.links:
             for attr in link.attributes:
                 if attr.attr_is_var == 'Y':
+                    print "Link  is found 2: ", attr.attr_id
+                    print  "======================================================"
                     fromnode = nodes[link.node_1_id]
                     tonode = nodes[link.node_2_id]
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        metadata = {}
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                        print gdxvar.name
+                        print "================================================="
                         dataset = dict(name = 'GAMS import - ' + link.name + ' ' \
                             + gdxvar.name,
                                       locked='N')
@@ -453,8 +475,9 @@ class GAMSImporter(JSONPlugin):
                                         is_in=True
                                         break
                             if is_in is False:
-                                continue
+                                #continue
                                 dataset['type'] = 'array'
+                                '''
                                 index = []
                                 data = []
                                 for i, idx in enumerate(gdxvar.index):
@@ -464,10 +487,16 @@ class GAMSImporter(JSONPlugin):
                                         idx.pop(idx.index(tonode))
                                         index.append(idx)
                                         data.append(gdxvar.data[i])
+                                '''
                                 dataset['value'] = self.create_array(gdxvar.index,
-                                                                 gdxvar.data)
+                                                                 gdxvar.data, link.name)
+
+                                #Should be removed later
+                                dataset['type'] = 'descriptor'
+                                metadata["data_type"] = "hashtable"
+                                #dataset['value'] = self.create_array(gdxvar.index,
+                                 #                                    gdxvar.data)
                         if dataset.has_key('value'):
-                            metadata={}
                             dataset['metadata']=json.dumps(metadata)
                             dataset['dimension']=attr.resourcescenario.value.dimension
                             res_scen = dict(resource_attr_id = attr.id,
@@ -475,7 +504,35 @@ class GAMSImporter(JSONPlugin):
                                             value = dataset)
                             self.res_scenario.append(res_scen)
 
-    def create_array(self, index, data):
+    def create_array(self, index, data, res):
+        elements = {}
+        for i in range (0, len(index)):
+            if '_' in res and len(index[i])==5:
+                #print index[i]
+                name=index[i][0]+"_"+index[i][1]+"_"+index[i][2]
+                #print res, name
+                if name == res:
+                    #print res, "==>Found toz with Length", index[i], data[i]
+                    #print index[i]
+                    #print data[i]
+                    key=index[i][4]
+                    if key in elements:
+                        elements[key][index[i][3]]=data[i]
+                    else:
+                        val = {index[i][3]: data[i]}
+                        elements[key] = val
+                    if(data[i]>0):
+                        print "Res is not zero:", res, data[i]
+                    continue
+            if len(index[i])==3 and index[i][2].strip().lower()==res.strip().lower():
+                val={index[i][1]: data[i]}
+                #print "Itr is found ......... ",index[i][0]," : ", val
+
+                elements[index[i][0]] = json.dumps(val)
+        return json.dumps(elements)
+
+
+    def create_array_(self, index, data):
         elements={}
         i=0;
         for key in index:
@@ -530,9 +587,9 @@ class GAMSImporter(JSONPlugin):
                 outer_array.append(inner_array)
             array = outer_array
             extent = extent[0:-1]
-        print array
-        print len(array)
-        print type(array)
+        #print array
+        #print len(array)
+        #print type(array)
         hydra_array = dict(arr_data = PluginLib.create_dict(array))
 
         return hydra_array
