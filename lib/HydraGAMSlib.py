@@ -225,6 +225,7 @@ def import_gms_data(filename):
     Read whole .gms file and expand all $ include statements found.
     """
     basepath = os.path.dirname(filename)
+    print "gams files: "+filename
     gms_data = ''
     with open(filename) as f:
         while True:
@@ -254,7 +255,9 @@ def import_gms_data(filename):
                     #line = import_gms_data(os.path.join(basepath, lineparts[2]))
                     line = import_gms_data(os.path.join(basepath, ff))
                 elif len(lineparts) == 2 and lineparts[0] == '$include':
-                    line = import_gms_data(os.path.join(basepath, lineparts[1]))
+                    file__= os.path.join(basepath, lineparts[1])
+                    if  os.path.isfile(file__):
+                        line = import_gms_data(file__)
             gms_data += line
     return gms_data
 

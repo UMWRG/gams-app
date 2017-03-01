@@ -271,24 +271,41 @@ def run_gams_model(args):
 
     model = GamsModel(args.gams_path, working_directory)
     write_progress(7, steps)
-    model.add_job(args.gms_file)
+    #model.add_job(args.gms_file)
     write_progress(8, steps)
     model.run()
     write_progress(9, steps)
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
+    sol_pool='solnpool.gdx'
     if args.gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
-        for file_ in files_list:
-            dt = parser.parse(files_list[file_])
-            delta = (dt-cur_time).total_seconds()
-            if delta>=0:
-                args.gdx_file = os.path.join(working_directory, file_)
-        if args.gdx_file is None:
-              raise HydraPluginError('Result file is not provided/found.')
+        print "===========================>", files_list.keys
+        if sol_pool in files_list:
+            dt = parser.parse(files_list[sol_pool])
+            delta = (dt - cur_time).total_seconds()
+            if delta <= 0:
+                gdx_list=[]
+                for file_ in files_list:
+                    if 'soln' in file_ and file_ != sol_pool:
+                        dt = parser.parse(files_list[sol_pool])
+                        delta = (dt - cur_time).total_seconds()
+                        if delta <= 0:
+                            print "file: ", file_
+                            gdx_list.append(os.path.join(working_directory, file_))
+                args.gdx_file = gdx_list
+                print "It is multi mga", len(args.gdx_file)
         else:
-            print "Results file: ", args.gdx_file
+            for file_ in files_list:
+                dt = parser.parse(files_list[file_])
+                delta = (dt-cur_time).total_seconds()
+                if delta>=0:
+                    args.gdx_file = os.path.join(working_directory, file_)
+            if args.gdx_file is None:
+                  raise HydraPluginError('Result file is not provided/found.')
+            else:
+                print "Results file: ", args.gdx_file
 
 def read_results(is_licensed, args, network, connection):
     """
