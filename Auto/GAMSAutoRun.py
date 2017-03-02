@@ -271,7 +271,7 @@ def run_gams_model(args):
 
     model = GamsModel(args.gams_path, working_directory)
     write_progress(7, steps)
-    #model.add_job(args.gms_file)
+    model.add_job(args.gms_file)
     write_progress(8, steps)
     model.run()
     write_progress(9, steps)
@@ -285,13 +285,13 @@ def run_gams_model(args):
         if sol_pool in files_list:
             dt = parser.parse(files_list[sol_pool])
             delta = (dt - cur_time).total_seconds()
-            if delta <= 0:
+            if delta >= 0:
                 gdx_list=[]
                 for file_ in files_list:
                     if 'soln' in file_ and file_ != sol_pool:
                         dt = parser.parse(files_list[sol_pool])
                         delta = (dt - cur_time).total_seconds()
-                        if delta <= 0:
+                        if delta >= 0:
                             print "file: ", file_
                             gdx_list.append(os.path.join(working_directory, file_))
                 args.gdx_file = gdx_list

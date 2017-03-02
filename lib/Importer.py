@@ -885,9 +885,9 @@ class GAMSImporter(JSONPlugin):
 
     def save(self):
         self.network.scenarios[0].resourcescenarios = self.res_scenario
-        print self.res_scenario
-        with open("c:\\hope\\Output.txt", "w") as text_file:
-            text_file.write(json.dumps(self.res_scenario))
+        #print self.res_scenario
+        #with open("Output.txt", "w") as text_file:
+        #    text_file.write(json.dumps(self.res_scenario))
         self.connection.call('update_scenario', {'scen':self.network.scenarios[0]})
 
 def set_gams_path_old():
