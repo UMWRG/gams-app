@@ -350,7 +350,8 @@ class GAMSImporter(JSONPlugin):
                 for j in range(0, len(self.gdx_variables)):
                     if self.attrs[attr.attr_id] in self.gdx_variables[j].keys():
                         gdxvar = self.gdx_variables[j][self.attrs[attr.attr_id]]
-                        dataset ['name']='GAMS import - ' + gdxvar.name
+                        dataset ['name']='GAMS import_'+ gdxvar.name
+                        dataset ['name']='GAMS import_'+ gdxvar.name
 
                         if (gdxvar.name in self.gams_units):
                             dataset['unit'] = self.gams_units[gdxvar.name]
@@ -412,7 +413,7 @@ class GAMSImporter(JSONPlugin):
                     for j in range(0, len(self.gdx_variables)):
                         if self.attrs[attr.attr_id] in self.gdx_variables[j].keys():
                             gdxvar = self.gdx_variables[j][self.attrs[attr.attr_id]]
-                            dataset['name']='GAMS import - ' + node.name + ' ' + gdxvar.name
+                            dataset['name']='GAMS import_ ' + node.name + ' ' + gdxvar.name
 
                             if (gdxvar.name in self.gams_units):
                                 dataset['unit'] = self.gams_units[gdxvar.name]
@@ -500,7 +501,7 @@ class GAMSImporter(JSONPlugin):
                             gdxvar = self.gdx_variables[j][self.attrs[attr.attr_id]]
                             #print gdxvar.name
                             #print "================================================="
-                            dataset['name']='GAMS import - ' + link.name + ' ' + gdxvar.name
+                            dataset['name']='GAMS import_' + link.name + ' ' + gdxvar.name
                             if (gdxvar.name in self.gams_units):
                                 dataset['unit'] = self.gams_units[gdxvar.name]
                             else:
@@ -531,7 +532,7 @@ class GAMSImporter(JSONPlugin):
                                             MGA_values[j] = data
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
-                                            MGA_values[j] = json.dumps(data)
+                                            MGA_values[j] = (data)
                                         break
                             elif gdxvar.dim > 2:
                                 is_in = False
@@ -542,10 +543,10 @@ class GAMSImporter(JSONPlugin):
                                             try:
                                                 data_ = float(data)
                                                 dataset['type'] = 'scalar'
-                                                MGA_values[j] = json.dumps(data)
+                                                MGA_values[j] = (data)
                                             except ValueError:
                                                 dataset['type'] = 'descriptor'
-                                                MGA_values[j] = json.dumps(data)
+                                                MGA_values[j] = (data)
                                             is_in = True
                                             break
                                 if is_in is False:
@@ -584,7 +585,7 @@ class GAMSImporter(JSONPlugin):
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     metadata = {}
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
-                    dataset = dict(name='GAMS import - ' + gdxvar.name, )
+                    dataset = dict(name='GAMS import_' + gdxvar.name, )
                     if (gdxvar.name in self.gams_units):
                         dataset['unit'] = self.gams_units[gdxvar.name]
                     else:
@@ -633,7 +634,7 @@ class GAMSImporter(JSONPlugin):
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                         metadata = {}
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
-                        dataset = dict(name='GAMS import - ' + node.name + ' ' \
+                        dataset = dict(name='GAMS import_' + node.name + ' ' \
                                             + gdxvar.name)
 
                         if (gdxvar.name in self.gams_units):
@@ -711,7 +712,7 @@ class GAMSImporter(JSONPlugin):
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
                         print "================================================="
-                        dataset = dict(name='GAMS import - ' + link.name + ' ' \
+                        dataset = dict(name='GAMS import_' + link.name + ' ' \
                                             + gdxvar.name,
                                        locked='N')
                         if (gdxvar.name in self.gams_units):
@@ -815,8 +816,10 @@ class GAMSImporter(JSONPlugin):
                 val={index[i][1]: data[i]}
                 #print "Itr is found ......... ",index[i][0]," : ", val
 
-                elements[index[i][0]] = json.dumps(val)
-        return json.dumps(elements)
+                #elements[index[i][0]] = json.dumps(val)
+                elements[index[i][0]] = (val)
+        return (elements)
+        #return json.dumps(elements)
 
 
     def create_array_(self, index, data):
@@ -833,18 +836,19 @@ class GAMSImporter(JSONPlugin):
         sss=sorted(elements.keys())
         for s in sss:
             values.append(elements[s])
-        #return values
-        return json.dumps(values)
+        return values
+        #return json.dumps(values)
 
     def create_timeseries(self, index, data):
         timeseries = {'0': {}}
         for i, idx in enumerate(index):
              if idx.find(".") is -1:
-                 timeseries['0'][self.time_axis[int(idx)]] = json.dumps(data[i])
+                 timeseries['0'][self.time_axis[int(idx)]] = data [i]#json.dumps(data[i])
              else:
-                 timeseries['0'][self.time_axis[idx]] = json.dumps(data[i])
+                 timeseries['0'][self.time_axis[idx]] = data[i]#json.dumps(data[i])
 
-        return json.dumps(timeseries)
+        return (timeseries)
+        #return json.dumps(timeseries)
         #return (timeseries)
 
     def create_array_(self, index, data):
@@ -887,7 +891,7 @@ class GAMSImporter(JSONPlugin):
         self.network.scenarios[0].resourcescenarios = self.res_scenario
         #print self.res_scenario
         #with open("Output.txt", "w") as text_file:
-        #    text_file.write(json.dumps(self.res_scenario))
+        #text_file.write(json.dumps(self.res_scenario))
         self.connection.call('update_scenario', {'scen':self.network.scenarios[0]})
 
 def set_gams_path_old():
