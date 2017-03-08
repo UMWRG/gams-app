@@ -318,6 +318,9 @@ def get_gams_path():
 
 key="12/FfCHspo*&s}:QMwd><s?:"
 lic_file="gasm_l.bin"
+
+lic_file=os.path.dirname(os.path.realpath(__file__))+"\\"+lic_file
+
 REG_PATH="gams\lic"
 #lic_file, REG_PATH, key
 
@@ -325,6 +328,8 @@ def check_lic():
     if os.name == 'nt':
         lic=License(lic_file, REG_PATH, key)
         return lic.is_licensed()
+    else:
+        return True
 
 
 

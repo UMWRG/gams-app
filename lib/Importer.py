@@ -465,7 +465,6 @@ class GAMSImporter(JSONPlugin):
                                         # dataset['value'] = self.create_array(inx,
                                         #                                dat, node.name)
 
-
                                 MGA_values[j] = self.create_array(gdxvar.index, gdxvar.data, node.name)
                                 dataset['type'] = 'array'
 
@@ -607,7 +606,7 @@ class GAMSImporter(JSONPlugin):
                         try:
                             data_ = float(data)
                             dataset['type'] = 'scalar'
-                            dataset['value'] = json.dumps(data)
+                            dataset['value'] = data
                         except ValueError:
                             dataset['type'] = 'descriptor'
                             dataset['value'] = data
@@ -618,6 +617,7 @@ class GAMSImporter(JSONPlugin):
                                                              gdxvar.data)
                     # Add data
                     if dataset.has_key('value'):
+                        dataset['value']=json.dumps(dataset['value'])
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
@@ -661,7 +661,7 @@ class GAMSImporter(JSONPlugin):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = json.dumps(data)
+                                        dataset['value'] = data
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = data
@@ -691,6 +691,7 @@ class GAMSImporter(JSONPlugin):
                             metadata["data_type"] = "hashtable"
 
                         if dataset.has_key('value'):
+                            dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
 
@@ -740,7 +741,7 @@ class GAMSImporter(JSONPlugin):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = json.dumps(data)
+                                        dataset['value'] = data
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = json.dumps(data)
@@ -783,6 +784,7 @@ class GAMSImporter(JSONPlugin):
                                 # dataset['value'] = self.create_array(gdxvar.index,
                                 #                                    gdxvar.data)
                         if dataset.has_key('value'):
+                            dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
                             res_scen = dict(resource_attr_id=attr.id,
@@ -792,35 +794,49 @@ class GAMSImporter(JSONPlugin):
 
 
 
+    ################
     def create_array(self, index, data, res):
+
         elements = {}
-        for i in range (0, len(index)):
-            if '_' in res and len(index[i])==5:
-                #print index[i]
-                name=index[i][0]+"_"+index[i][1]+"_"+index[i][2]
-                #print res, name
+        for i in range(0, len(index)):
+            if '_' in res and len(index[i]) == 5:
+                # print index[i]
+                name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
+                # print res, name
                 if name == res:
-                    #print res, "==>Found toz with Length", index[i], data[i]
-                    #print index[i]
-                    #print data[i]
-                    key=index[i][4]
+                    # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
+                    key = index[i][4]
                     if key in elements:
-                        elements[key][index[i][3]]=data[i]
+                        elements[key][index[i][3]] = data[i]
                     else:
                         val = {index[i][3]: data[i]}
                         elements[key] = val
-                    #if(data[i]>0):
+                    # if(data[i]>0):
                     #    print "Res is not zero:", res, data[i]
                     continue
-            if len(index[i])==3 and index[i][2].strip().lower()==res.strip().lower():
-                val={index[i][1]: data[i]}
-                #print "Itr is found ......... ",index[i][0]," : ", val
+            if len(index[i]) == 3 and index[i][2].strip().lower() == res.strip().lower():
+                # ['2037-38', 'NYAA', 'norfolkrural']
+                key = index[i][0]
+                if key in elements:
+                    elements[key][index[i][1]] = data[i]
+                else:
+                    val = {index[i][1]: data[i]}
+                    elements[key] = val
 
-                #elements[index[i][0]] = json.dumps(val)
+                # val={index[i][1]: data[i]}
+                # print "Itr is found ......... ",index[i][0]," : ", val
                 elements[index[i][0]] = (val)
-        return (elements)
-        #return json.dumps(elements)
 
+            elif len(index[i]) == 2 and index[i][1].strip().lower() == res.strip().lower():
+                val = {index[i][0]: data[i]}
+                # print "Itr is found ......... ",index[i][0]," : ", val
+
+                # elements[index[i][0]] = json.dumps(val)
+                elements[index[i][0]] = (val)
+
+                # elements[index[i][0]] = data[i]
+        return (elements)
+        # return json.dumps(elements)
 
     def create_array_(self, index, data):
         elements={}
