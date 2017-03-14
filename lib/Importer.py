@@ -555,7 +555,9 @@ class GAMSImporter(JSONPlugin):
 
                                     # Should be removed later
                                     dataset['type'] = 'array'
-                                    # dataset['value'] = self.create_array(gdxvar.index,
+                                        #sys.exit()
+
+                                        # dataset['value'] = self.create_array(gdxvar.index,
                                     #
                                     #
                     #
@@ -799,6 +801,14 @@ class GAMSImporter(JSONPlugin):
 
         elements = {}
         for i in range(0, len(index)):
+            if '_' in res and len(index[i]) == 4:
+                 name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
+                 if name == res:
+                    key = index[i][3]
+                    elements[key] = data[i]
+                    # if(data[i]>0):9
+                    #    print "Res is not zero:", res, data[i]
+                    continue
             if '_' in res and len(index[i]) == 5:
                 # print index[i]
                 name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
