@@ -253,18 +253,33 @@ class GAMSExporter(JSONPlugin):
 
     def export_link_groups(self):
         "Export link groups if there are any."
+        self.sets += '* Link groups ....\n\n'
         link_groups = []
         link_strings = []
+        links_groups_members={}
+
         for group in self.network.groups:
-            group_links = self.network.get_link(group=group.ID)
+            group_links = []
+            for link in self.network.links:
+                if group.ID in link.groups:
+                    group_links.append(link)
+                else:
+                    for item in link.groups:
+                        if item ==group.ID or group.ID in item:
+                            group_links.append(link)
+                            break
+
+            #group_links = self.network.get_link(group=group.ID)
             if len(group_links) > 0:
+                links_groups_members[group.name]=group_links
+                print "It is biggere thank zero...."
                 link_groups.append(group)
                 lstring = ''
                 if self.links_as_name:
-                    lstring +=  'link_name /\n'
+                    lstring +=  group.name+' /\n'
                 else:
                     if self.use_jun == True:
-                        lstring += 'links(i, jun_set, j) vector of all links /\n'
+                        lstring += group.name+ '(i, jun_set, j) vector links group /\n'
                     else:
                         lstring += '(i,j) /\n'
                 #lstring += group.name + '(i,j) /\n'
@@ -281,14 +296,37 @@ class GAMSExporter(JSONPlugin):
                 lstring += '/\n\n'
                 link_strings.append(lstring)
 
+        EXCLUSIVITY_SET=[]
+        DEPENDENCY_SET=[]
         if len(link_groups) > 0:
             self.output += '* Link groups\n\n'
             self.sets += 'link_groups vector of all link groups /\n'
             for group in link_groups:
+                if group.name.lower().startswith("dependency"):
+                    DEPENDENCY_SET.append(group.name)
+                if group.name.lower().startswith("exclusivity"):
+                    EXCLUSIVITY_SET.append(group.name)
                 self.sets += group.name + '\n'
             self.sets += '/\n\n'
             for lstring in link_strings:
                 self.sets += lstring
+
+        # the following to be used with AW EBSD
+        self.links_groups_members=links_groups_members
+        if len (EXCLUSIVITY_SET)>0:
+            self.EXCLUSIVITY_SET = EXCLUSIVITY_SET
+            self.sets += 'EXCLUSIVITY_SET /\n'
+            for item in EXCLUSIVITY_SET:
+                self.sets += item + '\n'
+            self.sets += '/\n\n'
+
+        if len(DEPENDENCY_SET)>0:
+            self.DEPENDENCY_SET = DEPENDENCY_SET
+            self.sets += 'DEPENDENCY_SET /\n'
+            for item in DEPENDENCY_SET:
+                self.sets += item + '\n'
+            self.sets += '/\n\n'
+
 
     def create_connectivity_matrix(self):
         ff='{0:<'+self.name_len+'}'
@@ -1421,9 +1459,7 @@ class GAMSExporter(JSONPlugin):
     ###########################
     def get_resourcess_set_collection(self, resources, set_title_, set_collections, id,
                                       islink=False):
-        print id, set_title_
-        print set_collections
-        print "=====================================>"
+
         attr_outputs = []
         ids = {}
 
@@ -1443,7 +1479,7 @@ class GAMSExporter(JSONPlugin):
                         title='set ' + set_title_ + ' (i, jun_set, j '
             else:
                 title='set ' + set_title_ + ' (i'
-        elif id == 'none':
+        elif id == 'none' or id =='group':
             title='set '+set_title_ + ' ('
 
         for set in set_collections:
@@ -1461,6 +1497,28 @@ class GAMSExporter(JSONPlugin):
         title=title+')\n/'
         attr_outputs.append('')
         attr_outputs.append(title)
+        ###################
+        if id == 'group':
+            print "It group ....", len(set_collections)
+            if set_collections[0].lower() == 'dependency_set' and len(set_collections) == 3:
+                para1 = set_collections[1]
+                parr2 = set_collections[2]
+                for group in self.DEPENDENCY_SET:
+                    for link in self.links_groups_members[group]:
+                        tt = link.get_attribute(attr_name=para1).value
+                        tt2 = link.get_attribute(attr_name=parr2).value
+                        lin=group +" . "+tt+" . "+tt2
+                        if (lin):
+                            attr_outputs.append(lin)
+                return '\n'.join(attr_outputs)
+            elif set_collections[0].lower() == 'exclusivity_set' and len(set_collections) == 2:
+                for group in self.EXCLUSIVITY_SET:
+                    for link in self.links_groups_members[group]:
+                        lin = group + " . " + link.get_attribute(attr_name=set_collections[1]).value
+                        if (lin):
+                            attr_outputs.append(lin)
+                return '\n'.join(attr_outputs)
+        ##################
         for resource in resources:
             line=''
             if id == 'default':
@@ -1476,42 +1534,37 @@ class GAMSExporter(JSONPlugin):
                 else:
                     line=resource.name
             for set in set_collections:
-                if(islink ==True):
-                    if set== 'to_NODE_type':
-                        tt=self.network.get_node(node_name=resource.to_node).template[1][0]
-                        if line:
-                            line = line + ' . '+tt
+                    if(islink ==True):
+                        if set== 'to_NODE_type':
+                            tt=self.network.get_node(node_name=resource.to_node).template[1][0]
+                            if line:
+                                line = line + ' . '+tt
+                            else:
+                                line=tt
+                        elif  set == 'from_NODE_type':
+                            tt=self.network.get_node(node_name=resource.from_node).template[1][0]
+                            if line:
+                                line = line + ' . '+tt
+                            else:
+                                line=tt
+                        elif set == 'links_types':
+                            tt=self.network.get_link(link_name=resource.name).template[1][0]
+                            if line:
+                                line = line + ' . ' + tt
+                            else:
+                                line = tt
                         else:
-                            line=tt
-                    elif  set == 'from_NODE_type':
-                        tt=self.network.get_node(node_name=resource.from_node).template[1][0]
-                        if line:
-                            line = line + ' . '+tt
-                        else:
-                            line=tt
-                    elif set == 'links_types':
-                        tt=self.network.get_link(link_name=resource.name).template[1][0]
-                        if line:
-                            line = line + ' . ' + tt
-                        else:
-                            line = tt
-
-                    else:
-                        tt=resource.get_attribute(attr_name=set)
-                        if tt==None:
-                            break
-                        if line:
-                            line=line+' . '+tt.value
-                        else:
-                            line =  tt.value
+                            tt=resource.get_attribute(attr_name=set)
+                            if tt==None:
+                                break
+                            if line:
+                                line=line+' . '+tt.value
+                            else:
+                                line =  tt.value
             if(line):
                  attr_outputs.append(line)
 
-        #attr_outputs.append('/;')
-        # attr_outputs.append('/;')
-        # ss = '\n'.join(attr_outputs)
-        # with open("c:\\temp\\" + attribute_name_ + ".txt", 'w') as f:
-        #    f.write(ss)
+
         return '\n'.join(attr_outputs)
 
     ##########################

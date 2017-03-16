@@ -1,14 +1,10 @@
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 '''
-
 plugin_name: GAMS
             - Export a network from Hydra to a gams input text file.
             - Rum GAMS.
             - Import a gdx results file into Hydra.
-
-
 **Mandatory Args:**
-
 ====================== ======= ========== =========================================
 Option                 Short   Parameter  Description
 ====================== ======= ========== =========================================
@@ -22,54 +18,41 @@ Option                 Short   Parameter  Description
 --output               -o      OUTPUT     Filename of the output file.
 --gams-model           -m      GMS_FILE   Full path to the GAMS model (*.gms)
                                           used for the simulation.
-
-
 **Server-based arguments**
-
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
---server_url           -u     SERVER_URL Url of the server the plugin will 
+--server_url           -u     SERVER_URL Url of the server the plugin will
                                          connect to.
                                          Defaults to localhost.
 --session_id           -c     SESSION_ID Session ID used by the calling software
-                                         If left empty, the plugin will attempt 
+                                         If left empty, the plugin will attempt
                                          to log in itself.
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
-
 **Optional arguments:**
-
 ====================== ====== ========== =================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =================================
 --group-nodes-by       -gn    GROUP_ATTR Group nodes by this attribute(s).
 --group_links-by       -gl    GROUP_ATTR Group links by this attribute(s).
 ====================== ====== ========== =================================
-
 **Switches:**
-
 ====================== ====== =========================================
 Option                 Short  Description
 ====================== ====== =========================================
 --export_by_type       -et    Set export data based on types or based
-                              on attributes only, default is export 
-                              data by attributes unless this option 
+                              on attributes only, default is export
+                              data by attributes unless this option
                               is set.
 ====================== ====== =========================================
-
-
 For Export function:
 ====================
-
 Specifying the time axis
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 One of the following two options for specifying the time domain of the model is
 mandatory:
-
 **Option 1:**
-
 ====================== ====== ========== =======================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =======================================
@@ -83,22 +66,16 @@ Option                 Short  Parameter  Description
                                           Hydra's unit conversion function (e.g.
                                           1 s, 3 min, 2 h, 4 day, 1 mon, 1 yr)
 ====================== ======= ========== ======================================
-
 **Option 2:**
-
 ====================== ====== ========== ======================================
 Option                 Short  Parameter  Description
 ====================== ======= ========== ======================================
 --time-axis             -tx    TIME_AXIS  Time axis for the modelling period (a
                                           list of comma separated time stamps).
 ====================== ======= ========== ======================================
-
-
 Example:
 =========
         -t 4 -s 4 -tx  2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo2.dat" -m "c:\temp\Demo2.gms"
-
-
 '''
 import sys
 import os
@@ -183,7 +160,7 @@ def commandline_parser():
     cmd_parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
-    return cmd_parser 
+    return cmd_parser
 
 def get_files_list(directory, ext):
     '''
@@ -234,7 +211,7 @@ def get_input_file_name(gams_model):
 
 def export_network(is_licensed):
     exporter = GAMSExporter(args)
-   
+
     write_progress(2, steps)
 
     exporter.get_network(is_licensed)
@@ -245,7 +222,7 @@ def export_network(is_licensed):
 
     if(args.gams_date_time_index is True):
             exporter.use_gams_date_index=True
-    
+
     write_progress(4, steps)
     exporter.write_time_index()
 
@@ -265,7 +242,7 @@ def run_gams_model(args):
     cur_time=datetime.now().replace(microsecond=0)
     write_progress(6, steps)
     working_directory=os.path.dirname(args.gms_file)
-    
+
     if working_directory == '':
         working_directory = '.'
 
@@ -309,7 +286,7 @@ def run_gams_model(args):
 
 def read_results(is_licensed, args, network, connection):
     """
-        Instantiate a GAMSImport class, assign the network, read the 
+        Instantiate a GAMSImport class, assign the network, read the
         gdx and gms files, update the network's data and then save
         the network.
     """
@@ -318,19 +295,19 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(11, steps)
     gdximport.load_gams_file(args.gms_file)
-    
+
     write_progress(12, steps)
     gdximport.set_network(is_licensed, network)
-    
+
     write_progress(13, steps)
     gdximport.parse_time_index()
-    
+
     write_progress(14, steps)
     gdximport.open_gdx_file(args.gdx_file)
-    
+
     write_progress(15, steps)
     gdximport.read_gdx_data()
-    
+
     write_progress(16, steps)
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
@@ -340,7 +317,7 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(17, steps)
     gdximport.assign_attr_data()
-    
+
     write_progress(18, steps)
     gdximport.save()
 
@@ -398,6 +375,4 @@ if __name__ == '__main__':
         write_progress(steps, steps)
     text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
     #log.info(text);
-    print (text)
-
-
+print (text)
