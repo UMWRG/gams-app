@@ -101,7 +101,6 @@ from HydraLib import PluginLib
 from dateutil import parser
 from HydraLib.PluginLib import write_progress, write_output
 from HydraGAMSlib import GamsModel
-from EBSD_Data_processing import *
 
 
 import logging

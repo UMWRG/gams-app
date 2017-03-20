@@ -272,7 +272,7 @@ class GAMSExporter(JSONPlugin):
             #group_links = self.network.get_link(group=group.ID)
             if len(group_links) > 0:
                 links_groups_members[group.name]=group_links
-                print "It is biggere thank zero...."
+                #print "It is biggere thank zero...."
                 link_groups.append(group)
                 lstring = ''
                 if self.links_as_name:
@@ -865,7 +865,7 @@ class GAMSExporter(JSONPlugin):
 
     def get_time_value(self, value, timestamps):
         '''
-            get data for timesamp
+            get data for timmp
 
             :param a JSON string
             :param a timestamp or list of timestamps (datetimes)
@@ -944,7 +944,7 @@ class GAMSExporter(JSONPlugin):
                             data_types[attr.name]=type_["type"].lower()
                         if 'id' in type_.keys():
                             id_=type_['id']
-                            print "Found id and it -------------->", id_, attr.name
+                             # "Found id and it -------------->", id_, attr.name
                             ids_key[attr.name]=id_
                     if attr.name not in sets_namess.keys():
                         if "key" in type_.keys():
@@ -1047,7 +1047,7 @@ class GAMSExporter(JSONPlugin):
                             data_str = ff.format(str((data)))
                             attr_outputs.append(data_str)
                         else:
-                            print "=========>", data, attribute_name, "----------------------->"
+                            #print "=========>", data, attribute_name, "----------------------->"
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="hashtable_seasonal":
@@ -1499,7 +1499,7 @@ class GAMSExporter(JSONPlugin):
         attr_outputs.append(title)
         ###################
         if id == 'group':
-            print "It group ....", len(set_collections)
+            #print "It group ....", len(set_collections)
             if set_collections[0].lower() == 'dependency_set' and len(set_collections) == 3:
                 para1 = set_collections[1]
                 parr2 = set_collections[2]
