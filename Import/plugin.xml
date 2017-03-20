@@ -4,6 +4,10 @@
     <plugin_description>
         Import a gdx results file into Hydra.
 	</plugin_description>
+    <plugin_category>import</plugin_category>
+    <plugin_command>GAMSImport.py</plugin_command>
+    <plugin_shell>python</plugin_shell>
+    <plugin_location>.</plugin_location>
 	<smallicon>gams_import16.png</smallicon>
     <largeicon>gams_import.png</largeicon>
     <plugin_epilog>For more information visit hydra platform website</plugin_epilog>
