@@ -101,6 +101,8 @@ from HydraLib import PluginLib
 from dateutil import parser
 from HydraLib.PluginLib import write_progress, write_output
 from HydraGAMSlib import GamsModel
+from EBSD_Data_processing import *
+
 
 import logging
 log = logging.getLogger(__name__)
@@ -255,15 +257,20 @@ def run_gams_model(args):
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
     sol_pool='solnpool.gdx'
+    res = 'results_MGA.gdx'
     if args.gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
         print "===========================>", files_list.keys
         if sol_pool in files_list:
             dt = parser.parse(files_list[sol_pool])
+            dt_2 = parser.parse(files_list[res])
             delta = (dt - cur_time).total_seconds()
-            if delta >= 0:
-                gdx_list=[]
+            delta_2 = (dt_2 - cur_time).total_seconds()
+            if delta >= 0 and delta_2 >= 0:
+                gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
+                args.gdx_file =gdx_list
+                return
                 for file_ in files_list:
                     if 'soln' in file_ and file_ != sol_pool:
                         dt = parser.parse(files_list[sol_pool])
@@ -303,10 +310,12 @@ def read_results(is_licensed, args, network, connection):
     gdximport.parse_time_index()
 
     write_progress(14, steps)
+    print "===================================================="
     gdximport.open_gdx_file(args.gdx_file)
 
     write_progress(15, steps)
     gdximport.read_gdx_data()
+
 
     write_progress(16, steps)
     gdximport.parse_variables('variables')
@@ -352,6 +361,8 @@ if __name__ == '__main__':
         args = cmd_parser.parse_args()
         check_args(args)
         exporter=export_network(is_licensed)
+        #get_AVAILABLE_DO(exporter.network)
+        #sys.exit()
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
         read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
