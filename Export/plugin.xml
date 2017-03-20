@@ -3,6 +3,10 @@
     <plugin_dir>GAMSExport.bat</plugin_dir>
     <plugin_description>Export a network from Hydra to a gams input text file.
 	</plugin_description>
+    <plugin_category>export</plugin_category>
+    <plugin_command>GAMSExport.py</plugin_command>
+    <plugin_shell>python</plugin_shell>
+    <plugin_location>.</plugin_location>
 	<smallicon>gams_export.png</smallicon>
     <largeicon>gams_export16.png</largeicon>
     <plugin_epilog>For more information visit hydra platform website</plugin_epilog>

@@ -7,8 +7,6 @@ import sys
 from HydraLib.PluginLib import HydraResource, HydraNetwork
 from HydraLib.HydraException import HydraPluginError
 from License import License
-from License import LicencePluginError
-from HydraLib import PluginLib
 
 import logging
 log = logging.getLogger(__name__)
@@ -20,6 +18,7 @@ class GamsModel(object):
 
         log.info("Using GAMS Path: %s", gamspath)
         try:
+            import pudb; pudb.set_trace()
             real_path = os.path.realpath(os.path.abspath(gamspath))
             api_path = os.path.join(real_path,'apifiles','Python','api')
             if api_path not in sys.path:
@@ -304,6 +303,15 @@ def get_gams_path():
                 #directories and picking the last one
                 if len(linuxtypes) > 0:
                     gams_path = base + linuxtypes[-1]
+        
+        #try looking in the path
+        if gams_path is None:
+            path = os.environ['PATH']
+            pathvars = path.split(':')
+            for pathvar in pathvars:
+                if pathvar.lower().find('gams') >= 0:
+                    log.info('Found GAMS installation at %s', pathvar)
+                    return pathvar
 
         if gams_path is not None:
             return gams_path
