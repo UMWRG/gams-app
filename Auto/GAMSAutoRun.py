@@ -251,6 +251,7 @@ def run_gams_model(args):
     write_progress(7, steps)
     model.add_job(args.gms_file)
     write_progress(8, steps)
+    write_output("Running GAMS model, please note that this may take time")
     model.run()
     write_progress(9, steps)
     log.info("Running GAMS model finsihed")
@@ -266,6 +267,7 @@ def run_gams_model(args):
             dt_2 = parser.parse(files_list[res])
             delta = (dt - cur_time).total_seconds()
             delta_2 = (dt_2 - cur_time).total_seconds()
+            # todo chaeck if dgx files exist
             if delta >= 0 and delta_2 >= 0:
                 gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
                 args.gdx_file =gdx_list
