@@ -18,7 +18,6 @@ class GamsModel(object):
 
         log.info("Using GAMS Path: %s", gamspath)
         try:
-            import pudb; pudb.set_trace()
             real_path = os.path.realpath(os.path.abspath(gamspath))
             api_path = os.path.join(real_path,'apifiles','Python','api')
             if api_path not in sys.path:
