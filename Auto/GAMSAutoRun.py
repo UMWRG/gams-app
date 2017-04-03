@@ -283,10 +283,12 @@ def run_gams_model(args):
                 print "It is multi mga", len(args.gdx_file)
         else:
             for file_ in files_list:
+                print "Toz: ", file_
                 dt = parser.parse(files_list[file_])
                 delta = (dt-cur_time).total_seconds()
                 if delta>=0:
                     args.gdx_file = os.path.join(working_directory, file_)
+                    print "Toz: 2", args.gdx_file
             if args.gdx_file is None:
                   raise HydraPluginError('Result file is not provided/found.')
             else:
