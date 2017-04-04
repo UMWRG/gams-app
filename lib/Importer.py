@@ -198,7 +198,9 @@ class GAMSImporter(JSONPlugin):
             self.filename=filename[1]
         else:
             self.is_MGS = False
+            self.filename=filename
         #filename = os.path.abspath(filename)
+        #print "Toz: ", self.filename
         self.gdxcc.gdxOpenRead(self.gdx_handle, self.filename)
         x, self.symbol_count, self.element_count = \
             self.gdxcc.gdxSystemInfo(self.gdx_handle)
@@ -446,7 +448,6 @@ class GAMSImporter(JSONPlugin):
                                     attr_id=attr.attr_id,
                                     value=dataset)
                     self.res_scenario.append(res_scen)
-
         # Node attributes
         nodes = dict()
         for node in self.network.nodes:
@@ -664,6 +665,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['value'] = self.create_timeseries(index, data)
                     elif gdxvar.dim == 0:
                         data = gdxvar.data[0]
+                        print "HELLLLOOOOOOOOOOOOOOOOOO"
                         try:
                             data_ = float(data)
                             dataset['type'] = 'scalar'
@@ -691,7 +693,6 @@ class GAMSImporter(JSONPlugin):
             nodes.update({node.id: node.name})
             for attr in node.attributes:
                 if attr.attr_is_var == 'Y':
-
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                         metadata = {}
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
@@ -713,6 +714,7 @@ class GAMSImporter(JSONPlugin):
                                     elif len(idx) is 2:
                                         index.append(idx[self.gdx_ts_vars[gdxvar.name]])
                                     data.append(gdxvar.data[i])
+                            print "TOOOOZ: ", node.name, gdxvar.name
                             dataset['value'] = self.create_timeseries(index, data)
                         elif gdxvar.dim == 1:
                             for i, idx in enumerate(gdxvar.index):
