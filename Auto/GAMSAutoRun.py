@@ -252,7 +252,7 @@ def run_gams_model(args):
     model.add_job(args.gms_file)
     write_progress(8, steps)
     write_output("Running GAMS model, please note that this may take time")
-    model.run()
+    #model.run()
     write_progress(9, steps)
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
@@ -268,7 +268,7 @@ def run_gams_model(args):
             delta = (dt - cur_time).total_seconds()
             delta_2 = (dt_2 - cur_time).total_seconds()
             # todo chaeck if dgx files exist
-            if delta >= 0 and delta_2 >= 0:
+            if delta <= 0 and delta_2 <= 0:
                 gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
                 args.gdx_file =gdx_list
                 return
@@ -276,7 +276,7 @@ def run_gams_model(args):
                     if 'soln' in file_ and file_ != sol_pool:
                         dt = parser.parse(files_list[sol_pool])
                         delta = (dt - cur_time).total_seconds()
-                        if delta >= 0:
+                        if delta <= 0:
                             print "file: ", file_
                             gdx_list.append(os.path.join(working_directory, file_))
                 args.gdx_file = gdx_list

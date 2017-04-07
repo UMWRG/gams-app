@@ -941,6 +941,7 @@ class GAMSExporter(JSONPlugin):
                     if attr.name not in data_types.keys():
                         type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
                         if "type" in type_.keys():
+                            print " TOOOZ:",type_["type"].lower()
                             data_types[attr.name]=type_["type"].lower()
                         if 'id' in type_.keys():
                             id_=type_['id']
@@ -1050,7 +1051,7 @@ class GAMSExporter(JSONPlugin):
                             #print "=========>", data, attribute_name, "----------------------->"
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
-            elif type_ =="hashtable_seasonal":
+            elif type_ =="nested_hashtable":
                 for res in ids[attribute_name]:
                     resource = res.keys()[0]
                     add=resource.name+"_"+attribute_name
@@ -1317,7 +1318,7 @@ class GAMSExporter(JSONPlugin):
                         else:
                             attr_outputs.append(resource.name+ ' . ' + attribute_name+' . '+k + '   ' + data_str)
                 counter+=1
-            elif type_ == "hashtable_seasonal":
+            elif type_ == "nested_hashtable":
                 if counter==0:
                     if (islink == False):
                         attr_outputs.append(

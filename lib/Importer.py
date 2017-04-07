@@ -239,11 +239,11 @@ class GAMSImporter(JSONPlugin):
             raise HydraPluginError(".gms file not specified.")
 
         gms_file = os.path.abspath(gms_file)
-        
+
         gms_data = import_gms_data(gms_file)
-        
+
         self.gms_data = gms_data.split('\n')
-        
+
         if self.network_id is None or self.scenario_id is None:
             self.network_id, self.scenario_id = self.get_ids_from_gms()
 
@@ -378,6 +378,7 @@ class GAMSImporter(JSONPlugin):
             except:
                 return True
         return valid
+
     def attr_data_for_MGA (self):
         # Network attributes
         for attr in self.network.attributes:
@@ -430,9 +431,10 @@ class GAMSImporter(JSONPlugin):
                         elif gdxvar.dim > 0 :
                             continue
                             dataset['type'] = 'array'
-                            metadata["data_type"] = "hashtable"
-                            #dataset['value'] = self.create_array(gdxvar.index, gdxvar.data)
-                            MGA_values[j]= self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data)
+                            #metadata["data_type"] = "hashtable"
+                            d_type, val__= self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data, self.network.nqme)
+                            metadata["data_type"] = d_type
+                            MGA_values[j]=val__
                         # Add data
                 if len(MGA_values)>0 and self.check_for_empty_values(MGA_values)==True:
                     dataset['value']=json.dumps(MGA_values)
@@ -500,15 +502,15 @@ class GAMSImporter(JSONPlugin):
                                 data = []
                                 # print  gdxvar.index
                                 # print  gdxvar.data
-                                MGA_values[j] = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data, node.name)
-                                dataset['type'] = 'array'
-
+                                #d_type, val__ = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data)
+                                d_type, val__ = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data, node.name)
+                                metadata["data_type"] = d_type
+                                MGA_values[j] = val__
                     if len(MGA_values) > 0 and self.check_for_empty_values(MGA_values)==True:
                         print "======================================= Node data is found ..."
                         print node.name
                         print gdxvar.name
                         metadata["sol_type"] = "MGA"
-                        metadata["data_type"] = "hashtable"
                         dataset['value']=json.dumps(MGA_values)
                         if gdxvar.name == 'TOTAL_EXISTING_IMPORT' and self.MGA_index[j] == "file20" and self.check_for_empty_values(MGA_values)==False:
                             print "Data toz=======================================>"
@@ -602,16 +604,10 @@ class GAMSImporter(JSONPlugin):
                                             break
                                 if is_in is False:
                                     # continue
-                                    MGA_values[j] = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index,
-                                                                         gdxvar.data, link.name)
-
-                                    # Should be removed later
-                                    dataset['type'] = 'array'
-                                        #sys.exit()
-
-                                        # dataset['value'] = self.create_array(gdxvar.index,
-                                    #
-                                    #
+                                    d_type, val__ = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index,
+                                                                                      gdxvar.data, link.name)
+                                    metadata["data_type"] = d_type
+                                    MGA_values[j] = val__
                     #
                     if len(MGA_values) > 0 and self.check_for_empty_values(MGA_values)==True:
                         print "============================================= link data is found"
@@ -625,7 +621,7 @@ class GAMSImporter(JSONPlugin):
                         print len(dataset['value']), attr.id,attr.attr_id
                         dataset['type'] = 'descriptor'
                         metadata["sol_type"] = "MGA"
-                        metadata["data_type"] = "hashtable"
+                        #metadata["data_type"] = "hashtable"
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
@@ -859,7 +855,8 @@ class GAMSImporter(JSONPlugin):
 
     ########################################################################################
                             ################
-    def create_arrayfrom_Mga_results(slf, soln_, index, data, res):
+    def create_arrayfrom_Mga_results(self, soln_, index, data, res):
+        d_type="hashtable"
         elements = {}
         for i in range(0, len(index)):
             if(index[i][0]==soln_):
@@ -877,6 +874,7 @@ class GAMSImporter(JSONPlugin):
                     name = index[i][1] + "_" + index[i][2] + "_" + index[i][3]
                     # print res, name
                     if name == res:
+                        d_type="nested_hashtable"
                         # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
                         key = index[i][5]
                         if key in elements:
@@ -892,6 +890,7 @@ class GAMSImporter(JSONPlugin):
                     #['file15', '2035-36', 'DYCP', 'centralessex']
                     #['file20', '2015-16', 'DYAA', 'cambridgeshireandwestsuffolk']''
                     key = index[i][1]
+                    d_type = "nested_hashtable"
                     if key in elements:
                         elements[key][index[i][2]] = data[i]
                     else:
@@ -911,11 +910,10 @@ class GAMSImporter(JSONPlugin):
                     elements[index[i][1]] = (val)
 
                     # elements[index[i][0]] = data[i]
-        return (elements)
+        return d_type, elements
         # return json.dumps(elements)
     #######################################################################################
     def create_array(self, index, data, res):
-
         elements = {}
         for i in range(0, len(index)):
             if '_' in res and len(index[i]) == 4:
