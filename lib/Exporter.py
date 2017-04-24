@@ -1344,7 +1344,10 @@ class GAMSExporter(JSONPlugin):
                         self.hashtables_keys[set_name] = keys
                     list = []
                     for i in range (0, len(value_[1])):
-                        vv = (json.loads(value_[1][i]))
+                        if not isinstance(value_[1][i], dict):
+                            vv = (json.loads(value_[1][i]))
+                        else:
+                            vv = value_[1][i]
                         for key in sorted(vv.keys()):
                             try:
                                 if(not int(key) in list):
@@ -1354,7 +1357,11 @@ class GAMSExporter(JSONPlugin):
                                     list.append(key)
                     for i in xrange(len(keys)):
                         key = keys[i]
-                        vv=json.loads(value_[1][i])
+                        if not isinstance(value_[1][i], dict):
+                            vv = (json.loads(value_[1][i]))
+                        else:
+                            vv = (value_[1][i])
+
                         for j in range(0, len(list)):
                             if (not list[j] in vv.keys()):
                                 continue
@@ -1367,7 +1374,7 @@ class GAMSExporter(JSONPlugin):
                                 else:
                                     if self.use_jun == False:
                                         attr_outputs.append((key + ' . ' + list[
-                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + vv[list[j]]))
+                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + str(vv[list[j]])))
                                     else:
                                         jun = self.junc_node[resource.name]
                                         attr_outputs.append((key + ' . ' + list[
@@ -1376,7 +1383,7 @@ class GAMSExporter(JSONPlugin):
 
                             else:
                                 attr_outputs.append(
-                                    (key + ' . ' + list[j] + ' . ' + attribute_name + ' . ' + resource.name + '    ' + vv[list[j]]))
+                                    (key + ' . ' + list[j] + ' . ' + attribute_name + ' . ' + resource.name + '    ' + str(vv[list[j]])))
                 counter += 1
         #attr_outputs.append('/;')
         #ss='\n'.join(attr_outputs)
