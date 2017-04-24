@@ -392,8 +392,8 @@ class GAMSImporter(JSONPlugin):
 
                      if _key!=None:
                         gdxvar = self.gdx_variables[_key]
-                        dataset ['name']='GAMS import_'+ gdxvar.name
-                        dataset ['name']='GAMS import_'+ gdxvar.name
+                        dataset ['name']= gdxvar.name
+                        dataset ['name']= gdxvar.name
 
                         if (gdxvar.name in self.gams_units):
                             dataset['unit'] = self.gams_units[gdxvar.name]
@@ -461,7 +461,7 @@ class GAMSImporter(JSONPlugin):
                         _key = self.get_key(self.attrs[attr.attr_id], self.gdx_variables)
                         if _key!=None:
                             gdxvar = self.gdx_variables[_key]
-                            dataset['name']='GAMS import_ ' + node.name + ' ' + gdxvar.name
+                            dataset['name']= gdxvar.name
 
                             if (gdxvar.name in self.gams_units):
                                 dataset['unit'] = self.gams_units[gdxvar.name]
@@ -552,7 +552,7 @@ class GAMSImporter(JSONPlugin):
                             gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                             #print gdxvar.name
                             #print "================================================="
-                            dataset['name']='GAMS import_' + link.name + ' ' + gdxvar.name
+                            dataset['name']=gdxvar.name
                             if (gdxvar.name in self.gams_units):
                                 dataset['unit'] = self.gams_units[gdxvar.name]
                             else:
@@ -646,7 +646,7 @@ class GAMSImporter(JSONPlugin):
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     metadata = {}
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
-                    dataset = dict(name='GAMS import_' + gdxvar.name, )
+                    dataset = dict(name=gdxvar.name, )
                     if (gdxvar.name in self.gams_units):
                         dataset['unit'] = self.gams_units[gdxvar.name]
                     else:
@@ -696,8 +696,7 @@ class GAMSImporter(JSONPlugin):
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                         metadata = {}
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
-                        dataset = dict(name='GAMS import_' + node.name + ' ' \
-                                            + gdxvar.name)
+                        dataset = dict(name=gdxvar.name)
 
                         if (gdxvar.name in self.gams_units):
                             dataset['unit'] = self.gams_units[gdxvar.name]
@@ -776,8 +775,7 @@ class GAMSImporter(JSONPlugin):
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
                         print "================================================="
-                        dataset = dict(name='GAMS import_' + link.name + ' ' \
-                                            + gdxvar.name,
+                        dataset = dict(name=gdxvar.name,
                                        locked='N')
                         if (gdxvar.name in self.gams_units):
                             dataset['unit'] = self.gams_units[gdxvar.name]
