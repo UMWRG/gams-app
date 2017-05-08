@@ -67,7 +67,6 @@ class GamsModel(object):
             return obj
         result = {}
         for key, val in obj.__dict__.items():
-
            # if key.startswith("_"):
               #  continue
             if isinstance(val, list):
