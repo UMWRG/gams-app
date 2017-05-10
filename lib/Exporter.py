@@ -905,10 +905,18 @@ class GAMSExporter(JSONPlugin):
 
 
     def compare_sets(self, key, key_):
-        for item in key_:
-            if not item in key:
-                key.append(item)
-
+        #for item_ in key_:
+        to_be_aded=[]
+        for i in range (0, len(key_)):
+            item_ =key_[i]
+        for j in range(0, len(key)):
+            item=key[j]
+            #for item in key:
+            if item.lower()==item_.lower():
+                continue
+            if j==len(key)-1:
+                to_be_aded.append(item)
+        key=key+to_be_aded
         return key
 
 
@@ -957,6 +965,7 @@ class GAMSExporter(JSONPlugin):
             ff = '{0:<' + self.array_len + '}'
             t_ = ff.format('')
             counter=0
+            #print "====>>>>",attribute_name
             type_= data_types[attribute_name]
             if attribute_name in sets_namess.keys():
                 set_name=sets_namess[attribute_name]
@@ -1040,7 +1049,11 @@ class GAMSExporter(JSONPlugin):
                         attr_outputs.append('\n' + ff.format(resource.name))
 
                     for i in xrange(len(keys)):
-                        data=value_[keys[i]]
+                        key=keys[i]
+                        #print i, key, "======>>>>>>",type(value_), attribute_name, value_.keys()
+                        #print "----->>>>>>",keys
+
+                        data=value_[key]
                         if res_type != "NETWORK":
                             data_str = ff.format(str((data)))
                             attr_outputs.append(data_str)
@@ -1132,9 +1145,10 @@ class GAMSExporter(JSONPlugin):
                         for j in xrange(len(list)):
                             su_key=str(list[j])
                             if res_type != "NETWORK":
-                                print attribute_name, "--->>>>",key, su_key, sub_set_name, list, resource.name
+                                #print attribute_name, "--->>>>",attribute_name,key, su_key, sub_set_name, list, resource.name, value_[key]
                                 if su_key not in value_[key]:
                                     continue
+                                #print "value_[key][su_key]", type(value_[key]), su_key
                                 data_str = ff.format(str((value_[key][su_key])))
                                 attr_outputs.append(data_str)
                             else:
