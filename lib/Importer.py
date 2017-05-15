@@ -437,13 +437,13 @@ class GAMSImporter(JSONPlugin):
                             MGA_values[j]=val__
                         # Add data
                 if len(MGA_values)>0 and self.check_for_empty_values(MGA_values)==True:
-                    dataset['value']=json.dumps(MGA_values)
+                    dataset['value']=json.dumps({"Solutions":MGA_values})
                     print len(MGA_values)
                     if (len(MGA_values) == 1):
                         print "length network: ", (MGA_values)
                     print len(dataset['value']), attr.id, attr.attr_id
                     dataset['type'] = 'descriptor'
-                    metadata["sol_type"] = "MGA"
+                    metadata["sol_type"] = "multiple"
                     dataset['metadata'] = json.dumps(metadata)
                     dataset['dimension'] = attr.resourcescenario.value.dimension
                     res_scen = dict(resource_attr_id=attr.id,
@@ -510,8 +510,8 @@ class GAMSImporter(JSONPlugin):
                         print "======================================= Node data is found ..."
                         print node.name
                         print gdxvar.name
-                        metadata["sol_type"] = "MGA"
-                        dataset['value']=json.dumps(MGA_values)
+                        metadata["sol_type"] = "multiple"
+                        dataset['value']=json.dumps({"Solutions":MGA_values})
                         if gdxvar.name == 'TOTAL_EXISTING_IMPORT' and self.MGA_index[j] == "file20" and self.check_for_empty_values(MGA_values)==False:
                             print "Data toz=======================================>"
                             # print dataset['value']
@@ -617,10 +617,10 @@ class GAMSImporter(JSONPlugin):
                         dataset['value']=json.dumps(MGA_values)
                         print len(MGA_values)
                         if(len(MGA_values)==1):
-                            print "length link: ", (MGA_values)
+                            print "length link: ", ({"Solutions":MGA_values})
                         print len(dataset['value']), attr.id,attr.attr_id
                         dataset['type'] = 'descriptor'
-                        metadata["sol_type"] = "MGA"
+                        metadata["sol_type"] = "multiple"
                         #metadata["data_type"] = "hashtable"
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
@@ -641,6 +641,7 @@ class GAMSImporter(JSONPlugin):
             if attr.attr_is_var == 'Y':
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                     metadata = {}
+                    metadata["sol_type"] = "single"
                     gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                     dataset = dict(name='GAMS import_' + gdxvar.name, )
                     if (gdxvar.name in self.gams_units):
@@ -661,7 +662,6 @@ class GAMSImporter(JSONPlugin):
                         dataset['value'] = self.create_timeseries(index, data)
                     elif gdxvar.dim == 0:
                         data = gdxvar.data[0]
-                        print "HELLLLOOOOOOOOOOOOOOOOOO"
                         try:
                             data_ = float(data)
                             dataset['type'] = 'scalar'
@@ -691,6 +691,8 @@ class GAMSImporter(JSONPlugin):
                 if attr.attr_is_var == 'Y':
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                         metadata = {}
+                        metadata["sol_type"] = "single"
+
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         dataset = dict(name='GAMS import_' + node.name + ' ' \
                                             + gdxvar.name)
@@ -710,7 +712,6 @@ class GAMSImporter(JSONPlugin):
                                     elif len(idx) is 2:
                                         index.append(idx[self.gdx_ts_vars[gdxvar.name]])
                                     data.append(gdxvar.data[i])
-                            print "TOOOOZ: ", node.name, gdxvar.name
                             dataset['value'] = self.create_timeseries(index, data)
                         elif gdxvar.dim == 1:
                             for i, idx in enumerate(gdxvar.index):
@@ -750,6 +751,10 @@ class GAMSImporter(JSONPlugin):
                             metadata["data_type"] = "hashtable"
 
                         if dataset.has_key('value'):
+                            try:
+                                pass
+                            except ex:
+                                pass
                             dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
@@ -769,6 +774,7 @@ class GAMSImporter(JSONPlugin):
                     tonode = nodes[link.node_2_id]
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
                         metadata = {}
+                        metadata["sol_type"] = "single"
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
                         print "================================================="
