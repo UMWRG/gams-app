@@ -905,18 +905,21 @@ class GAMSExporter(JSONPlugin):
 
 
     def compare_sets(self, key, key_):
-        #for item_ in key_:
-        to_be_aded=[]
-        for i in range (0, len(key_)):
-            item_ =key_[i]
-        for j in range(0, len(key)):
-            item=key[j]
-            #for item in key:
-            if item.lower()==item_.lower():
-                continue
-            if j==len(key)-1:
-                to_be_aded.append(item)
-        key=key+to_be_aded
+        for item_ in key_:
+            if(item_ not in key):
+                key.append(item_)
+        if(len(key_)!=len(key)):
+            to_be_aded=[]
+            for i in range (0, len(key_)):
+                item_ =key_[i]
+            for j in range(0, len(key)):
+                item=key[j]
+                #for item in key:
+                if str(item).strip().lower()==str(item_).strip().lower():
+                    continue
+                if j==len(key)-1:
+                    to_be_aded.append(item)
+            key=key+to_be_aded
         return key
 
 
@@ -978,7 +981,7 @@ class GAMSExporter(JSONPlugin):
                     if add in self.added_pars:
                         continue
                     value_=json.loads(res.values()[0].value.value)
-
+                    value_ =value_[value_.keys()[0]]
                     keys=sorted(value_.keys())
                     if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
@@ -1069,6 +1072,7 @@ class GAMSExporter(JSONPlugin):
                     if add in self.added_pars:
                         continue
                     value_ = json.loads(res.values()[0].value.value)
+                    value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())
                     if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1182,6 +1186,7 @@ class GAMSExporter(JSONPlugin):
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
+
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.nodes, attribute_name, keys, set_name))
                     if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1205,6 +1210,7 @@ class GAMSExporter(JSONPlugin):
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
+
                     if attribute_name in ids_key.keys():
                         id=ids_key[attribute_name]
                     else:
@@ -1218,6 +1224,7 @@ class GAMSExporter(JSONPlugin):
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
+
                     if attribute_name not in self.hashtables_keys.keys():
                         self.hashtables_keys[attribute_name]=keys
 
@@ -1306,6 +1313,7 @@ class GAMSExporter(JSONPlugin):
                     if not add in self.added_pars:
                         self.added_pars.append(add)
                     value_ = json.loads(res.values()[0].value.value)
+                    value_=value_[value_.keys()[0]]
 
                     keys = sorted(value_.keys())
                     if (set_name not in self.hashtables_keys.keys()):
@@ -1356,6 +1364,7 @@ class GAMSExporter(JSONPlugin):
                     if not add in self.added_pars:
                         self.added_pars.append(add)
                     value_ = json.loads(res.values()[0].value.value)
+                    value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())#value_[0]
                     if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
