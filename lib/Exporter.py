@@ -903,7 +903,15 @@ class GAMSExporter(JSONPlugin):
              dim.append(len(arr))
         return dim
 
+    def get_sub_keys(self, values):
+        sub_keys=[]
+        keys=sorted(values.keys())
+        for key in keys:
+            for k in values[key].keys():
+                if k not in sub_keys:
+                    sub_keys.append(k)
 
+        return sub_keys
     def compare_sets(self, key, key_):
         for item_ in key_:
             if(item_ not in key):
@@ -1065,6 +1073,8 @@ class GAMSExporter(JSONPlugin):
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="nested_hashtable":
+                ss = "CambridgeWaterBarnhamCross_j_CambridgeWaterBarnhamCross_CambridgeshireandWestSuffolk_Pot_CambridgeshireandWestSuffolk"
+
                 for res in ids[attribute_name]:
                     resource = res.keys()[0]
                     add=resource.name+"_"+attribute_name
@@ -1084,14 +1094,17 @@ class GAMSExporter(JSONPlugin):
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
-
+                    '''
                     values= value_[keys[0]]
                     list=[]
+
                     for key in sorted(values.keys()):
                         try:
                             list.append(int(key))
                         except:
                             list.append(key)
+                    '''
+                    list=sorted(self.get_sub_keys(value_))
 
                     for key in sorted(list):
                         t_ = t_ + ff.format(key)
@@ -1146,14 +1159,18 @@ class GAMSExporter(JSONPlugin):
                         if (sub_set_name not in self.hashtables_keys.keys()):
                             self.hashtables_keys[sub_set_name] = list
 
+
+
+
                         for j in xrange(len(list)):
                             su_key=str(list[j])
+
                             if res_type != "NETWORK":
                                 #print attribute_name, "--->>>>",attribute_name,key, su_key, sub_set_name, list, resource.name, value_[key]
                                 if su_key not in value_[key]:
-                                    continue
-                                #print "value_[key][su_key]", type(value_[key]), su_key
-                                data_str = ff.format(str((value_[key][su_key])))
+                                    data_str = ff.format(str(('')))
+                                else:
+                                    data_str = ff.format(str((value_[key][su_key])))
                                 attr_outputs.append(data_str)
                             else:
                                 data_str = ff.format(keys[i]) + ff.format(str(float(value_[key][su_key])))
