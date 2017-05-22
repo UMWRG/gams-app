@@ -167,6 +167,22 @@ class GAMSExporter(JSONPlugin):
                 self.sets += node.name + '\n'
             self.sets += '/\n\n'
 
+    def get_dict(self, obj):
+        if not hasattr(obj, "__dict__"):
+            return obj
+        result = {}
+        for key, val in obj.__dict__.items():
+
+            if key.startswith("_"):
+                continue
+            if isinstance(val, list):
+                element = []
+                for item in val:
+                    element.append(get_dict(item))
+            else:
+                element = get_dict(obj.__dict__[key])
+            result[key] = element
+        return result
     def export_node_groups(self):
         "Export node groups if there are any."
         node_groups = []
@@ -388,6 +404,7 @@ class GAMSExporter(JSONPlugin):
             # data.extend(self.export_arrays(nodes))
             data.extend(self.export_hashtable(nodes))
 
+
         # Export link data for each node type
         data.append('* Link data\n\n')
         for link_type in self.network.get_link_types(template_id=self.template_id):
@@ -429,6 +446,17 @@ class GAMSExporter(JSONPlugin):
         data.extend(self.export_timeseries_using_attributes (self.network.links, res_type='LINK'))
         #self.export_arrays(self.network.links) #??????
         data.extend(self.export_hashtable(self.network.links, res_type = 'LINK'))
+
+
+        #########
+        # Export link data for each groups
+        data.append('\n\n\n* Groups data\n')
+        #data.extend(self.export_parameters_using_attributes(self.network.groups, 'scalar', res_type='LINK'))
+        #self.export_descriptor_parameters_using_attributes(self.network.groups)
+        #data.extend(self.export_timeseries_using_attributes(self.network.groups, res_type='groups'))
+        # self.export_arrays(self.network.links) #??????
+        data.extend(self.export_hashtable(self.network.groups, res_type = 'groups'))
+        ########
         self.output = "%s%s"%(self.output, ''.join(data))
         log.info("Data exported")
 
@@ -930,6 +958,52 @@ class GAMSExporter(JSONPlugin):
             key=key+to_be_aded
         return key
 
+    def get_hashtable_type(self, res):
+        value=json.loads(res.value)
+        first_item=value[value.keys()[0]]
+        if isinstance(first_item[first_item.keys()[0]], dict):
+            #print "1. Length", len(first_item[first_item.keys()[0]])
+            attr_tryp = 'nested_hashtable'
+        else:
+            attr_tryp='hashtable'
+            #print "2. value", first_item[first_item.keys()[0]]
+
+        return attr_tryp
+
+    def export_group_table(self, attribute_name, group_type):
+        groups_list=[]
+        nodes_type={}
+
+
+        ff = '{0:<' + self.array_len + '}'
+        for group in self.network.groups:
+            if group.template.values()[0][0] ==group_type[0]:
+                groups_list.append(group.name)
+                nodes_type[group.name] = self.network.get_node(group=group.ID)
+
+        table_=['\n']
+        table_.append("TABLE "+attribute_name+"(i,"+group_type[0]+")")
+        line=ff.format('')
+        groups_list.sort()
+        for i in range(0, len(groups_list)):
+            line =line+ff.format(groups_list[i])
+        table_.append(line)
+        for node in self.network.nodes:
+            line_=ff.format(node.name)
+            for i in range(0, len(groups_list)):
+                gg=groups_list[i]
+                if node in nodes_type[gg]:
+                    line_=line_+ff.format('1')
+                else:
+                    line_=line_+ff.format('0')
+            table_.append(line_)
+
+        table_.append(';\n\n')
+
+
+        return '\n'.join(table_)
+
+
 
     def export_hashtable (self, resources,res_type=None):
         """Export hashtable which includes seasonal data .
@@ -945,10 +1019,16 @@ class GAMSExporter(JSONPlugin):
         sets_namess={}
         # Identify all the timeseries attributes and unique attribute
         # names
+        groups_types={}
         for resource in resources:
             for attr in resource.attributes:
                 if attr.dataset_type == 'array' and attr.is_var is False:
                     attr.name = translate_attr_name(attr.name)
+                    if res_type == "groups":
+                        if attr.name not in groups_types:
+                            groups_types[attr.name]=resource.template.values()[0][0]
+
+
                     if attr.name  in ids.keys():
                         ar=ids[attr.name ]
                     else:
@@ -959,6 +1039,8 @@ class GAMSExporter(JSONPlugin):
                         type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
                         if "data_type" in type_.keys():
                             data_types[attr.name]=type_["data_type"].lower()
+                            if "hashtable" in  data_types[attr.name]:
+                                data_types[attr.name]=self.get_hashtable_type(self.resourcescenarios_ids[attr.resource_attr_id].value)
                         if 'id' in type_.keys():
                             id_=type_['id']
                              # "Found id and it -------------->", id_, attr.name
@@ -1023,6 +1105,12 @@ class GAMSExporter(JSONPlugin):
                         elif res_type == "NETWORK":
                             attr_outputs.append('\n\nParameter '+ attribute_name + ' ('+ set_name + ')')
 
+                        elif res_type == "groups":
+                            if attribute_name in groups_types:
+                                type=groups_types[attribute_name]
+                            else:
+                                type='groups'
+                            attr_outputs.append('\n\nTable ' + attribute_name + ' ('+type +', ' + set_name + ')')
                         else:
                             attr_outputs.append('\n\nTable ' + attribute_name + ' (i, '+set_name+')')
 
@@ -1104,9 +1192,8 @@ class GAMSExporter(JSONPlugin):
                         except:
                             list.append(key)
                     '''
-                    list=sorted(self.get_sub_keys(value_))
-
-                    for key in sorted(list):
+                    list_=sorted(self.get_sub_keys(value_))
+                    for key in sorted(list_):
                         t_ = t_ + ff.format(key)
 
                     if (counter == 0):
@@ -1157,13 +1244,10 @@ class GAMSExporter(JSONPlugin):
 
 
                         if (sub_set_name not in self.hashtables_keys.keys()):
-                            self.hashtables_keys[sub_set_name] = list
+                            self.hashtables_keys[sub_set_name] = list_
 
-
-
-
-                        for j in xrange(len(list)):
-                            su_key=str(list[j])
+                        for j in xrange(len(list_)):
+                            su_key=str(list_[j])
 
                             if res_type != "NETWORK":
                                 #print attribute_name, "--->>>>",attribute_name,key, su_key, sub_set_name, list, resource.name, value_[key]
@@ -1175,6 +1259,11 @@ class GAMSExporter(JSONPlugin):
                             else:
                                 data_str = ff.format(keys[i]) + ff.format(str(float(value_[key][su_key])))
                                 attr_outputs.append(data_str + '\n')
+            elif type_ == "group_collection" and res_type == "NETWORK":
+                for res in ids[attribute_name]:
+                    value_ = json.loads(res.values()[0].value.value)
+                    attr_outputs.extend(self.export_group_table(attribute_name, value_[0]))
+
             elif type_ == "nodes_array_collection" and res_type == "NETWORK":
                 for res in ids[attribute_name]:
                     resource = res.keys()[0]
@@ -1237,16 +1326,15 @@ class GAMSExporter(JSONPlugin):
                         self.get_resourcess_set_collection(self.network.links, attribute_name, keys,id,
                                                                    True))
             elif type_ == "set_collection" and res_type == "NETWORK":
+                #print "Set collection: ", attribute_name
                 for res in ids[attribute_name]:
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
-
                     if attribute_name not in self.hashtables_keys.keys():
                         self.hashtables_keys[attribute_name]=keys
 
-
-            if res_type == "NETWORK":
+            if res_type == "NETWORK" and  type_ != "group_collection":
                 attr_outputs.append('/;')
         return attr_outputs
 

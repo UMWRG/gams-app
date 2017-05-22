@@ -636,7 +636,6 @@ class GAMSImporter(JSONPlugin):
 
     def attr_data_for_single_sol(self):  # Network attributes
         for attr in self.network.attributes:
-            # print attr.attr_id,  attr.attr_is_var
             #print  "======================================================"
             if attr.attr_is_var == 'Y':
                 if self.attrs[attr.attr_id] in self.gdx_variables.keys():
@@ -648,7 +647,6 @@ class GAMSImporter(JSONPlugin):
                         dataset['unit'] = self.gams_units[gdxvar.name]
                     else:
                         dataset['unit'] = '-'
-
                     if gdxvar.name in self.gdx_ts_vars.keys():
                         dataset['type'] = 'timeseries'
                         index = []
@@ -690,6 +688,7 @@ class GAMSImporter(JSONPlugin):
             for attr in node.attributes:
                 if attr.attr_is_var == 'Y':
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        print "Nod attr: ", gdxvar.name
                         metadata = {}
                         metadata["sol_type"] = "single"
 
@@ -769,7 +768,7 @@ class GAMSImporter(JSONPlugin):
             for attr in link.attributes:
                 if attr.attr_is_var == 'Y':
                     print "Link  is found 2: ", attr.attr_id
-                    print  "======================================================"
+                    print  "1 ======================================================"
                     fromnode = nodes[link.node_1_id]
                     tonode = nodes[link.node_2_id]
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
@@ -777,7 +776,7 @@ class GAMSImporter(JSONPlugin):
                         metadata["sol_type"] = "single"
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
-                        print "================================================="
+                        print "2 ================================================="
                         dataset = dict(name='GAMS import_' + link.name + ' ' \
                                             + gdxvar.name,
                                        locked='N')
@@ -920,6 +919,8 @@ class GAMSImporter(JSONPlugin):
         # return json.dumps(elements)
     #######################################################################################
     def create_array(self, index, data, res):
+        print res, index, data,
+        print "\n=============>>>"
         elements = {}
         for i in range(0, len(index)):
             if '_' in res and len(index[i]) == 4:
