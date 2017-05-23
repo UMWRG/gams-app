@@ -10,6 +10,7 @@ from HydraLib.hydra_dateutil import reindex_timeseries
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
+from HydraGAMSlib import find_item_in_hashtable
 
 from decimal import Decimal
 
@@ -183,8 +184,31 @@ class GAMSExporter(JSONPlugin):
                 element = get_dict(obj.__dict__[key])
             result[key] = element
         return result
+
     def export_node_groups(self):
         "Export node groups if there are any."
+
+        #### Groups types
+        nodes_groups_types = {}
+        ff = '{0:<' + self.array_len + '}'
+        for group in self.network.groups:
+            if len(group.template.values()[0])==0:
+                continue
+            group_type= group.template.values()[0][0]
+            if group_type not in nodes_groups_types:
+                _list=[]
+                nodes_groups_types[group_type]=_list
+            else:
+                _list=nodes_groups_types[group_type]
+
+            _list.append(group.name)
+
+
+        for gr_type in nodes_groups_types.keys():
+            if find_item_in_hashtable(gr_type, self.hashtables_keys)==None:
+            #if gr_type not in self.hashtables_keys:
+                self.hashtables_keys[gr_type.lower()] = nodes_groups_types[gr_type]
+
         node_groups = []
         group_strings = []
         for group in self.network.groups:
@@ -196,9 +220,11 @@ class GAMSExporter(JSONPlugin):
                 for node in group_nodes:
                     gstring += node.name + '\n'
                 gstring += '/\n\n'
-                group_strings.append(gstring)
+                #print "gstring: ", gstring
 
-        if len(node_groups) > 0:
+                group_strings.append(gstring)
+                                    #self.hashtables_keys[set_name] = keys
+        if len(node_groups)>0:
             self.sets += '* Node groups\n\n'
             self.sets += 'node_groups vector of all node groups /\n'
             for group in node_groups:
@@ -973,10 +999,10 @@ class GAMSExporter(JSONPlugin):
     def export_group_table(self, attribute_name, group_type):
         groups_list=[]
         nodes_type={}
-
-
         ff = '{0:<' + self.array_len + '}'
         for group in self.network.groups:
+            if len(group.template.values()[0])==0:
+                continue
             if group.template.values()[0][0] ==group_type[0]:
                 groups_list.append(group.name)
                 nodes_type[group.name] = self.network.get_node(group=group.ID)
@@ -1025,7 +1051,7 @@ class GAMSExporter(JSONPlugin):
                 if attr.dataset_type == 'array' and attr.is_var is False:
                     attr.name = translate_attr_name(attr.name)
                     if res_type == "groups":
-                        if attr.name not in groups_types:
+                        if attr.name not in groups_types and len(resource.template.values()[0])>0:
                             groups_types[attr.name]=resource.template.values()[0][0]
 
 
@@ -1073,10 +1099,13 @@ class GAMSExporter(JSONPlugin):
                     value_=json.loads(res.values()[0].value.value)
                     value_ =value_[value_.keys()[0]]
                     keys=sorted(value_.keys())
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
                     else:
-                        keys_=self.hashtables_keys[set_name]
+                        print "OFFFFFFFFFF", set_name
+
+                        keys_=find_item_in_hashtable(set_name, self.hashtables_keys)
                         self.hashtables_keys[set_name]=self.compare_sets(keys, keys_)
                     #values=value_[1]
                     for key in keys:
@@ -1172,7 +1201,8 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     #values_=value_[1]
 
@@ -1243,7 +1273,8 @@ class GAMSExporter(JSONPlugin):
                         #all_data = json.loads(value_[1][i])
 
 
-                        if (sub_set_name not in self.hashtables_keys.keys()):
+                        if find_item_in_hashtable(sub_set_name, self.hashtables_keys) == None:
+                        #if (sub_set_name not in self.hashtables_keys.keys()):
                             self.hashtables_keys[sub_set_name] = list_
 
                         for j in xrange(len(list_)):
@@ -1270,7 +1301,8 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.nodes, attribute_name, keys, set_name))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
@@ -1282,7 +1314,8 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.links, attribute_name, keys, set_name, True))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
@@ -1294,7 +1327,8 @@ class GAMSExporter(JSONPlugin):
                     keys = value_[0]
 
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.nodes, attribute_name, keys, set_name))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
@@ -1305,7 +1339,8 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.links, attribute_name, keys, set_name, True))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
@@ -1331,7 +1366,8 @@ class GAMSExporter(JSONPlugin):
                     resource = res.keys()[0]
                     value_ = json.loads(res.values()[0].value.value)
                     keys = value_[0]
-                    if attribute_name not in self.hashtables_keys.keys():
+                    if find_item_in_hashtable(attribute_name, self.hashtables_keys) == None:
+                    #if attribute_name not in self.hashtables_keys.keys():
                         self.hashtables_keys[attribute_name]=keys
 
             if res_type == "NETWORK" and  type_ != "group_collection":
@@ -1421,7 +1457,8 @@ class GAMSExporter(JSONPlugin):
                     value_=value_[value_.keys()[0]]
 
                     keys = sorted(value_.keys())
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
@@ -1471,7 +1508,8 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())#value_[0]
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
+                    #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
 
                     list = []

@@ -339,3 +339,10 @@ def check_lic():
 
 
 
+
+def find_item_in_hashtable(item, h_tables):
+    item=item.lower().strip()
+    for item_ in h_tables.keys():
+        if item == item_.lower().strip():
+            return h_tables[item_]
+    return None
