@@ -60,8 +60,27 @@ class GAMSExporter(JSONPlugin):
                                                    'template_id':self.template_id,
                                                    'scenario_ids':[self.scenario_id]})
 
+
         self.hydranetwork=net
         log.info("Network retrieved")
+        
+        template = self.connection.call('get_template', 
+                                        {'template_id':net.types[0].template_id})
+        self.node_types = []
+        self.link_types = []
+        self.group_types = []
+        self.network_type = None
+        for templatetype in template.types:
+            if templatetype.resource_type == 'NODE':
+                self.node_types.append(templatetype)
+            elif templatetype.resource_type == 'LINK':
+                self.link_types.append(templatetype)
+            elif templatetype.resource_type == 'GROUP':
+                self.group_types.append(templatetype)
+            elif templatetype.resource_type == 'NETWORK':
+                self.network_type = templatetype
+
+        log.info("Template retrieved")
 
         if net.scenarios is not None:
             for s in net.scenarios:
@@ -158,13 +177,13 @@ class GAMSExporter(JSONPlugin):
         self.sets += 'SETS\n\n'
         # Group nodes by type
         self.sets += 'nodes_types   /\n'
-        for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.sets += object_type+'\n'
+        for object_type in self.node_types:
+            self.sets += object_type.name+'\n'
         self.sets += '/\n\n'
 
-        for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.sets += object_type + '(i) /\n'
-            for node in self.network.get_node(node_type=object_type):
+        for object_type in self.node_types:
+            self.sets += object_type.name + '(i) /\n'
+            for node in self.network.get_node(node_type=object_type.name):
                 self.sets += node.name + '\n'
             self.sets += '/\n\n'
 
@@ -227,17 +246,17 @@ class GAMSExporter(JSONPlugin):
         # Group links by type
         self.sets += '* Link types\n\n'
         self.sets += 'links_types   /\n'
-        for object_type in self.network.get_link_types(template_id=self.template_id):
-            self.sets += object_type + '\n'
+        for object_type in self.link_types:
+            self.sets += object_type.name + '\n'
         self.sets += '/\n\n'
 
-        for object_type in self.network.get_link_types(template_id=self.template_id):
-            self.sets += object_type
+        for object_type in self.link_types:
+            self.sets += object_type.name
             if self.links_as_name:
                 self.sets +=  'link_name /\n'
             else:
                 if self.use_jun == True:
-                    self.sets += 'links(i, jun_set, j) vector of '+object_type+' links /\n'
+                    self.sets += 'links(i, jun_set, j) vector of '+object_type.name+' links /\n'
                 else:
                     self.sets += '(i,j) /\n'
             for link in self.network.get_link(link_type=object_type):
@@ -313,19 +332,22 @@ class GAMSExporter(JSONPlugin):
 
         # the following to be used with AW EBSD
         self.links_groups_members=links_groups_members
-        if len (EXCLUSIVITY_SET)>0:
-            self.EXCLUSIVITY_SET = EXCLUSIVITY_SET
-            self.sets += 'EXCLUSIVITY_SET /\n'
-            for item in EXCLUSIVITY_SET:
-                self.sets += item + '\n'
-            self.sets += '/\n\n'
 
-        if len(DEPENDENCY_SET)>0:
-            self.DEPENDENCY_SET = DEPENDENCY_SET
+        self.EXCLUSIVITY_SET = EXCLUSIVITY_SET
+        self.sets += 'EXCLUSIVITY_SET /\n'
+        for item in EXCLUSIVITY_SET:
+            self.sets += item + '\n'
+        self.sets += '/\n\n'
+
+        self.DEPENDENCY_SET = DEPENDENCY_SET
+        if len(DEPENDENCY_SET):
             self.sets += 'DEPENDENCY_SET /\n'
             for item in DEPENDENCY_SET:
                 self.sets += item + '\n'
-            self.sets += '/\n\n'
+        else:
+            self.sets += 'LEFT_RIGHT_SET(*) /\nLEFT_DEP\nDEP_RIGHT\n/\n\n'
+            self.sets += 'DEPENDENCY_SET(*) /\n'
+        self.sets += '/\n\n'
 
 
     def create_connectivity_matrix(self):
@@ -379,24 +401,25 @@ class GAMSExporter(JSONPlugin):
         # Export node data for each node type
         data = ['* Node data\n\n']
         self.time_table={}
-        for node_type in \
-                self.network.get_node_types(template_id=self.template_id):
-            data.append('* Data for node type %s\n\n' % node_type)
-            nodes = self.network.get_node(node_type=node_type)
-            data.extend(self.export_parameters_using_type(nodes, node_type, 'scalar'))
-            data.extend(self.export_parameters_using_type(nodes, node_type, 'descriptor'))
-            data.extend(self.export_timeseries_using_type(nodes, node_type))
+        for node_type in self.node_types:
+            type_name = node_type.name
+            data.append('* Data for node type %s\n\n' % type_name)
+            nodes = self.network.get_node(node_type=type_name)
+            data.extend(self.export_parameters_using_type(nodes, type_name, 'scalar'))
+            data.extend(self.export_parameters_using_type(nodes, type_name, 'descriptor'))
+            data.extend(self.export_timeseries_using_type(nodes, type_name))
             # data.extend(self.export_arrays(nodes))
             data.extend(self.export_hashtable(nodes))
 
         # Export link data for each node type
         data.append('* Link data\n\n')
-        for link_type in self.network.get_link_types(template_id=self.template_id):
-            data.append('* Data for link type %s\n\n' % link_type)
-            links = self.network.get_link(link_type=link_type)
-            data.extend(self.export_parameters_using_type(links, link_type, 'scalar', res_type='LINK'))
-            data.extend(self.export_parameters_using_type(links, link_type,'descriptor', res_type='LINK'))
-            data.extend(self.export_timeseries_using_type(links, link_type, res_type='LINK'))
+        for link_type in self.link_types:
+            type_name = link_type.name
+            data.append('* Data for link type %s\n\n' % type_name)
+            links = self.network.get_link(link_type=type_name)
+            data.extend(self.export_parameters_using_type(links, type_name, 'scalar', res_type='LINK'))
+            data.extend(self.export_parameters_using_type(links, type_name,'descriptor', res_type='LINK'))
+            data.extend(self.export_timeseries_using_type(links, type_name, res_type='LINK'))
             #self.export_arrays(links)
             data.extend(self.export_hashtable(links))
         self.output = "%s%s"%(self.output, ''.join(data))
@@ -1300,7 +1323,7 @@ class GAMSExporter(JSONPlugin):
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
                     values = value_[1]
                     for i in xrange(len(values)):
-                        k=keys[i]
+                        k=str(keys[i])
                         data_str = ff.format(str((values[i])))
                         if islink == True:
                             if self.links_as_name:
@@ -1661,6 +1684,7 @@ class GAMSExporter(JSONPlugin):
                             for k  in range (dim[0]):
                                 #print k, "It is ", len(array)
                                 if len(array)==dim[0]:
+                                    log.info(array)
                                     item=array[k]
                                 elif len(array[0])==dim[0]:
                                      item=array[0][k]
@@ -1785,7 +1809,7 @@ class GAMSExporter(JSONPlugin):
         for key in self.hashtables_keys.keys():
             self.sets +=('\n'+key+'\n/')
             for val in self.hashtables_keys[key]:
-                self.sets +=('\n' + val)
+                self.sets +=('\n' + str(val))
             self.sets += ('\n/\n\n')
 
         with open(self.filename, 'w') as f:
