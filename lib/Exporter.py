@@ -259,7 +259,7 @@ class GAMSExporter(JSONPlugin):
                     self.sets += 'links(i, jun_set, j) vector of '+object_type.name+' links /\n'
                 else:
                     self.sets += '(i,j) /\n'
-            for link in self.network.get_link(link_type=object_type):
+            for link in self.network.get_link(link_type=object_type.name):
                 if self.links_as_name:
                     self.sets += link.name + '\n'
                 else:
