@@ -1092,8 +1092,10 @@ class GAMSExporter(JSONPlugin):
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
+                    
+                    if not isinstance(values, dict):
+                        values= (json.loads(values))
 
-                    values= (json.loads(values))
                     list=[]
                     for key in sorted(values.keys()):
                         try:
@@ -1148,8 +1150,10 @@ class GAMSExporter(JSONPlugin):
 
                         else:
                             attr_outputs.append('\n' + ff.format(key+'.'+resource.name))
-                        all_data = json.loads(value_[1][i])
 
+                        all_data = value_[1][i]
+                        if not isinstance(all_data, dict):
+                            all_data = json.loads(all_data)
 
                         if (sub_set_name not in self.hashtables_keys.keys()):
                             self.hashtables_keys[sub_set_name] = list
