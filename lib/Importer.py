@@ -683,16 +683,93 @@ class GAMSImporter(JSONPlugin):
                         self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
+        for group in self.network.resourcegroups:
+            group.update({group.id: group.name})
+            for attr in group.attributes:
+                if attr.attr_is_var == 'Y':
+                    if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        metadata = {}
+                        metadata["sol_type"] = "single"
+                        gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                        dataset = dict(name='GAMS import_' + group.name + ' ' \
+                                            + gdxvar.name)
+                        if (gdxvar.name in self.gams_units):
+                            dataset['unit'] = self.gams_units[gdxvar.name]
+                        else:
+                            dataset['unit'] = '-'
+                        if gdxvar.name in self.gdx_ts_vars.keys():
+                            dataset['type'] = 'timeseries'
+                            index = []
+                            data = []
+                            for i, idx in enumerate(gdxvar.index):
+                                if node.name in idx:
+                                    if len(idx) is 4:
+                                        index.append('.'.join(map(str, idx[1:])))
+                                    elif len(idx) is 2:
+                                        index.append(idx[self.gdx_ts_vars[gdxvar.name]])
+                                    data.append(gdxvar.data[i])
+                            dataset['value'] = self.create_timeseries(index, data)
+                        elif gdxvar.dim == 1:
+                            for i, idx in enumerate(gdxvar.index):
+                                # print idx
+                                if node.name in idx:
+                                    data = gdxvar.data[i]
+                                    try:
+                                        data_ = float(data)
+                                        dataset['type'] = 'scalar'
+                                        dataset['value'] = data
+                                    except ValueError:
+                                        dataset['type'] = 'descriptor'
+                                        dataset['value'] = data
+                                    break
+
+                        elif gdxvar.dim > 1:
+                            dataset['type'] = 'array'
+                            index = []
+                            data = []
+                            # print  gdxvar.index
+                            # print  gdxvar.data
+                            inx = copy.deepcopy(gdxvar.index)
+                            dat = copy.deepcopy(gdxvar.data)
+                            for i, idx in enumerate(inx):
+                                if group.name in idx:
+                                    idx.pop(idx.index(group.name))
+                                    index.append(idx)
+                                    data.append(dat[i])
+                                    # print "index: ",index
+
+                                    # self.arrange_array(inx, gdxvar.data)
+                                    # dataset['value'] = self.create_array(inx,
+                                    #                                dat, node.name)
+                            dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, group.name)
+                            dataset['type'] = 'descriptor'
+                            metadata["data_type"] = "hashtable"
+
+                        if dataset.has_key('value'):
+                            try:
+                                pass
+                            except ex:
+                                pass
+                            dataset['value'] = json.dumps(dataset['value'])
+                            dataset['metadata'] = json.dumps(metadata)
+                            dataset['dimension'] = attr.resourcescenario.value.dimension
+
+                            res_scen = dict(resource_attr_id=attr.id,
+                                            attr_id=attr.attr_id,
+                                            value=dataset)
+                            self.res_scenario.append(res_scen)
+
         for node in self.network.nodes:
             nodes.update({node.id: node.name})
             for attr in node.attributes:
                 if attr.attr_is_var == 'Y':
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
-                        print "Nod attr: ", gdxvar.name
                         metadata = {}
                         metadata["sol_type"] = "single"
 
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
+                        print "Node attr: ", gdxvar.name
+
                         dataset = dict(name='GAMS import_' + node.name + ' ' \
                                             + gdxvar.name)
 
@@ -776,7 +853,7 @@ class GAMSImporter(JSONPlugin):
                         metadata["sol_type"] = "single"
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
-                        print "2 ================================================="
+                        print "12 ================================================="
                         dataset = dict(name='GAMS import_' + link.name + ' ' \
                                             + gdxvar.name,
                                        locked='N')
@@ -919,8 +996,9 @@ class GAMSImporter(JSONPlugin):
         # return json.dumps(elements)
     #######################################################################################
     def create_array(self, index, data, res):
-        print res, index, data,
-        print "\n=============>>>"
+        print res, index
+        print data
+        print "\nres=============>>>", res
         elements = {}
         for i in range(0, len(index)):
             if '_' in res and len(index[i]) == 4:
@@ -931,10 +1009,25 @@ class GAMSImporter(JSONPlugin):
                     # if(data[i]>0):9
                     #    print "Res is not zero:", res, data[i]
                     continue
+
+            if len(index[i]) == 4:
+                name=index[i][0]
+                key=key = index[i][1]
+                key_2 = index[i][2]
+                if key in elements:
+                    if key_2 in elements[key]:
+                        elements[key][key_2][index[i][3]] = data[i]
+                    else:
+                        elements[key][key_2]={[index[i][3]] : data[i]}
+                else:
+                    val = {key_2:{index[i][3]: data[i]}}
+                    elements[key] = val
+                continue
             if '_' in res and len(index[i]) == 5:
+                print "From 5", res
                 # print index[i]
                 name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
-                # print res, name
+                print res, name
                 if name == res:
                     # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
                     key = index[i][4]
@@ -946,6 +1039,20 @@ class GAMSImporter(JSONPlugin):
                     # if(data[i]>0):
                     #    print "Res is not zero:", res, data[i]
                     continue
+                else:
+                    name=index[i][0] + "_" + index[i][1]
+                    if name == res:
+                        key = index[i][2]
+                        key_2 = index[i][3]
+                        if key in elements:
+                            if key_2 in elements[key]:
+                                elements[key][key_2][index[i][4]] = data[i]
+                            else:
+                                elements[key][key_2]={[index[i][4]] : data[i]}
+                        else:
+                            val = {key_2:{index[i][4]: data[i]}}
+                            elements[key] = val
+                        continue
             if len(index[i]) == 3 and index[i][2].strip().lower() == res.strip().lower():
                 # ['2037-38', 'NYAA', 'norfolkrural']
                 key = index[i][0]
