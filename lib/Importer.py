@@ -875,16 +875,21 @@ class GAMSImporter(JSONPlugin):
                     name = index[i][1] + "_" + index[i][2] + "_" + index[i][3]
                     # print res, name
                     if name == res:
-                        # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
-                        key = index[i][5]
-                        if key in elements:
-                            elements[key][index[i][4]] = data[i]
+                        if 'j_'+index[i][4].strip().lower() == index[i][2].strip().lower():
+                            key = index[i][5]
+                            elements[key] = data[i]
+                            continue
                         else:
-                            val = {index[i][4]: data[i]}
-                            elements[key] = val
-                        # if(data[i]>0):
-                        #    print "Res is not zero:", res, data[i]
-                        continue
+                            # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
+                            key = index[i][5]
+                            if key in elements:
+                                elements[key][index[i][4]] = data[i]
+                            else:
+                                val = {index[i][4]: data[i]}
+                                elements[key] = val
+                            # if(data[i]>0):
+                            #    print "Res is not zero:", res, data[i]
+                            continue
                 if len(index[i]) == 4 and index[i][3].strip().lower() == res.strip().lower():
                     # ['2037-38', 'NYAA', 'norfolkrural']
                     #['file15', '2035-36', 'DYCP', 'centralessex']
