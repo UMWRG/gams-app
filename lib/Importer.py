@@ -1028,6 +1028,12 @@ class GAMSImporter(JSONPlugin):
                     key = index[i][3]
                     elements[key] = data[i]
                     continue
+            if '_' in res and len(index[i]) == 3:
+                 name = index[i][0] + "_" + index[i][1]
+                 if name == res:
+                    key = index[i][2]
+                    elements[key] = data[i]
+                    continue
             if len(index[i]) == 4:
                 name=index[i][0]
                 key=key = index[i][1]
