@@ -677,6 +677,11 @@ class GAMSImporter(JSONPlugin):
                         dataset['value']=json.dumps(dataset['value'])
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
+                        #print "network Adding the attr ... ============================================================"
+                        #print "gdxvar.name: ", gdxvar.name
+                        #print "metadat: ", dataset['metadata']
+                        #print "vaue: ", dataset['value']
+                        #print "arrt is added ... ============================================================"
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
                                         value=dataset)
@@ -753,6 +758,11 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
+                            #print "groups Adding the attr ... ============================================================", group.name
+                            #print "gdxvar.name: ", gdxvar.name
+                            #print "metadat: ", dataset['metadata']
+                            #print "vaue: ", dataset['value']
+                            #print "arrt is added ... ============================================================"
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
@@ -834,6 +844,11 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
+                            #print "nodes Adding the attr ... ============================================================", node.name
+                            #print "gdxvar.name: ", gdxvar.name
+                            #print "metadat: ", dataset['metadata']
+                            #print "vaue: ",dataset['value']
+                            #print "arrt is added ... ============================================================"
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
@@ -844,8 +859,8 @@ class GAMSImporter(JSONPlugin):
         for link in self.network.links:
             for attr in link.attributes:
                 if attr.attr_is_var == 'Y':
-                    print "Link  is found 2: ", attr.attr_id
-                    print  "1 ======================================================"
+                    #print "Link  is found 2: ", attr.attr_id
+                    #print  "1 ======================================================"
                     fromnode = nodes[link.node_1_id]
                     tonode = nodes[link.node_2_id]
                     if self.attrs[attr.attr_id] in self.gdx_variables.keys():
@@ -853,7 +868,7 @@ class GAMSImporter(JSONPlugin):
                         metadata["sol_type"] = "single"
                         gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                         print gdxvar.name
-                        print "12 ================================================="
+                        #print "12 ================================================="
                         dataset = dict(name='GAMS import_' + link.name + ' ' \
                                             + gdxvar.name,
                                        locked='N')
@@ -928,6 +943,11 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = json.dumps(dataset['value'])
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
+                            #print "links Adding the attr ... ============================================================", link.name
+                            #print "gdxvar.name: ", gdxvar.name
+                            #print "metadat: ", dataset['metadata']
+                            #print "vaue: ", dataset['value']
+                            #print "arrt is added ... ============================================================"
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
                                             value=dataset)
@@ -996,9 +1016,10 @@ class GAMSImporter(JSONPlugin):
         # return json.dumps(elements)
     #######################################################################################
     def create_array(self, index, data, res):
-        print res, index
-        print data
-        print "\nres=============>>>", res
+        #print "res:",res
+        #print "index:", index
+        #print "data:", data
+        #print "\nres=============>>>", res
         elements = {}
         for i in range(0, len(index)):
             if '_' in res and len(index[i]) == 4:
@@ -1006,10 +1027,7 @@ class GAMSImporter(JSONPlugin):
                  if name == res:
                     key = index[i][3]
                     elements[key] = data[i]
-                    # if(data[i]>0):9
-                    #    print "Res is not zero:", res, data[i]
                     continue
-
             if len(index[i]) == 4:
                 name=index[i][0]
                 key=key = index[i][1]
@@ -1024,12 +1042,10 @@ class GAMSImporter(JSONPlugin):
                     elements[key] = val
                 continue
             if '_' in res and len(index[i]) == 5:
-                print "From 5", res
                 # print index[i]
                 name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
                 print res, name
                 if name == res:
-                    # ['bury_water_reuse', 'j_cws5', 'cambridgeshireandwestsuffolk', 'DYCP', '2015-16']
                     key = index[i][4]
                     if key in elements:
                         elements[key][index[i][3]] = data[i]
@@ -1053,27 +1069,45 @@ class GAMSImporter(JSONPlugin):
                             val = {key_2:{index[i][4]: data[i]}}
                             elements[key] = val
                         continue
+            elif len(index[i]) == 5 and index[i][0].strip().lower() == res.strip().lower():
+                key = index[i][1]
+                key_2 = index[i][2]
+                key_3 = index[i][3]
+                if key in elements:
+                    if key_2 in elements[key]:
+                        if key_3 in elements[key][key_2]:
+                            elements[key][key_2][key_3][index[i][4]]=data[i]
+                        else:
+                            elements[key][key_2] = {[key_3]:{index[i][4]: data[i]}}
+                    else:
+                        elements[key] = {[key_2]:{key_3:{index[i][4]: data[i]}}}
+                else:
+                    val = {key_2: {key_3:{index[i][4]: data[i]}}}
+                    elements[key] = val
+                continue
             if len(index[i]) == 3 and index[i][2].strip().lower() == res.strip().lower():
-                # ['2037-38', 'NYAA', 'norfolkrural']
                 key = index[i][0]
                 if key in elements:
                     elements[key][index[i][1]] = data[i]
                 else:
                     val = {index[i][1]: data[i]}
                     elements[key] = val
-
-                # val={index[i][1]: data[i]}
-                # print "Itr is found ......... ",index[i][0]," : ", val
                 elements[index[i][0]] = (val)
 
             elif len(index[i]) == 2 and index[i][1].strip().lower() == res.strip().lower():
                 val = {index[i][0]: data[i]}
-                # print "Itr is found ......... ",index[i][0]," : ", val
-
-                # elements[index[i][0]] = json.dumps(val)
                 elements[index[i][0]] = (val)
 
                 # elements[index[i][0]] = data[i]
+            elif len(index[i]) == 3 and index[i][0].strip().lower() == res.strip().lower():
+                key = index[i][1]
+                if key in elements:
+                    elements[key][index[i][2]] = data[i]
+                else:
+                    val = {index[i][2]: data[i]}
+                    elements[key] = val
+                elements[index[i][1]] = (val)
+                continue
         return (elements)
         # return json.dumps(elements)
 
