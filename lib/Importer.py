@@ -668,10 +668,9 @@ class GAMSImporter(JSONPlugin):
                             dataset['type'] = 'descriptor'
                             dataset['value'] = data
                     elif gdxvar.dim > 0:
-                        continue
                         dataset['type'] = 'array'
                         dataset['value'] = self.create_array(gdxvar.index,
-                                                             gdxvar.data)
+                                                             gdxvar.data, self.network.name)
                     # Add data
                     if dataset.has_key('value'):
                         dataset['value']=json.dumps(dataset['value'])
@@ -1022,6 +1021,27 @@ class GAMSImporter(JSONPlugin):
         #print "\nres=============>>>", res
         elements = {}
         for i in range(0, len(index)):
+            if res ==self.network.name:
+                if len(index[i]) == 2:
+                    key = index[i][0]
+                    if key in elements:
+                        elements[key][index[i][1]] = data[i]
+                    else:
+                        val = {index[i][1]: data[i]}
+                        elements[key] = val
+                elif len(index[i])==3:
+                    key = key = index[i][0]
+                    key_2 = index[i][1]
+                    if key in elements:
+                        if key_2 in elements[key]:
+                            elements[key][key_2][index[i][2]] = data[i]
+                        else:
+                            elements[key][key_2] = {[index[i][2]]: data[i]}
+                    else:
+                        val = {key_2: {index[i][2]: data[i]}}
+                        elements[key] = val
+                continue
+
             if '_' in res and len(index[i]) == 4:
                  name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
                  if name == res:

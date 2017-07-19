@@ -1102,8 +1102,8 @@ class GAMSExporter(JSONPlugin):
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
-                    else:
-                        print "OFFFFFFFFFF", set_name
+                    #else:
+                    #    print "OFFFFFFFFFF", set_name
 
                         keys_=find_item_in_hashtable(set_name, self.hashtables_keys)
                         self.hashtables_keys[set_name]=self.compare_sets(keys, keys_)
