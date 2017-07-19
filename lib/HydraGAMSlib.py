@@ -26,6 +26,7 @@ class GamsModel(object):
             self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 1)
 
         except Exception as e:
+            log.exception(e)
             raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")
 
     def add_job(self, model_file):
