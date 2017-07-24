@@ -831,8 +831,6 @@ class GAMSImporter(JSONPlugin):
                                     # dataset['value'] = self.create_array(inx,
                                     #                                dat, node.name)
 
-                            if attr.attr_id == 73:
-                                import pudb; pudb.set_trace()
                             dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, node.name)
                             dataset['type'] = 'descriptor'
                             metadata["data_type"] = "hashtable"
