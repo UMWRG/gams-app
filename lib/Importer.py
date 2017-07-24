@@ -831,6 +831,8 @@ class GAMSImporter(JSONPlugin):
                                     # dataset['value'] = self.create_array(inx,
                                     #                                dat, node.name)
 
+                            if attr.attr_id == 73:
+                                import pudb; pudb.set_trace()
                             dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, node.name)
                             dataset['type'] = 'descriptor'
                             metadata["data_type"] = "hashtable"
@@ -1056,17 +1058,18 @@ class GAMSImporter(JSONPlugin):
                     continue
             if len(index[i]) == 4:
                 name=index[i][0]
-                key=key = index[i][1]
-                key_2 = index[i][2]
-                if key in elements:
-                    if key_2 in elements[key]:
-                        elements[key][key_2][index[i][3]] = data[i]
+                if name == res:
+                    key=key = index[i][1]
+                    key_2 = index[i][2]
+                    if key in elements:
+                        if key_2 in elements[key]:
+                            elements[key][key_2][index[i][3]] = data[i]
+                        else:
+                            elements[key][key_2]={index[i][3] : data[i]}
                     else:
-                        elements[key][key_2]={[index[i][3]] : data[i]}
-                else:
-                    val = {key_2:{index[i][3]: data[i]}}
-                    elements[key] = val
-                continue
+                        val = {key_2:{index[i][3]: data[i]}}
+                        elements[key] = val
+                    continue
             if '_' in res and len(index[i]) == 5:
                 # print index[i]
                 name = index[i][0] + "_" + index[i][1] + "_" + index[i][2]
@@ -1090,7 +1093,7 @@ class GAMSImporter(JSONPlugin):
                             if key_2 in elements[key]:
                                 elements[key][key_2][index[i][4]] = data[i]
                             else:
-                                elements[key][key_2]={[index[i][4]] : data[i]}
+                                elements[key][key_2]={index[i][4] : data[i]}
                         else:
                             val = {key_2:{index[i][4]: data[i]}}
                             elements[key] = val
@@ -1104,9 +1107,9 @@ class GAMSImporter(JSONPlugin):
                         if key_3 in elements[key][key_2]:
                             elements[key][key_2][key_3][index[i][4]]=data[i]
                         else:
-                            elements[key][key_2] = {[key_3]:{index[i][4]: data[i]}}
+                            elements[key][key_2] = {key_3:{index[i][4]: data[i]}}
                     else:
-                        elements[key] = {[key_2]:{key_3:{index[i][4]: data[i]}}}
+                        elements[key] = {key_2:{key_3:{index[i][4]: data[i]}}}
                 else:
                     val = {key_2: {key_3:{index[i][4]: data[i]}}}
                     elements[key] = val
