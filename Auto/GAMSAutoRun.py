@@ -1,5 +1,6 @@
-# (c) Copyright 2013, 2014, 2015 University of Manchester\
+#(c) Copyright 2013, 2014, 2015 University of Manchester\
 '''
+
 plugin_name: GAMS
             - Export a network from Hydra to a gams input text file.
             - Rum GAMS.

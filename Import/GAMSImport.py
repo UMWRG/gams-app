@@ -1,7 +1,5 @@
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
-
-
 '''
  plugin_name: Import GAMS
 	          Import a gdx results file into Hydra.

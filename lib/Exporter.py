@@ -35,6 +35,7 @@ class GAMSExporter(JSONPlugin):
         self.output=''
         self.added_pars=[]
         self.junc_node={}
+        self.empty_groups=[]
 
         self.connect(args)
         if args.time_axis is not None:
@@ -63,6 +64,8 @@ class GAMSExporter(JSONPlugin):
 
         self.hydranetwork=net
         log.info("Network retrieved")
+
+        print "===>>>>", net.types
         
         template = self.connection.call('get_template', 
                                         {'template_id':net.types[0].template_id})
@@ -148,6 +151,14 @@ class GAMSExporter(JSONPlugin):
         self.export_links()
         log.info("Exporting link groups")
         self.export_link_groups()
+        print "====>>>Toz"
+        st=""
+        for empty_group in self.empty_groups:
+            st += ('\n' + empty_group + '\n/')
+            st += ('\n/\n\n')
+        print st
+
+        print self.empty_groups
         log.info("Creating connectivity matrix")
         #self.create_connectivity_matrix()
         log.info("Writing nodes coordinates")
@@ -192,16 +203,23 @@ class GAMSExporter(JSONPlugin):
         node_groups = []
         group_strings = []
         for group in self.network.groups:
+            print group.type
             group_nodes = self.network.get_node(group=group.ID)
+            node_groups.append(group)
             if len(group_nodes) > 0:
-                node_groups.append(group)
+                if group.name in self.empty_groups:
+                    self.empty_groups.remove(group.name)
+
                 gstring = ''
                 gstring += group.name + '(i) /\n'
                 for node in group_nodes:
                     gstring += node.name + '\n'
                 gstring += '/\n\n'
                 group_strings.append(gstring)
-
+            else:
+                if group.name not in self.empty_groups:
+                    self.empty_groups.append(group.name)
+                    #group_strings.append(group.name + '(i) /\n'+'/\n')
         if len(node_groups) > 0:
             self.sets += '* Node groups\n\n'
             self.sets += 'node_groups vector of all node groups /\n'
@@ -291,7 +309,6 @@ class GAMSExporter(JSONPlugin):
             #group_links = self.network.get_link(group=group.ID)
             if len(group_links) > 0:
                 links_groups_members[group.name]=group_links
-                #print "It is biggere thank zero...."
                 link_groups.append(group)
                 lstring = ''
                 if self.links_as_name:
@@ -301,7 +318,6 @@ class GAMSExporter(JSONPlugin):
                         lstring += group.name+ '(i, jun_set, j) vector links group /\n'
                     else:
                         lstring += '(i,j) /\n'
-                #lstring += group.name + '(i,j) /\n'
                 for link in group_links:
                     if self.links_as_name:
                         lstring += link.name + '\n'
@@ -331,6 +347,15 @@ class GAMSExporter(JSONPlugin):
                 self.sets += lstring
 
         # the following to be used with AW EBSD
+        for group in self.network.groups:
+            if group in link_groups:
+                if group.name in self.empty_groups:
+                    self.empty_groups.remove(group.name)
+                continue
+            if group.name not in self.empty_groups:
+                if group.name not in self.sets:
+                     self.empty_groups.append(group.name)
+
         self.links_groups_members=links_groups_members
 
         self.EXCLUSIVITY_SET = EXCLUSIVITY_SET
@@ -1814,6 +1839,10 @@ class GAMSExporter(JSONPlugin):
             self.sets +=('\n'+key+'\n/')
             for val in self.hashtables_keys[key]:
                 self.sets +=('\n' + str(val))
+            self.sets += ('\n/\n\n')
+
+        for empty_group in self.empty_groups:
+            self.sets += ('\n' + empty_group + '\n/')
             self.sets += ('\n/\n\n')
 
         with open(self.filename, 'w') as f:
