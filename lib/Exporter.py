@@ -151,12 +151,6 @@ class GAMSExporter(JSONPlugin):
         self.export_links()
         log.info("Exporting link groups")
         self.export_link_groups()
-        print "====>>>Toz"
-        st=""
-        for empty_group in self.empty_groups:
-            st += ('\n' + empty_group + '\n/')
-            st += ('\n/\n\n')
-        print st
 
         print self.empty_groups
         log.info("Creating connectivity matrix")
@@ -203,7 +197,6 @@ class GAMSExporter(JSONPlugin):
         node_groups = []
         group_strings = []
         for group in self.network.groups:
-            print group.type
             group_nodes = self.network.get_node(group=group.ID)
             node_groups.append(group)
             if len(group_nodes) > 0:
@@ -1842,7 +1835,7 @@ class GAMSExporter(JSONPlugin):
             self.sets += ('\n/\n\n')
 
         for empty_group in self.empty_groups:
-            self.sets += ('\n' + empty_group + '\n/')
+            self.sets += ('\n' + empty_group + '(*)\n/')
             self.sets += ('\n/\n\n')
 
         with open(self.filename, 'w') as f:
