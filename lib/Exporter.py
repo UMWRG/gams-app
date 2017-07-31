@@ -11,7 +11,10 @@ from HydraLib.hydra_dateutil import reindex_timeseries
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
 from HydraGAMSlib import find_item_in_hashtable
-
+from HydraGAMSlib import sort_list
+from HydraGAMSlib import get_resourcescenarios_ids
+from HydraGAMSlib import translate_attr_name
+from HydraGAMSlib import get_sorted_key
 from decimal import Decimal
 
 import json
@@ -960,12 +963,10 @@ class GAMSExporter(JSONPlugin):
     def get_sub_keys(self, values):
         sub_keys=[]
         keys=sorted(values.keys())
-        sort_months_list(keys)
         for key in keys:
             for k in values[key].keys():
                 if k not in sub_keys:
                     sub_keys.append(k)
-
         return sub_keys
     def compare_sets(self, key, key_):
         for item_ in key_:
@@ -1099,8 +1100,8 @@ class GAMSExporter(JSONPlugin):
                         continue
                     value_=json.loads(res.values()[0].value.value)
                     value_ =value_[value_.keys()[0]]
-                    keys=sorted(value_.keys())
-                    sort_months_list(keys)
+                    keys=value_.keys()
+                    sort_list(keys, get_sorted_key(res, 1))
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
@@ -1202,8 +1203,8 @@ class GAMSExporter(JSONPlugin):
                         continue
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
-                    keys = sorted(value_.keys())
-                    sort_months_list(keys)
+                    keys = value_.keys()
+                    sort_list(keys, get_sorted_key(res, 1))
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1215,18 +1216,9 @@ class GAMSExporter(JSONPlugin):
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
-                    '''
-                    values= value_[keys[0]]
-                    list=[]
 
-                    for key in sorted(values.keys()):
-                        try:
-                            list.append(int(key))
-                        except:
-                            list.append(key)
-                    '''
-                    list_=sorted(self.get_sub_keys(value_))
-                    sort_months_list(list_)
+                    list_=(self.get_sub_keys(value_))
+                    sort_list(list_, get_sorted_key(res, 2))
                     for key in (list_):
                         t_ = t_ + ff.format(key)
                     if (counter == 0):
@@ -1457,10 +1449,11 @@ class GAMSExporter(JSONPlugin):
                     if not add in self.added_pars:
                         self.added_pars.append(add)
                     value_ = json.loads(res.values()[0].value.value)
-                    value_=value_[value_.keys()[0]]
+                    print res.metadata
 
+                    value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())
-                    sort_months_list(keys)
+                    sort_list(keys, get_sorted_key(res, 1))
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1512,7 +1505,7 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())#value_[0]
-                    sort_months_list(keys)
+                    sort_list(keys)
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1521,7 +1514,7 @@ class GAMSExporter(JSONPlugin):
                     for i in range (0, len(keys)):
                         vv=value_[keys[i]]
                         kkk=sorted(vv.keys())
-                        sort_months_list(kkk)
+                        sort_list(kkk)
                         for key in kkk:
                             try:
                                 if(not int(key) in list):
@@ -1965,77 +1958,4 @@ class GAMSExporter(JSONPlugin):
         with open(self.filename, 'w') as f:
             f.write(self.sets+self.output)
 
-def translate_attr_name(name):
-    """Replace non alphanumeric characters with '_'. This function throws an
-    error, if the first letter of an attribute name is not an alphabetic
-    character.
-    """
-    if isinstance(name, str):
-        translator = ''.join(chr(c) if chr(c).isalnum()
-                             else '_' for c in range(256))
-    elif isinstance(name, unicode):
-        translator = UnicodeTranslate()
 
-    name = name.translate(translator)
-    return name
-
-
-class UnicodeTranslate(dict):
-    """Translate a unicode attribute name to a valid GAMS variable.
-    """
-    def __missing__(self, item):
-        char = unichr(item)
-        repl = u'_'
-        if item < 256 and char.isalnum():
-            repl = char
-        self[item] = repl
-        return repl
-
-
-
-def get_dict(obj):
-    if type(obj) is list:
-        list_results=[]
-        for item in obj:
-            list_results.append(get_dict(item))
-        return list_results
-
-    if not hasattr(obj, "__dict__"):
-         return obj
-
-    result = {}
-    for key, val in obj.__dict__.items():
-        if key.startswith("_"):
-            continue
-        if isinstance(val, list):
-            element = []
-            for item in val:
-                element.append(get_dict(item))
-        else:
-            element = get_dict(obj.__dict__[key])
-        result[key] = element
-    return result
-
-def get_resourcescenarios_ids(resourcescenarios):
-    resourcescenarios_ids={}
-    for res in resourcescenarios:
-        #print "==============================>", get_dict(res)
-        #print type(res)
-        resourcescenarios_ids[res.resource_attr_id]=res
-    return resourcescenarios_ids
-
-def sort_months_list(months_list):
-    sorted_month_list=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
-    return_sorted_month=True
-    to_be_added={}
-    for month in months_list:
-        if month.upper() in sorted_month_list:
-            to_be_added[sorted_month_list.index(month.upper())]=month
-        else:
-            return_sorted_month=False
-            break
-
-    if return_sorted_month==True and len(to_be_added)==len(months_list):
-        del months_list[:]
-        for ind in sorted(to_be_added.keys()):
-            months_list.append(to_be_added[ind])

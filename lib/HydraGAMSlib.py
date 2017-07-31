@@ -3,6 +3,7 @@
 
 import os
 import sys
+import json
 
 from HydraLib.PluginLib import HydraResource, HydraNetwork
 from HydraLib.HydraException import HydraPluginError
@@ -346,3 +347,97 @@ def find_item_in_hashtable(item, h_tables):
         if item == item_.lower().strip():
             return h_tables[item_]
     return None
+
+
+short_form_month_list=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+full_form_month_list=["JANNURAY", "FEBRUARY", "MARCH", "APRIL",	"MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER","NOVEMBER","DECEMBER"]
+
+
+def sort_list(items_list, key):
+    if key.upper()=='MONTH':
+        is_sorted=_sort_months_list(items_list, short_form_month_list)
+        if is_sorted==False:
+            is_sorted=_sort_months_list(items_list, full_form_month_list)
+    if key.upper()!='MONTH' or is_sorted == False:
+        items_list.sort()
+
+
+def _sort_months_list(months_list, month_list):
+    is_sorted = False
+    try:
+        months_list.sort(key=lambda x: month_list.index(x.upper()))
+        is_sorted=True
+    except:
+        pass
+
+    return is_sorted
+
+
+def get_dict(obj):
+    if type(obj) is list:
+        list_results=[]
+        for item in obj:
+            list_results.append(get_dict(item))
+        return list_results
+
+    if not hasattr(obj, "__dict__"):
+         return obj
+
+    result = {}
+    for key, val in obj.__dict__.items():
+        if key.startswith("_"):
+            continue
+        if isinstance(val, list):
+            element = []
+            for item in val:
+                element.append(get_dict(item))
+        else:
+            element = get_dict(obj.__dict__[key])
+        result[key] = element
+    return result
+
+
+def get_resourcescenarios_ids(resourcescenarios):
+    resourcescenarios_ids={}
+    for res in resourcescenarios:
+        resourcescenarios_ids[res.resource_attr_id]=res
+    return resourcescenarios_ids
+
+
+def translate_attr_name(name):
+    """Replace non alphanumeric characters with '_'. This function throws an
+    error, if the first letter of an attribute name is not an alphabetic
+    character.
+    """
+    if isinstance(name, str):
+        translator = ''.join(chr(c) if chr(c).isalnum()
+                             else '_' for c in range(256))
+    elif isinstance(name, unicode):
+        translator = UnicodeTranslate()
+
+    name = name.translate(translator)
+    return name
+
+
+class UnicodeTranslate(dict):
+    """Translate a unicode attribute name to a valid GAMS variable.
+    """
+    def __missing__(self, item):
+        char = unichr(item)
+        repl = u'_'
+        if item < 256 and char.isalnum():
+            repl = char
+        self[item] = repl
+        return repl
+
+
+def get_sorted_key(res, level):
+    sorted_key=''
+    try:
+        if level==1:
+            sorted_key=json.loads(res.values()[0].value.metadata)['key']
+        elif level==2:
+            sorted_key=json.loads(res.values()[0].value.metadata)['sub_key']
+    except:
+        pass
+    return sorted_key
