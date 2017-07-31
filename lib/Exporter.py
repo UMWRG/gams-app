@@ -960,6 +960,7 @@ class GAMSExporter(JSONPlugin):
     def get_sub_keys(self, values):
         sub_keys=[]
         keys=sorted(values.keys())
+        sort_months_list(keys)
         for key in keys:
             for k in values[key].keys():
                 if k not in sub_keys:
@@ -1099,6 +1100,7 @@ class GAMSExporter(JSONPlugin):
                     value_=json.loads(res.values()[0].value.value)
                     value_ =value_[value_.keys()[0]]
                     keys=sorted(value_.keys())
+                    sort_months_list(keys)
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name]=keys
@@ -1190,7 +1192,7 @@ class GAMSExporter(JSONPlugin):
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="nested_hashtable":
-                ss = "CambridgeWaterBarnhamCross_j_CambridgeWaterBarnhamCross_CambridgeshireandWestSuffolk_Pot_CambridgeshireandWestSuffolk"
+                #ss = "CambridgeWaterBarnhamCross_j_CambridgeWaterBarnhamCross_CambridgeshireandWestSuffolk_Pot_CambridgeshireandWestSuffolk"
 
                 for res in ids[attribute_name]:
                     resource = res.keys()[0]
@@ -1201,6 +1203,7 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())
+                    sort_months_list(keys)
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1223,9 +1226,9 @@ class GAMSExporter(JSONPlugin):
                             list.append(key)
                     '''
                     list_=sorted(self.get_sub_keys(value_))
-                    for key in sorted(list_):
+                    sort_months_list(list_)
+                    for key in (list_):
                         t_ = t_ + ff.format(key)
-
                     if (counter == 0):
                         if islink:
                             if self.links_as_name:
@@ -1457,6 +1460,7 @@ class GAMSExporter(JSONPlugin):
                     value_=value_[value_.keys()[0]]
 
                     keys = sorted(value_.keys())
+                    sort_months_list(keys)
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1508,6 +1512,7 @@ class GAMSExporter(JSONPlugin):
                     value_ = json.loads(res.values()[0].value.value)
                     value_=value_[value_.keys()[0]]
                     keys = sorted(value_.keys())#value_[0]
+                    sort_months_list(keys)
                     if find_item_in_hashtable(set_name, self.hashtables_keys) == None:
                     #if (set_name not in self.hashtables_keys.keys()):
                         self.hashtables_keys[set_name] = keys
@@ -1515,7 +1520,9 @@ class GAMSExporter(JSONPlugin):
                     list = []
                     for i in range (0, len(keys)):
                         vv=value_[keys[i]]
-                        for key in sorted(vv.keys()):
+                        kkk=sorted(vv.keys())
+                        sort_months_list(kkk)
+                        for key in kkk:
                             try:
                                 if(not int(key) in list):
                                     list.append(int(key))
@@ -2016,3 +2023,19 @@ def get_resourcescenarios_ids(resourcescenarios):
         #print type(res)
         resourcescenarios_ids[res.resource_attr_id]=res
     return resourcescenarios_ids
+
+def sort_months_list(months_list):
+    sorted_month_list=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
+    return_sorted_month=True
+    to_be_added={}
+    for month in months_list:
+        if month.upper() in sorted_month_list:
+            to_be_added[sorted_month_list.index(month.upper())]=month
+        else:
+            return_sorted_month=False
+            break
+
+    if return_sorted_month==True and len(to_be_added)==len(months_list):
+        del months_list[:]
+        for ind in sorted(to_be_added.keys()):
+            months_list.append(to_be_added[ind])
