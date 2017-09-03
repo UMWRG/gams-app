@@ -33,6 +33,7 @@ class GAMSExporter(JSONPlugin):
         self.sets=[]
         self.descriptors = {}
         self.hashtables_keys={}
+        self.attr_hashtables_keys = {}
         self.output=''
         self.added_pars=[]
         self.junc_node={}
@@ -826,7 +827,6 @@ class GAMSExporter(JSONPlugin):
 
             if (descriptor_list > 0):
                 self.descriptors[attribute.name]=descriptor_list
-
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
         """Export time series.
@@ -1967,10 +1967,19 @@ class GAMSExporter(JSONPlugin):
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
+        st = ''
+        for key in self.attr_hashtables_keys.keys():
+            st += ('\n' + key + '\n/')
+            for val in self.attr_hashtables_keys[key]:
+                st += ('\n' + str(val))
+            st += ('\n/\n\n')
+
+        self.set = st + '\n\n' + self.set
+
         for key in self.hashtables_keys.keys():
-            self.sets +=('\n'+key+'\n/')
+            self.sets += ('\n' + key + '\n/')
             for val in self.hashtables_keys[key]:
-                self.sets +=('\n' + str(val))
+                self.sets += ('\n' + str(val))
             self.sets += ('\n/\n\n')
 
         self.sets += '* empty groups\n\n'
@@ -1979,7 +1988,7 @@ class GAMSExporter(JSONPlugin):
             self.sets += ('\n/\n\n')
 
         with open(self.filename, 'w') as f:
-            f.write(self.sets+self.output)
+            f.write(self.sets + self.output)
 
 def translate_attr_name(name):
     """Replace non alphanumeric characters with '_'. This function throws an
