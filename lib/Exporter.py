@@ -31,11 +31,16 @@ class GAMSExporter(JSONPlugin):
         self.time_index = []
         self.time_axis =None
         self.sets=[]
+        self.descriptors = {}
         self.hashtables_keys={}
         self.output=''
         self.added_pars=[]
         self.junc_node={}
+        self.link_code={}#Links are allowed to have 'codes' which are an attribute with a shorthand name to simplify indexing in the model
         self.empty_groups=[]
+        #Keep track of all the groups which are subgroups (within other groups) as they are treated differently
+        #to top-level groups. NOTE: This currently only supports 1 level of subgrouping
+        self.subgroups = {}
 
         self.connect(args)
         if args.time_axis is not None:
@@ -66,14 +71,16 @@ class GAMSExporter(JSONPlugin):
         log.info("Network retrieved")
 
         print "===>>>>", net.types
+
+        self.template_id = net.types[0].template_id
         
-        template = self.connection.call('get_template', 
+        self.template = self.connection.call('get_template', 
                                         {'template_id':net.types[0].template_id})
         self.node_types = []
         self.link_types = []
         self.group_types = []
         self.network_type = None
-        for templatetype in template.types:
+        for templatetype in self.template.types:
             if templatetype.resource_type == 'NODE':
                 self.node_types.append(templatetype)
             elif templatetype.resource_type == 'LINK':
@@ -91,6 +98,7 @@ class GAMSExporter(JSONPlugin):
                     self.scenario=s
 
         self.resourcescenarios_ids=get_resourcescenarios_ids(net.scenarios[0].resourcescenarios)
+
         self.network = GAMSnetwork()
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
@@ -105,6 +113,11 @@ class GAMSExporter(JSONPlugin):
             self.get_time_axix_from_attributes_values(self.network.nodes)
         if (self.time_axis is None):
             self.get_time_axix_from_attributes_values(self.network.links)
+
+        #If links have a 'code' attirbute, build this dict
+        #THis attribute is used for simpler modelling, rather than using start/end nodes to refer to a link
+        self.get_link_codes()
+
         self.get_junc_link()
         if (len(self.junc_node) > 0):
             self.use_jun = True
@@ -141,22 +154,35 @@ class GAMSExporter(JSONPlugin):
     def export_network(self):
         if self.links_as_name is False and len(self.junc_node)==0:
             self.check_links_between_nodes()
-        self.get_longest_node_link_name();
         self.sets += '* Network definition\n\n'
+
         log.info("Exporting nodes")
         self.export_nodes()
-        log.info("Exporting node groups")
-        self.export_node_groups()
         log.info("Exporting links")
         self.export_links()
-        log.info("Exporting link groups")
-        self.export_link_groups()
+        log.info("Exporting Groups")
+        self.export_groups()
 
-        print self.empty_groups
+
+        log.info("Exporting groups that contain nodes")
+        node_groups = self.export_node_groups()
+        log.info("Exporting groups that contain links")
+        link_groups = self.export_link_groups()
+        #Do this here so we can identify which groups are subgroups, as they
+        #must be handled differently
+        log.info("Exporting subgroups")
+        self.export_subgroups()
+        log.info("Exporting groups that contain subgroups")
+        subgroup_groups = self.export_subgroup_groups()
+
+        #create groups that either have no elements or groups in the template
+        #that are not in the network
+        self.set_empty_groups(node_groups, link_groups, subgroup_groups)
+
         log.info("Creating connectivity matrix")
         #self.create_connectivity_matrix()
         log.info("Writing nodes coordinates")
-        self.export_resources_coordinates()
+        #self.export_resources_coordinates()
         log.info("Matrix created")
 
     def get_longest_node_link_name(self):
@@ -198,37 +224,49 @@ class GAMSExporter(JSONPlugin):
         group_strings = []
         for group in self.network.groups:
             group_nodes = self.network.get_node(group=group.ID)
-            node_groups.append(group)
             if len(group_nodes) > 0:
-                if group.name in self.empty_groups:
-                    self.empty_groups.remove(group.name)
 
-                gstring = ''
-                gstring += group.name + '(i) /\n'
+                #is it a subgroup? If so, store it as such and don't write it
+                #like a first-level group
+                if group.name in self.subgroups:
+                    for n in group_nodes:
+                        self.subgroups[group.name]['contents'].append(n.name)
+
+                node_groups.append(group)
+
+
+                grp_str = ''
+                grp_str += group.name + '(i) /\n'
                 for node in group_nodes:
-                    gstring += node.name + '\n'
-                gstring += '/\n\n'
-                group_strings.append(gstring)
-            else:
-                if group.name not in self.empty_groups:
-                    self.empty_groups.append(group.name)
-                    #group_strings.append(group.name + '(i) /\n'+'/\n')
+                    grp_str += node.name + '\n'
+                grp_str += '/\n\n'
+                group_strings.append(grp_str)
+
         if len(node_groups) > 0:
             self.sets += '* Node groups\n\n'
             self.sets += 'node_groups vector of all node groups /\n'
             for group in node_groups:
                 self.sets += group.name + '\n'
             self.sets += '/\n\n'
-            for gstring in group_strings:
-                self.sets += gstring
+            for grp_str in group_strings:
+                self.sets += grp_str
+
+        return node_groups
 
 
     def get_junc_link(self):
         for link in self.network.links:
-                    res=link.get_attribute(attr_name="jun_node")
-                    if res is None or res.value is None:
-                          continue
-                    self.junc_node[link.name]=res.value
+            res=link.get_attribute(attr_name="jun_node")
+            if res is None or res.value is None:
+                  continue
+            self.junc_node[link.name]=res.value
+
+    def get_link_codes(self):
+        for link in self.network.links:
+            res=link.get_attribute(attr_name="code")
+            if res is None or res.value is None:
+                    continue
+            self.link_code[link.name]=res.value
 
     def export_links(self):
         self.sets += 'SETS\n\n'
@@ -289,18 +327,27 @@ class GAMSExporter(JSONPlugin):
         links_groups_members={}
 
         for group in self.network.groups:
-            group_links = []
-            for link in self.network.links:
-                if group.ID in link.groups:
-                    group_links.append(link)
-                else:
-                    for item in link.groups:
-                        if item ==group.ID or group.ID in item:
-                            group_links.append(link)
-                            break
-
-            #group_links = self.network.get_link(group=group.ID)
+            group_links = self.network.get_link(group=group.ID)
             if len(group_links) > 0:
+
+                #is it a subgroup? If so, store it as such and don't write it
+                #like a first-level group
+                if group.name in self.subgroups:
+
+                    manual_idx = group.get_attribute(attr_name='index')
+                    if manual_idx is not None:
+                        for l in group_links:
+                            #If there's a 'Code' attribute, use that instead of the name.
+                            if self.link_code.get(l.name):
+                                ref_name = self.link_code[l.name]
+                            else:
+                                raise Exception("Group uses an index attribute %s but it is not found on link %s"%(manual_idx, l.name))
+                            self.subgroups[group.name]['contents'].append(ref_name)
+                            self.subgroups[group.name]['index'] = manual_idx.value
+                    else:
+                        for l in group_links:
+                            self.subgroups[group.name]['contents'].append(l.gams_name)
+
                 links_groups_members[group.name]=group_links
                 link_groups.append(group)
                 lstring = ''
@@ -324,49 +371,156 @@ class GAMSExporter(JSONPlugin):
                 lstring += '/\n\n'
                 link_strings.append(lstring)
 
-        EXCLUSIVITY_SET=[]
-        DEPENDENCY_SET=[]
         if len(link_groups) > 0:
-            self.output += '* Link groups\n\n'
-            self.sets += 'link_groups vector of all link groups /\n'
-            for group in link_groups:
-                if group.name.lower().startswith("dependency"):
-                    DEPENDENCY_SET.append(group.name)
-                if group.name.lower().startswith("exclusivity"):
-                    EXCLUSIVITY_SET.append(group.name)
-                self.sets += group.name + '\n'
-            self.sets += '/\n\n'
+            self.output += '\n* Link groups\n\n'
             for lstring in link_strings:
                 self.sets += lstring
 
-        # the following to be used with AW EBSD
+        return link_groups
+
+    def export_groups(self):
+        self.sets += 'SETS\n\n'
+        # Write all groups ...
+        self.sets += 'group_name /\n'
         for group in self.network.groups:
-            if group in link_groups:
-                if group.name in self.empty_groups:
-                    self.empty_groups.remove(group.name)
-                continue
-            if group.name not in self.empty_groups:
-                if group.name not in self.sets:
-                     self.empty_groups.append(group.name)
-
-        self.links_groups_members=links_groups_members
-
-        self.EXCLUSIVITY_SET = EXCLUSIVITY_SET
-        self.sets += 'EXCLUSIVITY_SET /\n'
-        for item in EXCLUSIVITY_SET:
-            self.sets += item + '\n'
+            self.sets +=group.name+'\n'
         self.sets += '/\n\n'
-
-        self.DEPENDENCY_SET = DEPENDENCY_SET
-        if len(DEPENDENCY_SET):
-            self.sets += 'DEPENDENCY_SET /\n'
-            for item in DEPENDENCY_SET:
-                self.sets += item + '\n'
-        else:
-            self.sets += 'LEFT_RIGHT_SET(*) /\nLEFT_DEP\nDEP_RIGHT\n/\n\n'
-            self.sets += 'DEPENDENCY_SET(*) /\n'
+        self.sets += 'groups (group_name) vector of all groups /\n'
+        for group in self.network.groups:
+            self.sets += group.name +'\n'
+        self.sets += '    /\n\n'
+        # Group groups by type
+        self.sets += '* group types\n\n'
+        self.sets += 'group_types   /\n'
+        for object_type in self.group_types:
+            self.sets += object_type.name + '\n'
         self.sets += '/\n\n'
+        
+        for group in self.network.groups:
+            group_subgroups=self.network.get_group(group=group.ID)
+            if len(group_subgroups) > 0:
+                #THis is a subgroup, so add to the list of subgroups for use when
+                #exporting the node / link groups in case they are treated differently
+                grouptype = group.template[self.template_id]
+                for subgroup in group_subgroups:
+                    subgrouptype = subgroup.template[self.template_id]
+                    self.subgroups[subgroup.name] = {'parent': group.name,
+                                                     'type':subgrouptype,
+                                                     'parent_type': grouptype,
+                                                     'contents':[],
+                                                     'index':None}
 
+        for object_type in self.group_types:
+            groups_of_type = self.network.get_group(group_type=object_type.name)
+            if len(groups_of_type) > 0 and groups_of_type[0].name not in self.subgroups:
+                self.sets += object_type.name
+                self.sets +=  ' /\n'
+                for group in groups_of_type:
+                    self.sets += group.name + '\n'
+                self.sets += '/\n\n'
+
+
+    def export_subgroup_groups(self):
+        "Export subgroup groups if there are any."
+
+        self.sets += '* Subgroup groups ....\n\n'
+
+        subgroup_groups = []
+        group_strings = []
+
+        for group in self.network.groups:
+            group_subgroups=self.network.get_group(group=group.ID)
+            if len(group_subgroups) > 0:
+                subgroup_groups.append(group)
+
+                grp_str = ''
+                grp_str += group.name + '(group_name) /\n'
+                for subgroup in group_subgroups:
+                    grp_str += subgroup.name + '\n'
+                grp_str += '/\n\n'
+                group_strings.append(grp_str)
+
+        if len(subgroup_groups) > 0:
+            self.sets += '* subgroup groups\n\n'
+            self.sets += 'subgroup_groups vector of all subgroup groups /\n'
+            for group in subgroup_groups:
+                self.sets += group.name + '\n'
+            self.sets += '/\n\n'
+            for grp_str in group_strings:
+                self.sets += grp_str
+
+        return subgroup_groups
+
+    def export_subgroups(self):
+
+        self.sets += '* Subgroups ....\n\n'
+        
+        subgroup_sets = {}
+        subgrouptype_parenttype_map = {}
+        #Index by default is 'I' for nodes and 'I, J' for links. 
+        #But it can be other things such as 'I, jun_set, J' or 'Code', so need to keep track of it.
+        subgroup_type_index = {} 
+
+        #Rearrange the data to put the group contents together, keyed on the subgroup type 
+        for subgroupname, subgroupdata in self.subgroups.items():
+            parent_type=subgroupdata['parent_type']
+            subgrouptype=subgroupdata['type']
+            parent = subgroupdata['parent']
+
+            subgrouptype_parenttype_map[subgrouptype] = parent_type
+            
+            contents = []
+            for c in subgroupdata['contents']:
+                contents.append((parent, c))
+            
+            if subgroupdata.get('index') is not None:
+                subgroup_type_index[subgrouptype] =subgroupdata['index']
+            else:
+                if contents[0][1].count('.') == 0:
+                    subgroup_type_index[subgrouptype] = "I"
+                else:
+                    #Dependin on the number of dots, create an index i, j or i, j, k etc.
+                    inum = ord('i')
+                    idx = []
+                    for i in range(contents[0][1].count('.')+1):
+                        idx.append(chr(inum+i))
+                    subgroup_type_index[subgrouptype] = ",".join(idx)
+
+            if subgroup_sets.get(subgrouptype) is None:
+                subgroup_sets[subgrouptype] = contents
+            else:
+                subgroup_sets[subgrouptype] = subgroup_sets[subgrouptype] + contents
+        
+        #Now that the data's in the correct format, print it
+        for subgrouptype, contents in subgroup_sets.items():
+            parent_type = subgrouptype_parenttype_map[subgrouptype]
+            index = subgroup_type_index[subgrouptype]
+            self.sets += "%s (%s,%s)\n"%(subgrouptype, parent_type, index)
+            self.sets += "/\n"
+            for c in contents:
+                self.sets += "%s . %s\n"%(c[0], c[1])
+
+            self.sets += '/\n\n'
+
+    def set_empty_groups(self, node_groups, link_groups, subgroup_groups):
+        """
+            Create a list of all the empty groups in the system so they can be exported as such.
+            This includes group types for which there are no groups defined
+        """
+        non_empty_groups = node_groups + link_groups + subgroup_groups
+        non_empty_group_IDS = [g.ID for g in non_empty_groups]
+        non_empty_group_types = []
+        for group in self.network.groups:
+            if group.ID not in non_empty_group_IDS:
+                self.empty_groups.append(group.name)
+
+            non_empty_group_types.append(group.template[self.template_id])
+
+        #Go through all group types and add empty sets for all those that don't
+        #have a group set in the data
+        for grouptype in self.group_types:
+            if grouptype.name not in non_empty_group_types:
+                self.empty_groups.append(grouptype.name)
 
     def create_connectivity_matrix(self):
         ff='{0:<'+self.name_len+'}'
@@ -644,7 +798,6 @@ class GAMSExporter(JSONPlugin):
         """Export scalars or descriptors.
         """
         datatype='descriptor'
-        counter_ = 0
         attributes = []
         attr_names = []
         attr_outputs = []
@@ -652,13 +805,12 @@ class GAMSExporter(JSONPlugin):
             for attr in resource.attributes:
                 if attr.dataset_type == datatype and attr.is_var is False:
                     translated_attr_name = translate_attr_name(attr.name)
-                    res = resource.get_attribute(attr_name=attr.name)
                     attr.name = translated_attr_name
                     if attr.name not in attr_names:
                         attributes.append(attr)
                         attr_names.append(attr.name)
         for attribute in attributes:
-            list = []
+            descriptor_list = []
 
             # attr_outputs.append(ff.format(0))
             attr_outputs.append('\n')
@@ -668,12 +820,12 @@ class GAMSExporter(JSONPlugin):
 
                 if attr is None or attr.value is None or attr.dataset_type != datatype:
                     continue
-                if attr.value not in list:
-                    list.append(attr.value)
+                if attr.value not in descriptor_list:
+                    descriptor_list.append(attr.value)
 
 
-            if (list > 0):
-                self.hashtables_keys[attribute.name]=list
+            if (descriptor_list > 0):
+                self.descriptors[attribute.name]=descriptor_list
 
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
@@ -1549,27 +1701,6 @@ class GAMSExporter(JSONPlugin):
         title=title+')\n/'
         attr_outputs.append('')
         attr_outputs.append(title)
-        ###################
-        if id == 'group':
-            #print "It group ....", len(set_collections)
-            if set_collections[0].lower() == 'dependency_set' and len(set_collections) == 3:
-                para1 = set_collections[1]
-                parr2 = set_collections[2]
-                for group in self.DEPENDENCY_SET:
-                    for link in self.links_groups_members[group]:
-                        tt = link.get_attribute(attr_name=para1).value
-                        tt2 = link.get_attribute(attr_name=parr2).value
-                        lin=group +" . "+tt+" . "+tt2
-                        if (lin):
-                            attr_outputs.append(lin)
-                return '\n'.join(attr_outputs)
-            elif set_collections[0].lower() == 'exclusivity_set' and len(set_collections) == 2:
-                for group in self.EXCLUSIVITY_SET:
-                    for link in self.links_groups_members[group]:
-                        lin = group + " . " + link.get_attribute(attr_name=set_collections[1]).value
-                        if (lin):
-                            attr_outputs.append(lin)
-                return '\n'.join(attr_outputs)
         ##################
         for resource in resources:
             line=''
@@ -1588,19 +1719,19 @@ class GAMSExporter(JSONPlugin):
             for set in set_collections:
                     if(islink ==True):
                         if set== 'to_NODE_type':
-                            tt=self.network.get_node(node_name=resource.to_node).template[1][0]
+                            tt=self.network.get_node(node_name=resource.to_node).template[self.template_id]
                             if line:
                                 line = line + ' . '+tt
                             else:
                                 line=tt
                         elif  set == 'from_NODE_type':
-                            tt=self.network.get_node(node_name=resource.from_node).template[1][0]
+                            tt=self.network.get_node(node_name=resource.from_node).template[self.template_id]
                             if line:
                                 line = line + ' . '+tt
                             else:
                                 line=tt
                         elif set == 'links_types':
-                            tt=self.network.get_link(link_name=resource.name).template[1][0]
+                            tt=self.network.get_link(link_name=resource.name).template[self.template_id]
                             if line:
                                 line = line + ' . ' + tt
                             else:
@@ -1826,6 +1957,14 @@ class GAMSExporter(JSONPlugin):
             log.exception(e)
             raise HydraPluginError("Please check time-axis or start time, end times and time step.")
 
+    def write_descriptors(self):
+        log.info("Writing descriptor sets %s.", self.filename)
+        for key in self.descriptors.keys():
+            self.sets +=('\nset '+key+'\n/')
+            for val in self.descriptors[key]:
+                self.sets +=('\n' + str(val))
+            self.sets += ('\n/\n\n')
+
     def write_file(self):
         log.info("Writing file %s.", self.filename)
         for key in self.hashtables_keys.keys():
@@ -1834,6 +1973,7 @@ class GAMSExporter(JSONPlugin):
                 self.sets +=('\n' + str(val))
             self.sets += ('\n/\n\n')
 
+        self.sets += '* empty groups\n\n'
         for empty_group in self.empty_groups:
             self.sets += ('\n' + empty_group + '(*)\n/')
             self.sets += ('\n/\n\n')

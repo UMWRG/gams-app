@@ -158,14 +158,18 @@ class GamsModel(object):
                 raise HydraPluginError("Model error: "+str(modelerror)+"\nSolver error: "+str(solvererror))
 
 class GAMSnetwork(HydraNetwork):
-    def gams_names_for_links(self, use_link_name=False):
+    def gams_names_for_links(self, use_link_name=False, jun=None):
         """
         Add a string to each link that can be used directly in GAMS code in
         order to define a link.
         """
         if use_link_name is False:
             for i, link in enumerate(self.links):
-                self.links[i].gams_name = link.from_node + ' . ' + link.to_node
+                if jun is None: 
+                    self.links[i].gams_name = link.from_node + ' . ' + link.to_node
+                else:
+                    self.links[i].gams_name = link.from_node + ' . ' + jun + ' . ' + link.to_node
+
         else:
             for i, link in enumerate(self.links):
                 self.links[i].gams_name = link.name

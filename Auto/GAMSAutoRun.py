@@ -220,7 +220,7 @@ def export_network(is_licensed):
 
     write_progress(3, steps)
 
-    exporter.export_network()
+    exporter.get_longest_node_link_name();
 
     if(args.gams_date_time_index is True):
             exporter.use_gams_date_index=True
@@ -232,6 +232,10 @@ def export_network(is_licensed):
         exporter.export_data_using_types()
     else:
         exporter.export_data_using_attributes()
+
+    exporter.write_descriptors()
+
+    exporter.export_network()
 
     write_progress(5, steps)
     write_output("Writing output file")
