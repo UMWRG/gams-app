@@ -33,7 +33,6 @@ class GAMSExporter(JSONPlugin):
         self.sets=[]
         self.descriptors = {}
         self.hashtables_keys={}
-        self.attr_hashtables_keys = {}
         self.output=''
         self.added_pars=[]
         self.junc_node={}
@@ -1967,14 +1966,6 @@ class GAMSExporter(JSONPlugin):
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
-        st = ''
-        for key in self.attr_hashtables_keys.keys():
-            st += ('\n' + key + '\n/')
-            for val in self.attr_hashtables_keys[key]:
-                st += ('\n' + str(val))
-            st += ('\n/\n\n')
-
-        self.sets = st + '\n\n' + self.sets
 
         for key in self.hashtables_keys.keys():
             self.sets += ('\n' + key + '\n/')
