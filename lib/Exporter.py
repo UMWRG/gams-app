@@ -1974,7 +1974,7 @@ class GAMSExporter(JSONPlugin):
                 st += ('\n' + str(val))
             st += ('\n/\n\n')
 
-        self.set = st + '\n\n' + self.set
+        self.sets = st + '\n\n' + self.sets
 
         for key in self.hashtables_keys.keys():
             self.sets += ('\n' + key + '\n/')
