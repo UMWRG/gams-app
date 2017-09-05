@@ -6,6 +6,8 @@
     <plugin_category>model</plugin_category>
     <plugin_command>GAMSAutoRun.py</plugin_command>
     <plugin_shell>python</plugin_shell>
+    <plugin_nativelogextension>lst</plugin_nativelogextension>
+    <plugin_nativeoutputextension>gdx</plugin_nativeoutputextension>
     <plugin_location>.</plugin_location>
 	<smallicon>icon16.png</smallicon>
     <largeicon>icon32.png</largeicon>
