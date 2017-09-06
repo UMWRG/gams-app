@@ -1972,10 +1972,14 @@ class GAMSExporter(JSONPlugin):
             for val in self.hashtables_keys[key]:
                 self.sets += ('\n' + str(val))
             self.sets += ('\n/\n\n')
+        
 
         self.sets += '* empty groups\n\n'
         for empty_group in self.empty_groups:
-            self.sets += ('\n' + empty_group + '(*)\n/')
+            index = "(*)"
+            if empty_group.find('LEFT') >=0 or empty_group.find('RIGHT') >=0 or empty_group == 'TYPE_MET':
+                index = "(*, *)"
+            self.sets += ('\n' + empty_group + index + '\n/')
             self.sets += ('\n/\n\n')
 
         with open(self.filename, 'w') as f:
