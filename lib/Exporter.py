@@ -27,6 +27,7 @@ class GAMSExporter(JSONPlugin):
         self.network_id = int(args.network_id)
         self.scenario_id = int(args.scenario_id)
         self.template_id = int(args.template_id) if args.template_id is not None else None
+        self.type_attr_default_datasets = {}
         self.filename = args.output
         self.time_index = []
         self.time_axis =None
@@ -41,6 +42,12 @@ class GAMSExporter(JSONPlugin):
         #Keep track of all the groups which are subgroups (within other groups) as they are treated differently
         #to top-level groups. NOTE: This currently only supports 1 level of subgrouping
         self.subgroups = {}
+    
+        #Many groups have multiple indices. Empty groups must be exported with
+        #the appropriate number of indices to avoid compilation errors. So we 
+        #must keep track of how many dimensions each group has (default is 1 unless
+        #explicitly specified using the 'dimensions' attribute on the group type in the template.
+        self.group_dimensions = {}
 
         self.connect(args)
         if args.time_axis is not None:
@@ -58,6 +65,9 @@ class GAMSExporter(JSONPlugin):
 
 
         self.attrs = self.connection.call('get_all_attributes', {})
+        self.attr_id_map = {}
+        for a in self.attrs:
+            self.attr_id_map[a.id] = a
         log.info("%s attributes retrieved", len(self.attrs))
 
     def get_network(self, is_licensed):
@@ -76,6 +86,13 @@ class GAMSExporter(JSONPlugin):
         
         self.template = self.connection.call('get_template', 
                                         {'template_id':net.types[0].template_id})
+
+        for t in self.template.types:
+            self.type_attr_default_datasets[t.id] = {}
+            for ta in t.typeattrs:
+                attr_name = self.attr_id_map[ta.attr_id].name
+                self.type_attr_default_datasets[t.id][attr_name] = ta.default_dataset
+
         self.node_types = []
         self.link_types = []
         self.group_types = []
@@ -519,6 +536,8 @@ class GAMSExporter(JSONPlugin):
         #Go through all group types and add empty sets for all those that don't
         #have a group set in the data
         for grouptype in self.group_types:
+            self.group_dimensions[grouptype.name] = self.type_attr_default_datasets[grouptype.id].get('dimensions', {'value':1})['value']
+
             if grouptype.name not in non_empty_group_types:
                 self.empty_groups.append(grouptype.name)
 
@@ -1977,8 +1996,9 @@ class GAMSExporter(JSONPlugin):
         self.sets += '* empty groups\n\n'
         for empty_group in self.empty_groups:
             index = "(*)"
-            if empty_group.find('LEFT') >=0 or empty_group.find('RIGHT') >=0 or empty_group == 'TYPE_MET':
-                index = "(*, *)"
+            if int(self.group_dimensions.get(empty_group, 1)) > 1:
+                indices = ['*'] * int(self.group_dimensions[empty_group])
+                index = "(" + ",".join(indices) + ")"
             self.sets += ('\n' + empty_group + index + '\n/')
             self.sets += ('\n/\n\n')
 
