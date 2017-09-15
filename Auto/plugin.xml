@@ -103,6 +103,14 @@
            <argtype>string</argtype>
            <help>Group links by this attribute(s).</help>
         </arg>
+       <arg>
+           <name>turn-debug-on</name>
+           <switch>-debug</switch>
+           <multiple>N</multiple>
+           <allownew>N</allownew>
+           <argtype>string</argtype>
+           <help>Send highly technical info and GAMS log to stdout.</help>
+        </arg>
         <arg>
             <name>output</name>
             <switch>-o</switch>

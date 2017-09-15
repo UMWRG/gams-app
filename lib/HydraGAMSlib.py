@@ -12,7 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class GamsModel(object):
-    def __init__(self, gamspath, working_directory):
+    def __init__(self, gamspath, working_directory, turn_debug_on):
         if(gamspath==None):
             gamspath=get_gams_path()
 
@@ -23,7 +23,11 @@ class GamsModel(object):
             if api_path not in sys.path:
                 sys.path.insert(0, api_path)
             from gams import  workspace
-            self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = 3)
+            if turn_debug_on == True:
+                debug_level = 3
+            else:
+                debug_level = 1
+            self.ws = workspace.GamsWorkspace(working_directory=working_directory, system_directory=gamspath, debug = debug_level)
 
         except Exception as e:
             log.exception(e)

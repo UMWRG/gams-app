@@ -140,6 +140,7 @@ def commandline_parser():
     cmd_parser.add_argument('-en', '--end-date',
                         help='''End date of the time period used for
                         simulation.''')
+
     cmd_parser.add_argument('-dt', '--time-step',
                         help='''Time step used for simulation.''')
     cmd_parser.add_argument('-tx', '--time-axis', nargs='+',
@@ -150,6 +151,9 @@ def commandline_parser():
 
     cmd_parser.add_argument('-et', '--export_by_type',action='store_true',
                         help='''Use this switch to export data based on type, rather than attribute.''')
+
+    cmd_parser.add_argument('-debug', '--turn-debug-on', action='store_true',
+                            help='''Use this switch to send highly technical info and GAMS log to stdout.''')
 
     cmd_parser.add_argument('-u', '--server-url',
                         help='''Specify the URL of the server to which this
@@ -248,11 +252,10 @@ def run_gams_model(args):
     cur_time=datetime.now().replace(microsecond=0)
     write_progress(6, steps)
     working_directory=os.path.dirname(args.gms_file)
-
     if working_directory == '':
         working_directory = '.'
 
-    model = GamsModel(args.gams_path, working_directory)
+    model = GamsModel(args.gams_path, working_directory, args.turn_debug_on)
     write_progress(7, steps)
     model.add_job(args.gms_file)
     write_progress(8, steps)
