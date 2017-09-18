@@ -54,7 +54,6 @@ class GAMSExporter(JSONPlugin):
         else:
             self.links_as_name = False
 
-
         self.attrs = self.connection.call('get_all_attributes', {})
         log.info("%s attributes retrieved", len(self.attrs))
 
@@ -195,9 +194,9 @@ class GAMSExporter(JSONPlugin):
         nodes_groups_types = {}
         ff = '{0:<' + self.array_len + '}'
         for group in self.network.groups:
-            if len(group.template.values()[0])==0:
+            if len(group.template.values())==0:
                 continue
-            group_type= group.template.values()[0][0]
+            group_type= group.template.values()[0]
             if group_type not in nodes_groups_types:
                 _list=[]
                 nodes_groups_types[group_type]=_list
@@ -1003,9 +1002,9 @@ class GAMSExporter(JSONPlugin):
         nodes_type={}
         ff = '{0:<' + self.array_len + '}'
         for group in self.network.groups:
-            if len(group.template.values()[0])==0:
+            if len(group.template.values())==0:
                 continue
-            if group.template.values()[0][0] ==group_type[0]:
+            if group.template.values()[0] ==group_type[0]:
                 groups_list.append(group.name)
                 nodes_type[group.name] = self.network.get_node(group=group.ID)
 
@@ -1053,8 +1052,8 @@ class GAMSExporter(JSONPlugin):
                 if attr.dataset_type == 'array' and attr.is_var is False:
                     attr.name = translate_attr_name(attr.name)
                     if res_type == "groups":
-                        if attr.name not in groups_types and len(resource.template.values()[0])>0:
-                            groups_types[attr.name]=resource.template.values()[0][0]
+                        if attr.name not in groups_types and len(resource.template.values())>0:
+                            groups_types[attr.name]=resource.template.values()[0]
 
 
                     if attr.name  in ids.keys():
