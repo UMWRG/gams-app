@@ -50,7 +50,10 @@ class GDXvariable(object):
         self.data = []
         self.index = []
 
-    def set_info(self, info, extinfo):
+    def set_info(self, info, extinfo, var_domain=None):
+        self.var_domain = var_domain
+        if self.var_domain!=None:
+            self.__get_domain()
         if info[1].endswith('_Pool_X'):
             self.name = info[1].replace('_Pool_X','')
         else:
@@ -60,7 +63,14 @@ class GDXvariable(object):
         self.records = extinfo[1]
         self.description = extinfo[3]
 
-
+    def __get_domain(self):
+        _domain=list(self.var_domain[1])
+        if 'i' in _domain:
+            _domain.remove('i')
+        if 'j' in _domain:
+            _domain.remove('j')
+        # adding it as a string as Hydra accepts only a string for metdata value
+        self.domain=json.dumps(_domain)
 
 def get_index(index_file_names):
     import gdxcc
@@ -70,7 +80,6 @@ def get_index(index_file_names):
     gdxcc.gdxOpenRead(gdx_handle, index_file_names)
     x, symbol_count, element_count = \
         gdxcc.gdxSystemInfo(gdx_handle)
-
     for i in range(symbol_count):
         gdx_variable = GDXvariable()
         info = gdxcc.gdxSymbolInfo(gdx_handle, i + 1)
@@ -85,7 +94,6 @@ def get_index(index_file_names):
 
 
 class GAMSImporter(JSONPlugin):
-
     def __init__(self, args, connection=None):
         import gdxcc
         self.gdxcc=gdxcc
@@ -220,7 +228,8 @@ class GAMSImporter(JSONPlugin):
             gdx_variable = GDXvariable()
             info = self.gdxcc.gdxSymbolInfo(self.gdx_handle, i + 1)
             extinfo = self.gdxcc.gdxSymbolInfoX(self.gdx_handle, i + 1)
-            gdx_variable.set_info(info, extinfo)
+            var_domain = self.gdxcc.gdxSymbolGetDomainX(self.gdx_handle, i + 1)
+            gdx_variable.set_info(info, extinfo, var_domain)
             self.gdxcc.gdxDataReadStrStart(self.gdx_handle, i + 1)
             for n in range(gdx_variable.records):
                 x, idx, data, y = self.gdxcc.gdxDataReadStr(self.gdx_handle)
@@ -442,6 +451,8 @@ class GAMSImporter(JSONPlugin):
                     print len(dataset['value']), attr.id, attr.attr_id
                     dataset['type'] = 'descriptor'
                     metadata["sol_type"] = "MGA"
+                    if gdxvar.var_domain!=None:
+                        metadata['domain']=gdxvar.domain
                     dataset['metadata'] = json.dumps(metadata)
                     dataset['dimension'] = attr.resourcescenario.value.dimension
                     res_scen = dict(resource_attr_id=attr.id,
@@ -509,6 +520,8 @@ class GAMSImporter(JSONPlugin):
                         print gdxvar.name
                         metadata["sol_type"] = "MGA"
                         metadata["data_type"] = "hashtable"
+                        if gdxvar.var_domain != None:
+                            metadata['domain'] = gdxvar.domain
                         dataset['value']=json.dumps(MGA_values)
                         if gdxvar.name == 'TOTAL_EXISTING_IMPORT' and self.MGA_index[j] == "file20" and self.check_for_empty_values(MGA_values)==False:
                             print "Data toz=======================================>"
@@ -626,6 +639,8 @@ class GAMSImporter(JSONPlugin):
                         dataset['type'] = 'descriptor'
                         metadata["sol_type"] = "MGA"
                         metadata["data_type"] = "hashtable"
+                        if gdxvar.var_domain != None:
+                            metadata['domain'] = gdxvar.domain
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
@@ -681,6 +696,8 @@ class GAMSImporter(JSONPlugin):
                     # Add data
                     if dataset.has_key('value'):
                         dataset['value']=json.dumps(dataset['value'])
+                        if gdxvar.var_domain != None:
+                            metadata['domain'] = gdxvar.domain
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
@@ -754,6 +771,8 @@ class GAMSImporter(JSONPlugin):
 
                         if dataset.has_key('value'):
                             dataset['value'] = json.dumps(dataset['value'])
+                            if gdxvar.var_domain != None:
+                                metadata['domain'] = gdxvar.domain
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
 
@@ -846,6 +865,8 @@ class GAMSImporter(JSONPlugin):
                                 #                                    gdxvar.data)
                         if dataset.has_key('value'):
                             dataset['value'] = json.dumps(dataset['value'])
+                            if gdxvar.var_domain != None:
+                                metadata['domain'] = gdxvar.domain
                             dataset['metadata'] = json.dumps(metadata)
                             dataset['dimension'] = attr.resourcescenario.value.dimension
                             res_scen = dict(resource_attr_id=attr.id,
