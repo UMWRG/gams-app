@@ -953,18 +953,19 @@ class GAMSImporter(JSONPlugin):
                         break
             res_data=[]
             kkeys=[]
-            for i in range (0, len(index)):
-                if len(res_index)==1:
-                    if index[i][i_index]!=res:
-                        continue
-                elif len(res_index)==2:
-                    if index[i][i_index] != res[0] or index[i][j_index]!=res[1]:
-                        continue
-                res_data.append(data[i])
-                kkeys.append(index[i])
-            for i in range (0, len(res_data)):
-                counter=0
-                self.get_hash_series(counter, main_hash, kkeys[i], res_index, res_data[i])
+            if len(res_index)>0:
+                for i in range (0, len(index)):
+                    if len(res_index)==1:
+                        if index[i][i_index]!=res:
+                            continue
+                    elif len(res_index)==2:
+                        if index[i][i_index] != res[0] or index[i][j_index]!=res[1]:
+                            continue
+                    res_data.append(data[i])
+                    kkeys.append(index[i])
+                for i in range (0, len(res_data)):
+                    counter=0
+                    self.get_hash_series(counter, main_hash, kkeys[i], res_index, res_data[i])
         return sol_type, main_hash
 
     def create_timeseries(self, index, data):
