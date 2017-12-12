@@ -620,8 +620,9 @@ class GAMSImporter(JSONPlugin):
                         dataset['type'] = 'array'
                         sol_type, dataset['value'] = self.create_array(gdxvar.name, gdxvar.index,
                                                              gdxvar.data, self.network.name, gdxvar.var_domain, 'network')
+
                         if len(dataset['value']) == 0:
-                            dataset['value'] = 'None'
+                            dataset['value'] = ''
                             metadata["data_type"] = "No_data"
                         else:
                             metadata["data_type"] = "hashtable"
@@ -642,7 +643,7 @@ class GAMSImporter(JSONPlugin):
                     dataset = dict(name='GAMS import_' + self.network.name + ' ' \
                                         + self.attrs[attr.attr_id],
                                    locked='N')
-                    dataset['value'] = 'None'
+                    dataset['value'] = ''
                     metadata["data_type"] = "No_data"
                     dataset['metadata'] = json.dumps(metadata)
                     dataset['dimension'] = attr.resourcescenario.value.dimension
@@ -708,7 +709,7 @@ class GAMSImporter(JSONPlugin):
                             sol_type, dataset['value'] = self.create_array(gdxvar.name, gdxvar.index, gdxvar.data, group.name, gdxvar.var_domain, 'group')
                             dataset['type'] = 'descriptor'
                             if len(dataset['value'])==0:
-                                dataset['value'] = 'None'
+                                dataset['value'] = ''
                                 metadata["data_type"] = "No_data"
                             else:
                                 metadata["data_type"] = "hashtable"
@@ -733,7 +734,7 @@ class GAMSImporter(JSONPlugin):
                         dataset = dict(name='GAMS import_' + group.name + ' ' \
                                             + self.attrs[attr.attr_id],
                                        locked='N')
-                        dataset['value'] = 'None'
+                        dataset['value'] = ''
                         metadata["data_type"] = "No_data"
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['type']='descriptor'
@@ -797,7 +798,7 @@ class GAMSImporter(JSONPlugin):
                             sol_type,dataset['value'] = self.create_array(gdxvar.name, gdxvar.index, gdxvar.data, node.name, gdxvar.var_domain)
                             dataset['type'] = 'descriptor'
                             if len(dataset['value'])==0:
-                                dataset['value'] = 'None'
+                                dataset['value'] = ''
                                 metadata["data_type"] = "No_data"
                             else:
                                 metadata["data_type"] = "hashtable"
@@ -823,7 +824,7 @@ class GAMSImporter(JSONPlugin):
                         dataset = dict(name='GAMS import_' + node.name + ' ' \
                                             + self.attrs[attr.attr_id],
                                        locked='N')
-                        dataset['value'] = 'None'
+                        dataset['value'] = ''
                         metadata["data_type"] = "No_data"
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['type'] = 'descriptor'
@@ -901,7 +902,7 @@ class GAMSImporter(JSONPlugin):
                                 # Should be removed later
                                 dataset['type'] = 'descriptor'
                                 if len(dataset['value'])==0:
-                                    dataset['value'] = 'None'
+                                    dataset['value'] = ''
                                     metadata["data_type"] = "No_data"
                                 else:
                                     metadata["data_type"] = "hashtable"
@@ -922,7 +923,7 @@ class GAMSImporter(JSONPlugin):
                         dataset = dict(name='GAMS import_' + link.name + ' ' \
                                             + self.attrs[attr.attr_id],
                                        locked='N')
-                        dataset['value'] = 'None'
+                        dataset['value'] = ''
                         metadata["data_type"] = "No_data"
                         dataset['metadata'] = json.dumps(metadata)
                         dataset['type'] = 'descriptor'
