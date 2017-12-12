@@ -493,7 +493,6 @@ class GAMSImporter(JSONPlugin):
                                 metadata["data_type"] = d_type
                                 MGA_values[j] = val__
                     if len(MGA_values) > 0 and self.check_for_empty_values(MGA_values)==True:
-                        print "======================================= Node data is found ..."
                         metadata["sol_type"] = "multiple"
                         if gdxvar.var_domain != None:
                             metadata['domain'] = gdxvar.domain
@@ -619,9 +618,13 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = data
                     elif gdxvar.dim > 0:
                         dataset['type'] = 'array'
-                        sol_type,dataset['value'] = self.create_array(gdxvar.index,
+                        sol_type, dataset['value'] = self.create_array(gdxvar.name, gdxvar.index,
                                                              gdxvar.data, self.network.name, gdxvar.var_domain, 'network')
-                    # Add data
+                        if len(dataset['value']) == 0:
+                            dataset['value'] = 'None'
+                            metadata["data_type"] = "No_data"
+                        else:
+                            metadata["data_type"] = "hashtable"
                     if dataset.has_key('value'):
                         if gdxvar.var_domain != None:
                             metadata['domain'] = gdxvar.domain
@@ -633,6 +636,22 @@ class GAMSImporter(JSONPlugin):
                                         attr_id=attr.attr_id,
                                         value=dataset)
                         self.res_scenario.append(res_scen)
+                else:
+                    print "No data found",self.attrs[attr.attr_id], self.network.name
+                    metadata = {}
+                    dataset = dict(name='GAMS import_' + self.network.name + ' ' \
+                                        + self.attrs[attr.attr_id],
+                                   locked='N')
+                    dataset['value'] = 'None'
+                    metadata["data_type"] = "No_data"
+                    dataset['metadata'] = json.dumps(metadata)
+                    dataset['dimension'] = attr.resourcescenario.value.dimension
+                    dataset['unit'] = '-'
+                    dataset['type'] = 'descriptor'
+                    res_scen = dict(resource_attr_id=attr.id,
+                                    attr_id=attr.attr_id,
+                                    value=dataset)
+                    self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
         for group in self.network.resourcegroups:
@@ -686,11 +705,13 @@ class GAMSImporter(JSONPlugin):
                                     index.append(idx)
                                     data.append(dat[i])
 
-                            sol_type, dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, group.name, gdxvar.var_domain, 'group')
-
+                            sol_type, dataset['value'] = self.create_array(gdxvar.name, gdxvar.index, gdxvar.data, group.name, gdxvar.var_domain, 'group')
                             dataset['type'] = 'descriptor'
-                            metadata["data_type"] = "hashtable"
-
+                            if len(dataset['value'])==0:
+                                dataset['value'] = 'None'
+                                metadata["data_type"] = "No_data"
+                            else:
+                                metadata["data_type"] = "hashtable"
                         if dataset.has_key('value'):
                             dataset['value'] = json.dumps(dataset['value'])
                             if gdxvar.var_domain != None:
@@ -706,7 +727,22 @@ class GAMSImporter(JSONPlugin):
                                             attr_id=attr.attr_id,
                                             value=dataset)
                             self.res_scenario.append(res_scen)
-
+                    else:
+                        print "No data found", self.attrs[attr.attr_id], group.name
+                        metadata={}
+                        dataset = dict(name='GAMS import_' + group.name + ' ' \
+                                            + self.attrs[attr.attr_id],
+                                       locked='N')
+                        dataset['value'] = 'None'
+                        metadata["data_type"] = "No_data"
+                        dataset['metadata'] = json.dumps(metadata)
+                        dataset['type']='descriptor'
+                        dataset['dimension'] = attr.resourcescenario.value.dimension
+                        dataset['unit'] = '-'
+                        res_scen = dict(resource_attr_id=attr.id,
+                                        attr_id=attr.attr_id,
+                                        value=dataset)
+                        self.res_scenario.append(res_scen)
         for node in self.network.nodes:
             nodes.update({node.id: node.name})
             for attr in node.attributes:
@@ -758,12 +794,13 @@ class GAMSImporter(JSONPlugin):
                                     idx.pop(idx.index(node.name))
                                     index.append(idx)
                                     data.append(dat[i])
-
-
-                            sol_type,dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, node.name, gdxvar.var_domain)
+                            sol_type,dataset['value'] = self.create_array(gdxvar.name, gdxvar.index, gdxvar.data, node.name, gdxvar.var_domain)
                             dataset['type'] = 'descriptor'
-                            metadata["data_type"] = "hashtable"
-
+                            if len(dataset['value'])==0:
+                                dataset['value'] = 'None'
+                                metadata["data_type"] = "No_data"
+                            else:
+                                metadata["data_type"] = "hashtable"
                         if dataset.has_key('value'):
                             try:
                                 pass
@@ -780,6 +817,22 @@ class GAMSImporter(JSONPlugin):
                                             attr_id=attr.attr_id,
                                             value=dataset)
                             self.res_scenario.append(res_scen)
+                    else:
+                        print "No data found",self.attrs[attr.attr_id], node.name
+                        metadata = {}
+                        dataset = dict(name='GAMS import_' + node.name + ' ' \
+                                            + self.attrs[attr.attr_id],
+                                       locked='N')
+                        dataset['value'] = 'None'
+                        metadata["data_type"] = "No_data"
+                        dataset['metadata'] = json.dumps(metadata)
+                        dataset['type'] = 'descriptor'
+                        dataset['dimension'] = attr.resourcescenario.value.dimension
+                        dataset['unit'] = '-'
+                        res_scen = dict(resource_attr_id=attr.id,
+                                        attr_id=attr.attr_id,
+                                        value=dataset)
+                        self.res_scenario.append(res_scen)
 
         # Link attributes
         for link in self.network.links:
@@ -844,10 +897,14 @@ class GAMSImporter(JSONPlugin):
                                 # continue
                                 dataset['type'] = 'array'
                                 link_nodes_list=[nodes[link.node_1_id],nodes[link.node_2_id]]
-                                sol_type, dataset['value'] =self.create_array (gdxvar.index, gdxvar.data, link_nodes_list, gdxvar.var_domain)
+                                sol_type, dataset['value'] =self.create_array (gdxvar.name, gdxvar.index, gdxvar.data, link_nodes_list, gdxvar.var_domain)
                                 # Should be removed later
                                 dataset['type'] = 'descriptor'
-                                metadata["data_type"] = "hashtable"
+                                if len(dataset['value'])==0:
+                                    dataset['value'] = 'None'
+                                    metadata["data_type"] = "No_data"
+                                else:
+                                    metadata["data_type"] = "hashtable"
                         if dataset.has_key('value'):
                             dataset['value'] = json.dumps(dataset['value'])
                             if gdxvar.var_domain != None:
@@ -859,7 +916,22 @@ class GAMSImporter(JSONPlugin):
                                             attr_id=attr.attr_id,
                                             value=dataset)
                             self.res_scenario.append(res_scen)
-
+                    else:
+                        print "No data found", self.attrs[attr.attr_id], link.name
+                        metadata = {}
+                        dataset = dict(name='GAMS import_' + link.name + ' ' \
+                                            + self.attrs[attr.attr_id],
+                                       locked='N')
+                        dataset['value'] = 'None'
+                        metadata["data_type"] = "No_data"
+                        dataset['metadata'] = json.dumps(metadata)
+                        dataset['type'] = 'descriptor'
+                        dataset['dimension'] = attr.resourcescenario.value.dimension
+                        dataset['unit'] = '-'
+                        res_scen = dict(resource_attr_id=attr.id,
+                                        attr_id=attr.attr_id,
+                                        value=dataset)
+                        self.res_scenario.append(res_scen)
 
 
     ########################################################################################
@@ -922,7 +994,7 @@ class GAMSImporter(JSONPlugin):
             counter += 1
             self.get_hash_series( counter, table, index, res_index_list, value)
 
-    def create_array (self, index,data, res, domain_, res_type=None):
+    def create_array (self,attribute_name,  index,data, res, domain_, res_type=None):
         domain=domain_[1]
         main_hash={}
         res_index=[]
@@ -966,6 +1038,8 @@ class GAMSImporter(JSONPlugin):
                 for i in range (0, len(res_data)):
                     counter=0
                     self.get_hash_series(counter, main_hash, kkeys[i], res_index, res_data[i])
+            else:
+                print "no data found for this attribute:: ", attribute_name," for: ",res
         return sol_type, main_hash
 
     def create_timeseries(self, index, data):
