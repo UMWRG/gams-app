@@ -91,7 +91,6 @@ if api_path not in sys.path:
 
 ##########################
 
-
 from HydraLib.HydraException import HydraPluginError
 from HydraGAMSlib import check_lic
 
@@ -226,7 +225,7 @@ def export_network(is_licensed):
 
     write_progress(4, steps)
     exporter.write_time_index()
-
+   
     if args.export_by_type is True:
         exporter.export_data_using_types()
     else:
@@ -236,6 +235,7 @@ def export_network(is_licensed):
     write_output("Writing output file")
 
     exporter.write_file()
+
     return exporter
 
 def run_gams_model(args):
@@ -246,7 +246,6 @@ def run_gams_model(args):
 
     if working_directory == '':
         working_directory = '.'
-
     model = GamsModel(args.gams_path, working_directory)
     write_progress(7, steps)
     model.add_job(args.gms_file)
@@ -261,38 +260,41 @@ def run_gams_model(args):
     if args.gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
-        print "===========================>", files_list.keys
-        if sol_pool in files_list:
-            dt = parser.parse(files_list[sol_pool])
-            dt_2 = parser.parse(files_list[res])
-            delta = (dt - cur_time).total_seconds()
-            delta_2 = (dt_2 - cur_time).total_seconds()
-            # todo chaeck if dgx files exist
-            if delta >= 0 and delta_2 >= 0:
-                gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
-                args.gdx_file =gdx_list
-                return
-                for file_ in files_list:
-                    if 'soln' in file_ and file_ != sol_pool:
-                        dt = parser.parse(files_list[sol_pool])
-                        delta = (dt - cur_time).total_seconds()
-                        if delta <= 0:
-                            print "file: ", file_
-                            gdx_list.append(os.path.join(working_directory, file_))
-                args.gdx_file = gdx_list
-                print "It is multi mga", len(args.gdx_file)
+        cur_file=get_gdx_file(working_directory, args, cur_time)
+        if cur_file != '':
+            args.gdx_file = cur_file
+            print "Found the results' file: ", args.gdx_file
         else:
-            for file_ in files_list:
-                print "Toz: ", file_
-                dt = parser.parse(files_list[file_])
-                delta = (dt-cur_time).total_seconds()
-                if delta>=0:
-                    args.gdx_file = os.path.join(working_directory, file_)
-                    print "Toz: 2", args.gdx_file
-            if args.gdx_file is None:
-                  raise HydraPluginError('Result file is not provided/found.')
+            raise HydraPluginError('Result file is not provided/found.')
+    else:
+        dt = parser.parse(args.gdx_file)
+        delta = (dt - cur_time).total_seconds()
+        if delta < 0:
+            raise HydraPluginError('Result file modification date is old (i.e. the current gams run did not create it')
+
+def get_gdx_file(working_directory, args, cur_time):
+    files_list = get_files_list(working_directory, '.gdx')
+    res_files={}
+    cur_file=''
+    cur_delta=0
+    files_list_keys=files_list.keys()
+    for i in range(0, len(files_list_keys)):
+        file_=files_list_keys[i]
+        if '_gams_py_' in  file_:
+            continue
+        print "Toz: ", file_
+        dt = parser.parse(files_list[file_])
+        delta = (dt - cur_time).total_seconds()
+        res_files[os.path.join(working_directory, file_)]=delta
+        if delta >= 0:
+            if i==0:
+                cur_file = os.path.join(working_directory, file_)
+                cur_delta = delta
             else:
-                print "Results file: ", args.gdx_file
+                if cur_delta<delta:
+                    cur_file = os.path.join(working_directory, file_)
+                    cur_delta = delta
+    return cur_file
 
 def read_results(is_licensed, args, network, connection):
     """
@@ -308,28 +310,20 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(12, steps)
     gdximport.set_network(is_licensed, network)
-
     write_progress(13, steps)
     gdximport.parse_time_index()
-
     write_progress(14, steps)
-    print "===================================================="
     gdximport.open_gdx_file(args.gdx_file)
-
     write_progress(15, steps)
     gdximport.read_gdx_data()
-
-
     write_progress(16, steps)
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
     gdximport.parse_variables('binary variables')
     gdximport.parse_variables('parameters')
-
     write_progress(17, steps)
-    gdximport.assign_attr_data()
-
+    gdximport.get_attributes_data()
     write_progress(18, steps)
     gdximport.save()
 

@@ -93,25 +93,18 @@ import logging
 log = logging.getLogger(__name__)
 
 def import_results(is_licensed, args):
-    print ("=================================================================================================")
     write_progress(1, steps)
-    print ("=================================================================================================")
     gdximport = GAMSImporter(args)
-    print ("=================================================================================================")
     write_progress(2, steps)
     gdximport.load_network(is_licensed)
-    log.info("<=====>")
     write_progress(3, steps)
     gdximport.load_gams_file(args.gms_file)
-    log.info("<=====>")
-   
     write_progress(4, steps)
     gdximport.parse_time_index()
-    
     write_progress(5, steps)
-    log.info ("<================================>"+args.gdx_file)
+    log.info ("Gdx file: "+args.gdx_file)
     gdximport.open_gdx_file(args.gdx_file)
-    
+
     write_progress(6, steps)
     gdximport.read_gdx_data()
     
@@ -123,7 +116,7 @@ def import_results(is_licensed, args):
     gdximport.parse_variables('parameters')
     
     write_progress(8, steps)
-    gdximport.assign_attr_data()
+    gdximport.get_attributes_data()
     
     write_progress(9, steps)
     gdximport.save()
