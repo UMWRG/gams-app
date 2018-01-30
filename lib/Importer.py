@@ -102,9 +102,9 @@ class GAMSImporter(JSONPlugin):
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
-        log.info("1 =========================>"+str(self.gdx_handle))
+        log.info("1 =========================>"+unicode(self.gdx_handle))
         rc = gdxcc.gdxCreate(self.gdx_handle, gdxcc.GMS_SSSIZE)
-        log.info("2 =============================>"+ str(rc))
+        log.info("2 =============================>"+ unicode(rc))
         if rc[0] == 0:
             raise HydraPluginError('Could not find GAMS installation.')
         self.symbol_count = 0
@@ -314,7 +314,7 @@ class GAMSImporter(JSONPlugin):
                line_parts=line.split("=")
                timestamp=ordinal_to_timestamp(Decimal(line_parts[1].replace(";","")))
                #idx=[timestamp.year, timestamp.month, timestamp.day]
-               idx=str(timestamp.year)+"."+str(timestamp.month)+"."+str(timestamp.day)
+               idx=unicode(timestamp.year)+"."+unicode(timestamp.month)+"."+unicode(timestamp.day)
                timestamp=date_to_string(timestamp)
                self.time_axis.update({idx: timestamp})
                i += 1
@@ -436,11 +436,10 @@ class GAMSImporter(JSONPlugin):
                                 dataset['type'] = 'scalar'
                                 #dataset['value'] = json.dumps(data)
                                 #MGA_values[j]=json.dumps(data)
-                                MGA_values[j] = data
+                                MGA_values[j] = unicode(data)
                             except ValueError:
                                 dataset['type'] = 'descriptor'
-                                #dataset['value'] = data
-                                MGA_values[j]=data
+                                MGA_values[j] = unicode(data)
                         elif gdxvar.dim > 0 :
                             continue
                             dataset['type'] = 'array'
@@ -506,10 +505,10 @@ class GAMSImporter(JSONPlugin):
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
                                             #MGA_values[j] = json.dumps(data)
-                                            MGA_values[j] = data
+                                            MGA_values[j] = unicode(data)
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
-                                            MGA_values[j] = data
+                                            MGA_values[j] = unicode(data)
                                         break
 
                             elif gdxvar.dim > 2:
@@ -599,10 +598,10 @@ class GAMSImporter(JSONPlugin):
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
                                             #MGA_values[j] = json.dumps(data)
-                                            MGA_values[j] = data
+                                            MGA_values[j] = unicode(data)
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
-                                            MGA_values[j] = (data)
+                                            MGA_values[j] = unicode(data)
                                         break
                             elif gdxvar.dim > 2:
                                 is_in = False
@@ -613,10 +612,10 @@ class GAMSImporter(JSONPlugin):
                                             try:
                                                 data_ = float(data)
                                                 dataset['type'] = 'scalar'
-                                                MGA_values[j] = (data)
+                                                MGA_values[j] = unicode(data)
                                             except ValueError:
                                                 dataset['type'] = 'descriptor'
-                                                MGA_values[j] = (data)
+                                                MGA_values[j] = unicode(data)
                                             is_in = True
                                             break
                                 if is_in is False:
@@ -682,10 +681,10 @@ class GAMSImporter(JSONPlugin):
                         try:
                             data_ = float(data)
                             dataset['type'] = 'scalar'
-                            dataset['value'] = data
+                            dataset['value'] = unicode(data)
                         except ValueError:
                             dataset['type'] = 'descriptor'
-                            dataset['value'] = data
+                            dataset['value'] = unicode(data)
                     elif gdxvar.dim > 0:
                         dataset['type'] = 'array'
                         dataset['value'] = self.create_array(gdxvar.index,
@@ -740,10 +739,10 @@ class GAMSImporter(JSONPlugin):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = data
+                                        dataset['value'] = unicode(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = data
+                                        dataset['value'] = unicode(data)
                                     break
 
                         elif gdxvar.dim > 1:
@@ -825,10 +824,10 @@ class GAMSImporter(JSONPlugin):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = data
+                                        dataset['value'] = unicode(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = data
+                                        dataset['value'] = unicode(data)
                                     break
 
                         elif gdxvar.dim > 1:
@@ -915,7 +914,7 @@ class GAMSImporter(JSONPlugin):
                                     try:
                                         data_ = float(data)
                                         dataset['type'] = 'scalar'
-                                        dataset['value'] = data
+                                        dataset['value'] = unicode(data)
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
                                         dataset['value'] = json.dumps(data)
