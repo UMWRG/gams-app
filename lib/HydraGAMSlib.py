@@ -12,6 +12,35 @@ from License import License
 log = logging.getLogger(__name__)
 
 class GamsModel(object):
+
+    model_status_map  = { 4  : 'Infeasible model found.',
+                          5  : 'Locally infeasible model found.',
+                          6  : 'Solver terminated early and model was still infeasible.',
+                          7  : 'Solver terminated early and model was feasible but not yet optimal.',
+                          11 : 'GAMS and/or solver licensing problem.',
+                          12 : 'Error: Unknown cause.',
+                          13 : 'Error: No solution attained.',
+                          14 : 'No solution returned.',
+                          18 : 'Unbounded: No solution.',
+                          19 : 'Infeasible: No solution.'
+                        }
+
+    solver_status_map = { 2  : "Solver ran out of iterations",
+                          3  : "Solver exceeded time limit",
+                          4  : "Solver quit with a problem",
+                          5  : "Solver quit with nonlinear term evaluation errors",
+                          6  : "Solver terminated because the model is beyond the solvers capabilities",
+                          7  : "Solver terminated with a license error",
+                          8  : "Solver terminated on users request (e.g. Ctrl+C)",
+                          9  : "Solver terminated on setup error",
+                          10 : "Solver terminated with error",  # duplicate
+                          11 : "Solver terminated with error",  # duplicate
+                          12 : "Solve skipped",
+                          13 : "Other error",
+                          14 : "Undefined condition"
+                        }
+
+
     def __init__(self, gamspath, working_directory):
         if(gamspath==None):
             gamspath=get_gams_path()
@@ -79,59 +108,20 @@ class GamsModel(object):
             result[key] = element
         return result
 
-    def check_model_status(self, status_key):
-        error = None
-        if (status_key == 4):
-            error='Infeasible model found.'
-        elif status_key == 5:
-            error=('locally infeasible model found.')
-        elif status_key == 6:
-            error='Solver terminated early and model was still infeasible.'
-        elif status_key == 7:
-            error='Solver terminated early and model was feasible but not yet optimal.'
-        elif status_key == 11:
-            error='GAMS and/or solver licensing problem.'
-        elif status_key == 12:
-            error='Error - No cause known.'
-        elif status_key == 13:
-            error='Error - No solution attained.'
-        elif status_key == 14:
-            error='No solution returned.'
-        elif status_key == 18:
-            error='Unbounded - no solution.'
-        elif status_key == 19:
-            error='Infeasible - no solution.'
-        return error
 
-    def check_solver_status(self,s_status):
-        error = None
-        if(s_status== 2):
-            error="Solver ran out of iterations"
-        elif (s_status == 3):
-            error="Solver exceeded time limit"
-        elif (s_status == 4):
-            error="Solver quit with a problem"
-        elif (s_status == 5):
-            error="Solver quit with nonlinear term evaluation errors"
-        elif(s_status == 6):
-            error="Solver terminated because the model is beyond the solvers capabilities"
-        elif (s_status == 7):
-            error="solver terminated with a license error"
-        elif (s_status == 8):
-            error="olver terminated on users request(e.g.Ctrl - C)"
-        elif (s_status == 9):
-            error="Solver terminated on setup error"
-        elif (s_status == 10):
-            error="Solver terminated with error"
-        elif (s_status == 11):
-            error="Solver terminated with error"
-        elif (s_status == 12):
-            error="Solve skipped"
-        elif (s_status == 13):
-            error="Other error"
-        elif (s_status> 14):
-            error="Undefined condition"
-        return error
+    def check_model_status(self, status):
+        """Maps model status code to corresponding text"""
+        return self.__class__.model_status_map.get(status, None)
+
+
+    def check_solver_status(self, status):
+        """Maps solver status code to corresponding text"""
+        stat_map = self.__class__.solver_status_map
+        max_key  = max(stat_map.keys())
+        if status > max_key:
+            return stat_map[max_key]
+
+        return stat_map.get(status, None)
 
 
     def run(self):
