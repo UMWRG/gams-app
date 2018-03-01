@@ -1,21 +1,18 @@
-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
 import os
 import sys
-from HydraLib import PluginLib
-
 import re
 import logging
 import json
 import copy
 
+from decimal import Decimal
 from operator import mul
 
-from HydraLib.HydraException import HydraPluginError
-from HydraLib.hydra_dateutil import ordinal_to_timestamp, date_to_string
-from HydraLib.PluginLib import JSONPlugin
-from decimal import Decimal
+from hydra_base.exceptions import HydraPluginError
+from hydra_base.util.hydra_dateutil import ordinal_to_timestamp, date_to_string
+from hydra_client.plugin import JSONPlugin
 
 from HydraGAMSlib import import_gms_data, get_gams_path
 
@@ -128,9 +125,9 @@ class GAMSImporter(JSONPlugin):
             raise HydraPluginError("gdx file not specified.")
 
         filename = os.path.abspath(filename)
-        
+
         self.gdxcc.gdxOpenRead(self.gdx_handle, filename)
-        
+
         x, self.symbol_count, self.element_count = \
             self.gdxcc.gdxSystemInfo(self.gdx_handle)
 
@@ -145,14 +142,14 @@ class GAMSImporter(JSONPlugin):
         print ""
         for i in range(self.symbol_count):
             gdx_variable = GDXvariable()
-            
+
             info = self.gdxcc.gdxSymbolInfo(self.gdx_handle, i + 1)
             extinfo = self.gdxcc.gdxSymbolInfoX(self.gdx_handle, i + 1)
-            
+
             gdx_variable.set_info(info, extinfo)
-            
+
             self.gdxcc.gdxDataReadStrStart(self.gdx_handle, i + 1)
-            
+
             for n in range(gdx_variable.records):
                 x, idx, data, y = self.gdxcc.gdxDataReadStr(self.gdx_handle)
                 gdx_variable.index.append(idx)
@@ -168,11 +165,11 @@ class GAMSImporter(JSONPlugin):
         if gms_file is None:
             raise HydraPluginError(".gms file not specified.")
         gms_file = os.path.abspath(gms_file)
-        
+
         gms_data = import_gms_data(gms_file)
-        
+
         self.gms_data = gms_data.split('\n')
-        
+
         if self.network_id is None or self.scenario_id is None:
             self.network_id, self.scenario_id = self.get_ids_from_gms()
 
@@ -531,6 +528,7 @@ class GAMSImporter(JSONPlugin):
         print array
         print len(array)
         print type(array)
+        # This will fail: PluginLib does not define create_dict
         hydra_array = dict(arr_data = PluginLib.create_dict(array))
 
         return hydra_array

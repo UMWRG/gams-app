@@ -1,20 +1,18 @@
-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
 
+import logging
 import os
 if os.name == 'nt':
     import _winreg as winreg
-import hashlib
 import os.path
+import hashlib
 import datetime
 import subprocess
-from subprocess import PIPE, Popen
+from Crypto import Random
 from Crypto.Cipher import AES
 from dateutil import parser
-from Crypto import Random
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -41,7 +39,7 @@ class License(object):
                  lic_=lic_string.split(',')
                  self.lic_type=lic_[0]
                  done=True
-             except Exception, e:
+             except Exception as e:
                  pass
             # set demo status
          if(done is False):
@@ -122,9 +120,11 @@ def decrypt(encrypted_text, key):
 
 
 def get_machine_id():
-    p=subprocess.Popen("wmic cpu get ProcessorId /format:csv",stdin=PIPE,stdout=PIPE)
-    s= p.stdout.read()
-    ss= s.split(',')
+    p  = subprocess.Popen("wmic cpu get ProcessorId /format:csv",
+                          stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE)
+    s  = p.stdout.read()
+    ss = s.split(',')
     return ss[len(ss)-1]
 
 
