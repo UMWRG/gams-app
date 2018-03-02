@@ -109,14 +109,16 @@ class GamsModel(object):
         return result
 
 
-    def check_model_status(self, status):
+    @classmethod
+    def check_model_status(cls, status):
         """Maps model status code to corresponding text"""
-        return self.__class__.model_status_map.get(status, None)
+        return cls.model_status_map.get(status, None)
 
 
-    def check_solver_status(self, status):
+    @classmethod
+    def check_solver_status(cls, status):
         """Maps solver status code to corresponding text"""
-        stat_map = self.__class__.solver_status_map
+        stat_map = cls.solver_status_map
         max_key  = max(stat_map.keys())
         if status > max_key:
             return stat_map[max_key]
