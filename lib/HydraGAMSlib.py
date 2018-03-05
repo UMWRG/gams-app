@@ -2,44 +2,20 @@
 
 import os
 import sys
-import logging
 
 from hydra_client.resources import HydraResource, HydraNetwork
 from hydra_base.exceptions import HydraPluginError
 
 from License import License
+from config import model_status_map, \
+                   solver_status_map, \
+                   default_model_status_msg, \
+                   default_solver_status_msg
 
+import logging
 log = logging.getLogger(__name__)
 
 class GamsModel(object):
-
-    model_status_map  = { 4  : 'Infeasible model found.',
-                          5  : 'Locally infeasible model found.',
-                          6  : 'Solver terminated early and model was still infeasible.',
-                          7  : 'Solver terminated early and model was feasible but not yet optimal.',
-                          11 : 'GAMS and/or solver licensing problem.',
-                          12 : 'Error: Unknown cause.',
-                          13 : 'Error: No solution attained.',
-                          14 : 'No solution returned.',
-                          18 : 'Unbounded: No solution.',
-                          19 : 'Infeasible: No solution.'
-                        }
-
-    solver_status_map = { 2  : "Solver ran out of iterations",
-                          3  : "Solver exceeded time limit",
-                          4  : "Solver quit with a problem",
-                          5  : "Solver quit with nonlinear term evaluation errors",
-                          6  : "Solver terminated because the model is beyond the solvers capabilities",
-                          7  : "Solver terminated with a license error",
-                          8  : "Solver terminated on users request (e.g. Ctrl+C)",
-                          9  : "Solver terminated on setup error",
-                          10 : "Solver terminated with error",  # duplicate
-                          11 : "Solver terminated with error",  # duplicate
-                          12 : "Solve skipped",
-                          13 : "Other error",
-                          14 : "Undefined condition"
-                        }
-
 
     def __init__(self, gamspath, working_directory):
         if(gamspath==None):
@@ -56,6 +32,7 @@ class GamsModel(object):
 
         except Exception as e:
             raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")
+
 
     def add_job(self, model_file):
        """
@@ -74,6 +51,7 @@ class GamsModel(object):
 
        self.job = self.ws.add_job_from_string(model)
 
+
     def get_model_name(self, model):
         '''
         get the model name from the GAMS model string
@@ -90,6 +68,7 @@ class GamsModel(object):
                     model_name=line[0]
                 return model_name
         return None
+
 
     def get_dict(self, obj):
         if not hasattr(obj, "__dict__"):
@@ -109,21 +88,19 @@ class GamsModel(object):
         return result
 
 
-    @classmethod
-    def check_model_status(cls, status):
-        """Maps model status code to corresponding text"""
-        return cls.model_status_map.get(status, None)
+    @staticmethod
+    def check_model_status(status, default_msg=default_model_status_msg):
+        return model_status_map.get(status, default_msg)
 
 
-    @classmethod
-    def check_solver_status(cls, status):
-        """Maps solver status code to corresponding text"""
-        stat_map = cls.solver_status_map
+    @staticmethod
+    def check_solver_status(status, default_msg=default_solver_status_msg):
+        stat_map = solver_status_map
         max_key  = max(stat_map.keys())
         if status > max_key:
             return stat_map[max_key]
 
-        return stat_map.get(status, None)
+        return stat_map.get(status, default_msg)
 
 
     def run(self):
