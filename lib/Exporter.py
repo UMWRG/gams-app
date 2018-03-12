@@ -1,20 +1,17 @@
-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
+import json
+import logging
+from decimal import Decimal
 from string import ascii_lowercase
 
-from HydraLib.PluginLib import JSONPlugin
-from HydraLib.HydraException import HydraPluginError
-from HydraLib.hydra_dateutil import reindex_timeseries
+from hydra_client.plugin import JSONPlugin
+from hydra_base.exceptions import HydraPluginError
+from hydra_base.util.hydra_dateutil import reindex_timeseries
 
 from HydraGAMSlib import GAMSnetwork
 from HydraGAMSlib import convert_date_to_timeindex
 
-from decimal import Decimal
-
-import json
-
-import logging
 log = logging.getLogger(__name__)
 
 class GAMSExporter(JSONPlugin):
@@ -32,7 +29,7 @@ class GAMSExporter(JSONPlugin):
         self.time_index = []
         self.time_axis =None
 
-        
+
         self.connect(args)
         if args.time_axis is not None:
             args.time_axis = ' '.join(args.time_axis).split(' ')
@@ -338,14 +335,14 @@ class GAMSExporter(JSONPlugin):
 
         if len(attributes) > 0:
             attr_outputs.append('SETS\n\n')  # Needed before sets are defined
-            
+
             attr_outputs.append(obj_type + '_' + datatype + 's /\n')
-            
+
             for attribute in attributes:
                 attr_outputs.append(attribute.name + '\n')
 
             attr_outputs.append('/\n\n')
-            
+
             if islink:
                 if self.links_as_name:
                     obj_index = 'i,links,j,'
@@ -359,10 +356,10 @@ class GAMSExporter(JSONPlugin):
                     '_data(i,' + obj_type + '_' + datatype + 's) \n\n')
 
             attr_outputs.append('                        ')
-            
+
             for attribute in attributes:
                 attr_outputs.append(' %14s' % attribute.name)
-            
+
             attr_outputs.append('\n')
 
             for resource in resources:
@@ -370,19 +367,19 @@ class GAMSExporter(JSONPlugin):
                     attr_outputs.append('{0:24}'.format(resource.gams_name))
                 else:
                     attr_outputs.append('{0:24}'.format(resource.name))
-                
+
                 for attribute in attributes:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    
+
                     if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
-                    
+
                     attr_outputs.append(' %14s' % attr.value)
-                
+
                 attr_outputs.append('\n')
-            
+
             attr_outputs.append('\n\n')
-        
+
         return attr_outputs
 
     def classify_attributes(self, resources,datatype ):
@@ -420,7 +417,7 @@ class GAMSExporter(JSONPlugin):
                         if attr.name not in attr_names:
                             attributes.append(attr)
                             attr_names.append(attr.name)
-            
+
             ff='{0:<'+self.name_len+'}'
 
             for attribute in attributes:
@@ -437,10 +434,10 @@ class GAMSExporter(JSONPlugin):
                 attr_outputs.append(ff.format('/'))
                 #attr_outputs.append(ff.format(0))
                 attr_outputs.append('\n')
-               
+
                 for resource in resources:
                     attr = resource.get_attribute(attr_name=attribute.name)
-                    
+
                     if attr is None or attr.value is None or attr.dataset_type != datatype:
                         continue
 
@@ -532,16 +529,16 @@ class GAMSExporter(JSONPlugin):
                             if all_data is None:
                                 all_data = self.get_time_value(attr.value, self.time_index)
                                 resource_data_cache[(resource.name, attribute.name)] = all_data
-                        except Exception, e:
+                        except Exception as e:
                             log.exception(e)
                             all_data = None
-                        
+
                         if all_data is None:
-                            raise HydraPluginError("Error finding value attribute %s on" 
+                            raise HydraPluginError("Error finding value attribute %s on"
                                                   "resource %s"%(attr.name, resource.name))
 
                         #Get each value in turn and add it to the line
-                        data = all_data[timestamp]     
+                        data = all_data[timestamp]
 
                         try:
                             data_str = ' %14f' % float(data)
@@ -565,7 +562,7 @@ class GAMSExporter(JSONPlugin):
             attributes = []
             attr_names = []
             attr_outputs = []
-            
+
             #Identify all the timeseries attributes and unique attribute
             #names
             for resource in resources:
@@ -622,12 +619,12 @@ class GAMSExporter(JSONPlugin):
                     #Get back a dictionary with values, keyed on the timestamps
                     try:
                         all_data = self.get_time_value(attr.value, self.time_index)
-                    except Exception, e:
+                    except Exception as e:
                         log.exception(e)
                         all_data = None
-                    
+
                     if all_data is None:
-                        raise HydraPluginError("Error finding value attribute %s on" 
+                        raise HydraPluginError("Error finding value attribute %s on"
                                               "resource %s"%(attr.name, resource.name))
                     if islink:
                         if self.links_as_name:
@@ -638,10 +635,10 @@ class GAMSExporter(JSONPlugin):
                             attr_outputs.append('\n'+ff.format(resource.gams_name))
                     else:
                         attr_outputs.append('\n'+ff.format(resource.name))
-                    
+
                     #Get each value in turn and add it to the line
                     for timestamp in self.time_index:
-                        tmp = all_data[timestamp]     
+                        tmp = all_data[timestamp]
 
                         if isinstance(tmp, list):
                             data="-".join(tmp)
@@ -668,9 +665,9 @@ class GAMSExporter(JSONPlugin):
             return None if no data is found
         '''
         converted_ts = reindex_timeseries(value, timestamps)
-  
+
         #For simplicity, turn this into a standard python dict with
-        #no columns. 
+        #no columns.
         value_dict = {}
 
         val_is_array = False

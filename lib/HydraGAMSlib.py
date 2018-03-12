@@ -1,17 +1,22 @@
-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
 import os
 import sys
 
-from HydraLib.PluginLib import HydraResource, HydraNetwork
-from HydraLib.HydraException import HydraPluginError
+from hydra_client.resources import HydraResource, HydraNetwork
+from hydra_base.exceptions import HydraPluginError
+
 from License import License
+from config import model_status_map, \
+                   solver_status_map, \
+                   default_model_status_msg, \
+                   default_solver_status_msg
 
 import logging
 log = logging.getLogger(__name__)
 
 class GamsModel(object):
+
     def __init__(self, gamspath, working_directory):
         if(gamspath==None):
             gamspath=get_gams_path()
@@ -27,6 +32,7 @@ class GamsModel(object):
 
         except Exception as e:
             raise HydraPluginError("Unable to import modules from gams. Please ensure that gams with version greater than 24.1 is installed.")
+
 
     def add_job(self, model_file):
        """
@@ -45,6 +51,7 @@ class GamsModel(object):
 
        self.job = self.ws.add_job_from_string(model)
 
+
     def get_model_name(self, model):
         '''
         get the model name from the GAMS model string
@@ -61,6 +68,7 @@ class GamsModel(object):
                     model_name=line[0]
                 return model_name
         return None
+
 
     def get_dict(self, obj):
         if not hasattr(obj, "__dict__"):
@@ -79,59 +87,20 @@ class GamsModel(object):
             result[key] = element
         return result
 
-    def check_model_status(self, status_key):
-        error=None
-        if (status_key == 4):
-            error='Infeasible model found.'
-        elif status_key == 5:
-            error=('locally infeasible model found.')
-        elif status_key == 6:
-            error='Solver terminated early and model was still infeasible.'
-        elif status_key == 7:
-            error='Solver terminated early and model was feasible but not yet optimal.'
-        elif status_key == 11:
-            error='GAMS and/or solver licensing problem.'
-        elif status_key == 12:
-            error='Error - No cause known.'
-        elif status_key == 13:
-            error='Error - No solution attained.'
-        elif status_key == 14:
-            error='No solution returned.'
-        elif status_key == 18:
-            error='Unbounded - no solution.'
-        elif status_key == 19:
-            error='Infeasible - no solution.'
-        return error
 
-    def check_solver_status(self,s_status):
-        error = None
-        if(s_status== 2):
-            error="Solver ran out of iterations"
-        elif (s_status == 3):
-            error="Solver exceeded time limit"
-        elif (s_status == 4):
-            error="Solver quit with a problem"
-        elif (s_status == 5):
-            error="Solver quit with nonlinear term evaluation errors"
-        elif(s_status == 6):
-            error="Solver terminated because the model is beyond the solvers capabilities"
-        elif (s_status == 7):
-            error="solver terminated with a license error"
-        elif (s_status == 8):
-            error="olver terminated on users request(e.g.Ctrl - C)"
-        elif (s_status == 9):
-            error="Solver terminated on setup error"
-        elif (s_status == 10):
-            error="Solver terminated with error"
-        elif (s_status == 11):
-            error="Solver terminated with error"
-        elif (s_status == 12):
-            error="Solve skipped"
-        elif (s_status == 13):
-            error="Other error"
-        elif (s_status> 14):
-            error="Undefined condition"
-        return error
+    @staticmethod
+    def check_model_status(status, default_msg=default_model_status_msg):
+        return model_status_map.get(status, default_msg)
+
+
+    @staticmethod
+    def check_solver_status(status, default_msg=default_solver_status_msg):
+        stat_map = solver_status_map
+        max_key  = max(stat_map.keys())
+        if status > max_key:
+            return stat_map[max_key]
+
+        return stat_map.get(status, default_msg)
 
 
     def run(self):
@@ -155,6 +124,7 @@ class GamsModel(object):
             solvererror=self.check_solver_status(s_status)
             if(modelerror is not None or solvererror is not None):
                 raise HydraPluginError("Model error: "+str(modelerror)+"\nSolver error: "+str(solvererror))
+
 
 class GAMSnetwork(HydraNetwork):
     def gams_names_for_links(self, use_link_name=False):
@@ -302,7 +272,7 @@ def get_gams_path():
                 #directories and picking the last one
                 if len(linuxtypes) > 0:
                     gams_path = base + linuxtypes[-1]
-        
+
         #try looking in the path
         if gams_path is None:
             path = os.environ['PATH']

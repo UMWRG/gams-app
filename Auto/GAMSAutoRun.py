@@ -29,11 +29,11 @@ Option                 Short   Parameter  Description
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
---server_url           -u     SERVER_URL Url of the server the plugin will 
+--server_url           -u     SERVER_URL Url of the server the plugin will
                                          connect to.
                                          Defaults to localhost.
 --session_id           -c     SESSION_ID Session ID used by the calling software
-                                         If left empty, the plugin will attempt 
+                                         If left empty, the plugin will attempt
                                          to log in itself.
 --gams-path            -G     GAMS_PATH  File path of the GAMS installation.
 --gdx-file             -f     GDX_FILE   GDX file containing GAMS results
@@ -53,8 +53,8 @@ Option                 Short  Parameter  Description
 Option                 Short  Description
 ====================== ====== =========================================
 --export_by_type       -et    Set export data based on types or based
-                              on attributes only, default is export 
-                              data by attributes unless this option 
+                              on attributes only, default is export
+                              data by attributes unless this option
                               is set.
 ====================== ====== =========================================
 
@@ -103,8 +103,10 @@ Example:
 import sys
 import os
 import time
-from datetime import datetime
+import logging
 import argparse as ap
+from datetime import datetime
+from dateutil import parser
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
@@ -114,19 +116,16 @@ if api_path not in sys.path:
 
 ##########################
 
-
-from HydraLib.HydraException import HydraPluginError
+from hydra_base.exceptions import HydraPluginError
+from hydra_client.output import write_progress, write_output, create_xml_response
 from HydraGAMSlib import check_lic
+from HydraGAMSlib import GamsModel
 
 from Exporter import GAMSExporter
 from Importer import GAMSImporter
-from HydraLib import PluginLib
-from dateutil import parser
-from HydraLib.PluginLib import write_progress, write_output
-from HydraGAMSlib import GamsModel
 
-import logging
 log = logging.getLogger(__name__)
+
 
 def commandline_parser():
     cmd_parser = ap.ArgumentParser(
@@ -183,7 +182,8 @@ def commandline_parser():
     cmd_parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
-    return cmd_parser 
+    return cmd_parser
+
 
 def get_files_list(directory, ext):
     '''
@@ -195,6 +195,7 @@ def get_files_list(directory, ext):
             absolute_path = os.stat(os.path.join(directory,file_))
             files_list[file_]=time.ctime(absolute_path.st_mtime)
     return files_list
+
 
 def get_input_file_name(gams_model):
     '''
@@ -232,9 +233,10 @@ def get_input_file_name(gams_model):
     log.info("Exporting data to: %s", inputfilename)
     return inputfilename
 
+
 def export_network(is_licensed):
     exporter = GAMSExporter(args)
-   
+
     write_progress(2, steps)
 
     exporter.get_network(is_licensed)
@@ -245,7 +247,7 @@ def export_network(is_licensed):
 
     if(args.gams_date_time_index is True):
             exporter.use_gams_date_index=True
-    
+
     write_progress(4, steps)
     exporter.write_time_index()
 
@@ -260,12 +262,13 @@ def export_network(is_licensed):
     exporter.write_file()
     return exporter
 
+
 def run_gams_model(args):
     log.info("Running GAMS model .....")
     cur_time=datetime.now().replace(microsecond=0)
     write_progress(6, steps)
     working_directory=os.path.dirname(args.gms_file)
-    
+
     if working_directory == '':
         working_directory = '.'
 
@@ -288,9 +291,10 @@ def run_gams_model(args):
         if args.gdx_file is None:
               raise HydraPluginError('Result file is not provided/found.')
 
+
 def read_results(is_licensed, args, network, connection):
     """
-        Instantiate a GAMSImport class, assign the network, read the 
+        Instantiate a GAMSImport class, assign the network, read the
         gdx and gms files, update the network's data and then save
         the network.
     """
@@ -299,19 +303,19 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(11, steps)
     gdximport.load_gams_file(args.gms_file)
-    
+
     write_progress(12, steps)
     gdximport.set_network(is_licensed, network)
-    
+
     write_progress(13, steps)
     gdximport.parse_time_index()
-    
+
     write_progress(14, steps)
     gdximport.open_gdx_file(args.gdx_file)
-    
+
     write_progress(15, steps)
     gdximport.read_gdx_data()
-    
+
     write_progress(16, steps)
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
@@ -321,7 +325,7 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(17, steps)
     gdximport.assign_attr_data()
-    
+
     write_progress(18, steps)
     gdximport.save()
 
@@ -347,10 +351,11 @@ def check_args(args):
     elif os.path.exists(os.path.dirname(os.path.realpath(args.output)))==False:
             raise HydraPluginError('Output file directory '+ os.path.dirname(args.output)+' does not exist.')
 
+
 if __name__ == '__main__':
     try:
-        is_licensed=check_lic()
-        steps=18
+        is_licensed = check_lic()
+        steps = 18
         write_progress(1, steps)
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
@@ -359,10 +364,10 @@ if __name__ == '__main__':
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
         read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
-        message="Run successfully"
-        errors = []
+        message = "Run successfully"
+        errors  = []
 
-    except HydraPluginError, e:
+    except HydraPluginError as e:
         log.exception(e)
         write_progress(steps, steps)
         errors = [e.message]
@@ -377,8 +382,7 @@ if __name__ == '__main__':
         log.exception(e)
         message = "An unknown error has occurred"
         write_progress(steps, steps)
-    text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
+
+    text = create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
     #log.info(text);
-    print (text)
-
-
+    print(text)
