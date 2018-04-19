@@ -196,7 +196,13 @@ class GAMSExporter(JSONPlugin):
         for group in self.network.groups:
             if len(group.template.values())==0:
                 continue
-            group_type= group.template.values()[0]
+            group_type_= group.template.values()[0]
+            if type (group_type_) is list:
+                if len(group_type_)==0:
+                    continue
+                group_type=group_type_[0]
+            elif type(group_type_) is basestring:
+                group_type=group_type_
             if group_type not in nodes_groups_types:
                 _list=[]
                 nodes_groups_types[group_type]=_list
@@ -963,6 +969,8 @@ class GAMSExporter(JSONPlugin):
         sub_keys=[]
         keys=sorted(values.keys())
         for key in keys:
+            if not isinstance(values[key], dict):
+                continue
             for k in values[key].keys():
                 if k not in sub_keys:
                     sub_keys.append(k)
@@ -1064,8 +1072,14 @@ class GAMSExporter(JSONPlugin):
                     ar.append({resource:self.resourcescenarios_ids[attr.resource_attr_id]})
                     if attr.name not in data_types.keys():
                         type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
+                        temp_type=''
                         if "data_type" in type_.keys():
-                            data_types[attr.name]=type_["data_type"].lower()
+                            temp_type = type_["data_type"].lower()
+                        elif 'type' in type_.keys():
+                            temp_type= type_["type"].lower()
+                        if temp_type!='':
+                            print "temp_type=====>>>", temp_type
+                            data_types[attr.name] = temp_type
                             if "hashtable" in  data_types[attr.name]:
                                 data_types[attr.name]=self.get_hashtable_type(self.resourcescenarios_ids[attr.resource_attr_id].value)
                         if 'id' in type_.keys():
@@ -1085,7 +1099,8 @@ class GAMSExporter(JSONPlugin):
             ff = '{0:<' + self.array_len + '}'
             t_ = ff.format('')
             counter=0
-            #print "====>>>>",attribute_name
+            print "====>>>>",attribute_name
+            print data_types
             type_= data_types[attribute_name]
             if attribute_name in sets_namess.keys():
                 set_name=sets_namess[attribute_name]
@@ -1391,6 +1406,7 @@ class GAMSExporter(JSONPlugin):
         sub_key=''
         for resource in resources:
             for attr in resource.attributes:
+                print "attr.dataset_type: ", attr.dataset_type, attr.name
                 if attr.dataset_type == 'array' and attr.is_var is False and self.is_it_in_list(attr.name, pars_collections)==True:
                     attr.name = translate_attr_name(attr.name)
                     if attr.name in ids.keys():
@@ -1419,7 +1435,10 @@ class GAMSExporter(JSONPlugin):
         for attribute_name in ids.keys():
             attr_outputs.append('*' + attribute_name)
             ff = '{0:<' + self.array_len + '}'
-            type_ = data_types[attribute_name]
+            print "===========data_types======>", data_types
+            type_=''
+            if attribute_name in data_types:
+                type_ = data_types[attribute_name]
             if attribute_name in sets_namess.keys():
                 set_name = sets_namess[attribute_name]
             else:
@@ -1680,8 +1699,12 @@ class GAMSExporter(JSONPlugin):
                 parr2 = set_collections[2]
                 for group in self.DEPENDENCY_SET:
                     for link in self.links_groups_members[group]:
-                        tt = link.get_attribute(attr_name=para1).value
-                        tt2 = link.get_attribute(attr_name=parr2).value
+                        tt_inter=link.get_attribute(attr_name=para1)
+                        tt2_inter = link.get_attribute(attr_name=parr2)
+                        if tt_inter is None or tt_inter.value is None or tt2_inter is None or tt2_inter is None:
+                            continue
+                            tt = tt_inter.value
+                            tt2 = tt2_inter.value
                         lin=group +" . "+tt+" . "+tt2
                         if (lin):
                             attr_outputs.append(lin)
@@ -1689,7 +1712,11 @@ class GAMSExporter(JSONPlugin):
             elif set_collections[0].lower() == 'exclusivity_set' and len(set_collections) == 2:
                 for group in self.EXCLUSIVITY_SET:
                     for link in self.links_groups_members[group]:
-                        lin = group + " . " + link.get_attribute(attr_name=set_collections[1]).value
+                        print "set_collections: ", set_collections, link.name
+                        temp_val=link.get_attribute(attr_name=set_collections[1]).value
+                        if temp_val == None:
+                            continue
+                        lin = group + " . " + temp_val
                         if (lin):
                             attr_outputs.append(lin)
                 return '\n'.join(attr_outputs)
@@ -1730,9 +1757,10 @@ class GAMSExporter(JSONPlugin):
                                 line = tt
                         else:
                             tt=resource.get_attribute(attr_name=set)
-                            if tt==None:
+                            if tt==None or tt.value is None:
                                 break
                             if line:
+                                print "tt is:", tt.value,"\n=====.>>>>>", type(tt.value)
                                 line=line+' . '+tt.value
                             else:
                                 line =  tt.value

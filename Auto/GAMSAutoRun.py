@@ -87,7 +87,7 @@ pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
 api_path = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
-    sys.path.insert(0, api_path)
+        sys.path.insert(0, api_path)
 
 ##########################
 
