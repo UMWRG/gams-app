@@ -495,7 +495,6 @@ class GAMSExporter(JSONPlugin):
         data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
         self.export_descriptor_parameters_using_attributes(self.network.nodes)
         #data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
-        print "SSSSSS", ''.join(self.export_timeseries_using_attributes (self.network.nodes))
         data.extend(self.export_timeseries_using_attributes (self.network.nodes))
         #data.extend(self.export_arrays(self.network.nodes)) #?????
         data.extend(self.export_hashtable(self.network.nodes))
@@ -507,6 +506,7 @@ class GAMSExporter(JSONPlugin):
         self.export_descriptor_parameters_using_attributes(self.network.links)
         #data.extend(self.export_parameters_using_attributes (self.network.links, 'descriptor', res_type='LINK'))
         data.extend(self.export_timeseries_using_attributes (self.network.links, res_type='LINK'))
+
         #self.export_arrays(self.network.links) #??????
         data.extend(self.export_hashtable(self.network.links, res_type = 'LINK'))
 

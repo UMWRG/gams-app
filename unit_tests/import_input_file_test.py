@@ -62,6 +62,12 @@ class gams_input_file_importer(unittest.TestCase):
         nodes_timeseries_attrs=''.join(nodes_timeseries_attrs)
         assert expected_nodes_timeseries_attrs.strip() == nodes_timeseries_attrs.strip()
 
+        #links timeseries attributes
+        expected_links_timeseries_attrs=read_file_contenet(r'links_timeseries_attrs.txt')
+        linkss_timeseries_attrs=self.exporter.export_timeseries_using_attributes(self.exporter.network.links)
+        linkss_timeseries_attrs=''.join(linkss_timeseries_attrs)
+        assert expected_links_timeseries_attrs.strip() == linkss_timeseries_attrs.strip()
+
 
     def test_import_links(self):
         expected_sets=read_file_contenet(r'links_sets.txt')
@@ -73,5 +79,3 @@ class gams_input_file_importer(unittest.TestCase):
         nodes_sets = self.exporter.export_nodes()
         assert expected_sets.strip() == nodes_sets.strip()
 
-    def test_import_network(self):
-        pass
