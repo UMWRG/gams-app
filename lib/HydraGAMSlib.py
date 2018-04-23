@@ -177,6 +177,7 @@ class GAMSlink(HydraResource):
 
 
 def convert_date_to_timeindex(date):
+    print "DATE: ", date
     totalseconds = date.hour * 3600 + date.minute * 60 + date.second
     return date.toordinal() + float(totalseconds) / 86400
 

@@ -1,5 +1,5 @@
 {
-   "end_date":null,
+   "end_date":"06/01/2018",
    "export_by_type":false,
    "gams_date_time_index":false,
    "gams_path":null,
@@ -12,9 +12,9 @@
    "scenario_id":"2",
    "server_url":null,
    "session_id":null,
-   "start_date":null,
+   "start_date":"01/01/2018",
    "template_id":null,
-   "time_step":null,
+   "time_step":"1 mon",
    "template_id":null,
-   "time_axis":"2018/01/01, 2018/02/01, 2018/03/01, 2018/04/01, 2018/05/01, 2018/06/01"
+   "time_axis":null 
 }

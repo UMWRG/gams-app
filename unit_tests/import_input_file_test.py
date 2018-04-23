@@ -44,12 +44,24 @@ class gams_input_file_importer(unittest.TestCase):
         self.attrs= json.loads(atttrs_json_string, object_hook=lambda d: namedtuple('X', d.keys(), rename=False, verbose=False)(*d.values()))
         self.exporter=GAMSExporter(self.args, self.hydra_network)
         self.exporter.prepare_network(True, self.attrs)
+        self.exporter.get_longest_node_link_name()
+        self.exporter.write_time_index()
 
     def tearDown(self):
         pass
 
     def test_import_resource_attributes(self):
-        pass
+        #sclar nodes_attributes
+        expected_scalar_attr=read_file_contenet(r'nodes_scalar_attr.txt')
+        nodes_scalar_attr=self.exporter.export_parameters_using_attributes(self.exporter.network.nodes, 'scalar')
+        nodes_scalar_attr=''.join(nodes_scalar_attr)
+        assert expected_scalar_attr.strip()==nodes_scalar_attr.strip()
+        # nodes timeseries_attributes
+        expected_nodes_timeseries_attrs=read_file_contenet(r'nodes_timeseries_attrs.txt')
+        nodes_timeseries_attrs=self.exporter.export_timeseries_using_attributes(self.exporter.network.nodes)
+        nodes_timeseries_attrs=''.join(nodes_timeseries_attrs)
+        assert expected_nodes_timeseries_attrs.strip() == nodes_timeseries_attrs.strip()
+
 
     def test_import_links(self):
         expected_sets=read_file_contenet(r'links_sets.txt')

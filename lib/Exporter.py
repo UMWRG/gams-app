@@ -39,13 +39,12 @@ class GAMSExporter(JSONPlugin):
         self.output=''
         self.added_pars=[]
         self.junc_node={}
-        if net is None:
-            self.connect(args)
-        else:
+        if net is not None:
             self.hydranetwork = net
+        self.connect(args)
         if args.time_axis is not None:
-            print "args.time_axis", type(str(args.time_axis))
             self.time_axis = ' '.join(str(args.time_axis)).split(' ')
+
 
         if(args.start_date is not None and args.end_date is not None and args.time_step is not None):
             self.time_axis = self.get_time_axis(args.start_date,
@@ -68,7 +67,6 @@ class GAMSExporter(JSONPlugin):
         self.prepare_network(is_licensed)
 
     def prepare_network(self, is_licensed, attrs=None):
-        print "LEEEE", len(self.hydranetwork.nodes)
         if attrs is None:
             self.attrs = self.connection.call('get_all_attributes', {})
         else:
@@ -81,6 +79,7 @@ class GAMSExporter(JSONPlugin):
 
         self.resourcescenarios_ids = get_resourcescenarios_ids(self.hydranetwork.scenarios[0].resourcescenarios)
         self.network = GAMSnetwork()
+
         self.network.description = None
         self.network.scenario_id = None
         self.network.nodes = []
@@ -90,7 +89,6 @@ class GAMSExporter(JSONPlugin):
         self.network.link_groups = []
         log.info("Loading net into gams network.")
         self.network.load(self.hydranetwork, self.attrs)
-        print "LOP", len(self.network.nodes)
         if (self.time_axis == None):
             if ('start_time' in self.network.scenarios[0] and 'time_step' in self.network.scenarios[
                 0] and 'end_time' in self.hydranetwork.scenarios[
@@ -172,7 +170,6 @@ class GAMSExporter(JSONPlugin):
                Export sets whcih include nodes and nodes types
               :return: string which contains the sets
               '''
-        print "Length", len(self.network.nodes)
         nodes_sets = 'i vector of all nodes\n/\n'
         for node in self.network.nodes:
             nodes_sets += node.name + '\n'
@@ -492,13 +489,13 @@ class GAMSExporter(JSONPlugin):
         data = ['\n* Network data\n']
         data.extend(self.export_parameters_using_attributes([self.network],'scalar',res_type='NETWORK'))
         self.export_descriptor_parameters_using_attributes([self.network])
-
         data.extend(self.export_hashtable([self.network],res_type='NETWORK'))
 
         data.append('\n\n\n* Nodes data\n')
         data.extend(self.export_parameters_using_attributes(self.network.nodes,'scalar'))
         self.export_descriptor_parameters_using_attributes(self.network.nodes)
         #data.extend(self.export_parameters_using_attributes (self.network.nodes,'descriptor'))
+        print "SSSSSS", ''.join(self.export_timeseries_using_attributes (self.network.nodes))
         data.extend(self.export_timeseries_using_attributes (self.network.nodes))
         #data.extend(self.export_arrays(self.network.nodes)) #?????
         data.extend(self.export_hashtable(self.network.nodes))
@@ -964,6 +961,7 @@ class GAMSExporter(JSONPlugin):
             :returns a dictionary, keyed on the timestamps provided.
             return None if no data is found
         '''
+        print "===>>>", value, timestamps
         converted_ts = reindex_timeseries(value, timestamps)
 
         #For simplicity, turn this into a standard python dict with
@@ -1110,7 +1108,6 @@ class GAMSExporter(JSONPlugin):
                         elif 'type' in type_.keys():
                             temp_type= type_["type"].lower()
                         if temp_type!='':
-                            print "temp_type=====>>>", temp_type
                             data_types[attr.name] = temp_type
                             if "hashtable" in  data_types[attr.name]:
                                 data_types[attr.name]=self.get_hashtable_type(self.resourcescenarios_ids[attr.resource_attr_id].value)
@@ -1131,7 +1128,6 @@ class GAMSExporter(JSONPlugin):
             ff = '{0:<' + self.array_len + '}'
             t_ = ff.format('')
             counter=0
-            print "====>>>>",attribute_name
             print data_types
             type_= data_types[attribute_name]
             if attribute_name in sets_namess.keys():
@@ -1221,21 +1217,17 @@ class GAMSExporter(JSONPlugin):
 
                     elif res_type == "NETWORK":
                         attr_outputs.append('\n' + ff.format('/')+'\n')
-
                     else:
                         attr_outputs.append('\n' + ff.format(resource.name))
 
                     for i in xrange(len(keys)):
                         key=keys[i]
-                        #print i, key, "======>>>>>>",type(value_), attribute_name, value_.keys()
-                        #print "----->>>>>>",keys
 
                         data=value_[key]
                         if res_type != "NETWORK":
                             data_str = ff.format(str((data)))
                             attr_outputs.append(data_str)
                         else:
-                            #print "=========>", data, attribute_name, "----------------------->"
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="nested_hashtable":
@@ -2004,6 +1996,7 @@ class GAMSExporter(JSONPlugin):
             log.info("Time index written")
         except Exception as e:
             log.exception(e)
+            print "Error...", e.message
             raise HydraPluginError("Please check time-axis or start time, end times and time step.")
 
     def write_file(self):
