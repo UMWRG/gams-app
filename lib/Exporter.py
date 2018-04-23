@@ -23,7 +23,7 @@ import logging
 log = logging.getLogger(__name__)
 
 class GAMSExporter(JSONPlugin):
-    def __init__(self, args):
+    def __init__(self, args, net=None):
         if args.template_id is not None:
             self.template_id = int(args.template_id)
 
@@ -39,10 +39,13 @@ class GAMSExporter(JSONPlugin):
         self.output=''
         self.added_pars=[]
         self.junc_node={}
-
-        self.connect(args)
+        if net is None:
+            self.connect(args)
+        else:
+            self.hydranetwork = net
         if args.time_axis is not None:
-            args.time_axis = ' '.join(args.time_axis).split(' ')
+            print "args.time_axis", type(str(args.time_axis))
+            self.time_axis = ' '.join(str(args.time_axis)).split(' ')
 
         if(args.start_date is not None and args.end_date is not None and args.time_step is not None):
             self.time_axis = self.get_time_axis(args.start_date,
@@ -54,9 +57,6 @@ class GAMSExporter(JSONPlugin):
         else:
             self.links_as_name = False
 
-        self.attrs = self.connection.call('get_all_attributes', {})
-        log.info("%s attributes retrieved", len(self.attrs))
-
     def get_network(self, is_licensed):
         net = self.connection.call('get_network', {'network_id':self.network_id,
                                                    'include_data': 'Y',
@@ -65,23 +65,40 @@ class GAMSExporter(JSONPlugin):
 
         self.hydranetwork=net
         log.info("Network retrieved")
+        self.prepare_network(is_licensed)
 
-        if net.scenarios is not None:
-            for s in net.scenarios:
+    def prepare_network(self, is_licensed, attrs=None):
+        print "LEEEE", len(self.hydranetwork.nodes)
+        if attrs is None:
+            self.attrs = self.connection.call('get_all_attributes', {})
+        else:
+            self.attrs=attrs
+        log.info("%s attributes retrieved", len(self.attrs))
+        if self.hydranetwork.scenarios is not None:
+            for s in self.hydranetwork.scenarios:
                 if s.id == self.scenario_id:
-                    self.scenario=s
+                    self.scenario = s
 
-        self.resourcescenarios_ids=get_resourcescenarios_ids(net.scenarios[0].resourcescenarios)
+        self.resourcescenarios_ids = get_resourcescenarios_ids(self.hydranetwork.scenarios[0].resourcescenarios)
         self.network = GAMSnetwork()
+        self.network.description = None
+        self.network.scenario_id = None
+        self.network.nodes = []
+        self.network.links = []
+        self.network.groups = []
+        self.network. node_groups = []
+        self.network.link_groups = []
         log.info("Loading net into gams network.")
-        self.network.load(net, self.attrs)
+        self.network.load(self.hydranetwork, self.attrs)
+        print "LOP", len(self.network.nodes)
         if (self.time_axis == None):
-            if ('start_time' in net.scenarios[0] and 'time_step' in net.scenarios[0] and 'end_time' in net.scenarios[
+            if ('start_time' in self.network.scenarios[0] and 'time_step' in self.network.scenarios[
+                0] and 'end_time' in self.hydranetwork.scenarios[
                 0]):
-                self.time_axis = self.get_time_axis(net.scenarios[0]['start_time'],
-                                               net.scenarios[0]['end_time'],
-                                               net.scenarios[0]['time_step'],
-                                               time_axis=None)
+                self.time_axis = self.get_time_axis(self.network.scenarios[0]['start_time'],
+                                                    self.network.scenarios[0]['end_time'],
+                                                    self.network.scenarios[0]['time_step'],
+                                                    time_axis=None)
         if (self.time_axis is None):
             self.get_time_axix_from_attributes_values(self.network.nodes)
         if (self.time_axis is None):
@@ -91,11 +108,13 @@ class GAMSExporter(JSONPlugin):
             self.use_jun = True
         else:
             self.use_jun = False
-        if(is_licensed is False):
-            if len(self.network.nodes)>20:
-                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
-            if self.time_axis is not None and len (self.time_axis)>20:
-                raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+        if (is_licensed is False):
+            if len(self.network.nodes) > 20:
+                raise HydraPluginError(
+                    "The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
+            if self.time_axis is not None and len(self.time_axis) > 20:
+                raise HydraPluginError(
+                    "The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
         log.info("Gams network loaded")
         self.network.gams_names_for_links(use_link_name=self.links_as_name)
         log.info("Names for links retrieved")
@@ -107,7 +126,7 @@ class GAMSExporter(JSONPlugin):
 * Scenario-ID: %s
 *******************************************************************************
 """ % (self.network.name, self.network.description,
-            self.network.ID, self.network.scenario_id)
+       self.network.ID, self.network.scenario_id)
 
     def check_links_between_nodes(self):
         for link in self.network.links:
@@ -122,13 +141,15 @@ class GAMSExporter(JSONPlugin):
         if self.links_as_name is False and len(self.junc_node)==0:
             self.check_links_between_nodes()
         self.get_longest_node_link_name();
-        self.sets += '* Network definition\n\n'
+        self.sets += '* Network definition\n\nSETS\n\n'
         log.info("Exporting nodes")
-        self.export_nodes()
+        nodes_sets = self.export_nodes()
+        self.sets += nodes_sets
         log.info("Exporting node groups")
         self.export_node_groups()
         log.info("Exporting links")
-        self.export_links()
+        links_sets_string=self.export_links()
+        self.sets +=links_sets_string
         log.info("Exporting link groups")
         self.export_link_groups()
         log.info("Creating connectivity matrix")
@@ -147,28 +168,34 @@ class GAMSExporter(JSONPlugin):
         self.array_len=str(node_name_len*2+15)
 
     def export_nodes(self):
-        self.sets += 'SETS\n\n'
-        # Write all nodes ...
-        self.sets += 'i vector of all nodes /\n'
+        '''
+               Export sets whcih include nodes and nodes types
+              :return: string which contains the sets
+              '''
+        print "Length", len(self.network.nodes)
+        nodes_sets = 'i vector of all nodes\n/\n'
         for node in self.network.nodes:
-            self.sets += node.name + '\n'
-        self.sets += '    /\n\n'
+            nodes_sets += node.name + '\n'
+        nodes_sets += '/\n\n'
         # ... and create an alias for the index i called j:
-        self.sets += 'Alias(i,j)\n\n'
+        nodes_sets += 'Alias(i,j)\n\n'
         # After an 'Alias; command another 'SETS' command is needed
-        self.sets += '* Node types\n\n'
-        self.sets += 'SETS\n\n'
+        nodes_sets += '* Node types\n\n'
+        nodes_sets += 'SETS\n\n'
         # Group nodes by type
-        self.sets += 'nodes_types   /\n'
+        nodes_sets += 'nodes_types\n/\n'
         for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.sets += object_type+'\n'
-        self.sets += '/\n\n'
-
+            nodes_sets += object_type + '\n'
+        nodes_sets += '/\n\n'
+        nodes_sets += '\n\n'
         for object_type in self.network.get_node_types(template_id=self.template_id):
-            self.sets += object_type + '(i) /\n'
+            nodes_sets += object_type + '(i)\n/\n'
+            node_=self.network.get_node(node_type=object_type)
             for node in self.network.get_node(node_type=object_type):
-                self.sets += node.name + '\n'
-            self.sets += '/\n\n'
+                nodes_sets += node.name + '\n'
+            nodes_sets += '/\n\n'
+
+        return nodes_sets
 
     def get_dict(self, obj):
         if not hasattr(obj, "__dict__"):
@@ -250,55 +277,60 @@ class GAMSExporter(JSONPlugin):
                     self.junc_node[link.name]=res.value
 
     def export_links(self):
-        self.sets += 'SETS\n\n'
+        '''
+         Export sets whcih include links and links types
+         return: string which contains the sets
+         '''
+        links_sets_string= 'SETS\n\n'
         # Write all links ...
         if self.links_as_name:
-            self.sets += 'link_name /\n'
+            links_sets_string += 'link_name \n/\n'
             for link in self.network.links:
-                self.sets +=link.name+'\n'
-            self.sets += '/\n\n'
-            self.sets += 'links (link_name) vector of all links /\n'
+                links_sets_string +=link.name+'\n'
+            links_sets_string += '/\n\n'
+            links_sets_string += 'links (link_name) vector of all links /\n'
         else:
             if self.use_jun==True:
-                self.sets += 'links(i, jun_set, j) vector of all links /\n'
+                links_sets_string += 'links(i, jun_set, j) vector of all links /n/\n'
             else:
-                self.sets += 'links(i,j) vector of all links /\n'
+                links_sets_string += 'links(i,j) vector of all links \n/\n'
         for link in self.network.links:
             if self.links_as_name:
-                self.sets += link.name +'\n'
+                links_sets_string += link.name +'\n'
             else:
                 if(self.use_jun==True):
                     jun=self.junc_node[link.name]
-                    self.sets += link.from_node+' . ' +jun+' . '+link.to_node+ '\n'
+                    links_sets_string += link.from_node+' . ' +jun+' . '+link.to_node+ '\n'
                 else:
-                    self.sets += link.gams_name + '\n'
-        self.sets += '    /\n\n'
+                    links_sets_string += link.gams_name + '\n'
+        links_sets_string += '/\n\n'
         # Group links by type
-        self.sets += '* Link types\n\n'
-        self.sets += 'links_types   /\n'
+        links_sets_string += '* Link types\n\n'
+        links_sets_string += 'links_types\n/\n'
         for object_type in self.network.get_link_types(template_id=self.template_id):
-            self.sets += object_type + '\n'
-        self.sets += '/\n\n'
+            links_sets_string += object_type + '\n'
+        links_sets_string += '/\n\n'
 
         for object_type in self.network.get_link_types(template_id=self.template_id):
-            self.sets += object_type
+            links_sets_string += object_type
             if self.links_as_name:
-                self.sets +=  'link_name /\n'
+                links_sets_string +=  'link_name /\n'
             else:
                 if self.use_jun == True:
-                    self.sets += 'links(i, jun_set, j) vector of '+object_type+' links /\n'
+                    links_sets_string += 'links(i, jun_set, j) vector of '+object_type+' links /\n'
                 else:
-                    self.sets += '(i,j) /\n'
+                    links_sets_string += '(i,j) \n/\n'
             for link in self.network.get_link(link_type=object_type):
                 if self.links_as_name:
-                    self.sets += link.name + '\n'
+                    links_sets_string += link.name + '\n'
                 else:
                     if self.use_jun == True:
                         jun = self.junc_node[link.name]
-                        self.sets += link.from_node + ' . ' + jun + ' . ' + link.to_node + '\n'
+                        links_sets_string += link.from_node + ' . ' + jun + ' . ' + link.to_node + '\n'
                     else:
-                        self.sets += link.gams_name + '\n'
-            self.sets += '/\n\n'
+                        links_sets_string += link.gams_name + '\n'
+            links_sets_string += '/\n\n'
+        return links_sets_string
 
     def export_link_groups(self):
         "Export link groups if there are any."
