@@ -153,7 +153,7 @@ class GAMSImporter(JSONPlugin):
                                              'scenario_ids': [int(scenario_id)],
                                              'template_id': None})
 
-        self.res_scenario = self.network.scenarios[0].resourcescenarios
+        self.res_scenario = []
         self.resourcescenarios_ids = {}
         for res in self.network.scenarios[0].resourcescenarios:
             self.resourcescenarios_ids[res['resource_attr_id']] = res
@@ -169,9 +169,11 @@ class GAMSImporter(JSONPlugin):
         self.is_licensed=is_licensed
         self.network =network
         self.resourcescenarios_ids = {}
+
+        log.info("Number of initial resource scenarios: %s", len(self.network.scenarios[0].resourcescenarios))
         for res in self.network.scenarios[0].resourcescenarios:
             self.resourcescenarios_ids[res['resource_attr_id']] = res
-        self.res_scenario = self.network.scenarios[0].resourcescenarios
+        self.res_scenario = []
         if(is_licensed is False):
             if len(self.network.nodes)>20:
                 raise HydraPluginError("The licence is limited demo (maximum limits are 20 nodes and 20 times steps).  Please contact software vendor (hydraplatform1@gmail.com) to get a full licence")
@@ -382,7 +384,7 @@ class GAMSImporter(JSONPlugin):
                             dataset['value'] = data
                         except ValueError:
                             dataset['type'] = 'descriptor'
-                            dataset['value'] = data
+                            dataset['value'] = json.dumps(data)
                     elif gdxvar.dim > 0:
                         dataset['type'] = 'array'
                         sol_type, dataset['value'] = self.create_array(gdxvar.name, gdxvar.index,
@@ -402,7 +404,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
                 else:
                     print "No data found",self.attrs[attr.attr_id], self.network.name
@@ -418,7 +420,7 @@ class GAMSImporter(JSONPlugin):
                     dataset['type'] = 'descriptor'
                     res_scen = dict(resource_attr_id=attr.id,
                                     attr_id=attr.attr_id,
-                                    value=dataset)
+                                    dataset=dataset)
                     self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
@@ -458,7 +460,7 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = data
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = data
+                                        dataset['value'] = json.dumps(data)
                                     break
 
                         elif gdxvar.dim > 1:
@@ -493,7 +495,7 @@ class GAMSImporter(JSONPlugin):
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
-                                            value=dataset)
+                                            dataset=dataset)
                             self.res_scenario.append(res_scen)
                     else:
                         print "No data found", self.attrs[attr.attr_id], group.name
@@ -509,7 +511,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['unit'] = '-'
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
         for node in self.network.nodes:
             nodes.update({node.id: node.name})
@@ -548,7 +550,7 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = data
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = data
+                                        dataset['value'] = json.dumps(data)
                                     break
 
                         elif gdxvar.dim > 1:
@@ -583,7 +585,7 @@ class GAMSImporter(JSONPlugin):
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
-                                            value=dataset)
+                                            dataset=dataset)
                             self.res_scenario.append(res_scen)
                     else:
                         print "No data found",self.attrs[attr.attr_id], node.name
@@ -599,7 +601,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['unit'] = '-'
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
 
         # Link attributes
@@ -654,7 +656,7 @@ class GAMSImporter(JSONPlugin):
                                         try:
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
-                                            dataset['value'] = json.dumps(data)
+                                            dataset['value'] = data
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
                                             dataset['value'] = json.dumps(data)
@@ -685,7 +687,7 @@ class GAMSImporter(JSONPlugin):
                             dataset['dimension'] = attr.resourcescenario.value.dimension
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
-                                            value=dataset)
+                                            dataset=dataset)
                             self.res_scenario.append(res_scen)
                     else:
                         print "No data found", self.attrs[attr.attr_id], link.name
@@ -701,7 +703,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['unit'] = '-'
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
 
     '''
@@ -719,7 +721,7 @@ class GAMSImporter(JSONPlugin):
         if counter==(len(index)-1):
             main_hash[index[counter]]=value
         elif  (counter+1) == (len(index) - 1) and (counter+1) in res_index_list:
-            main_hash[index[counter]] = value
+            main_hash[index[counter]]="%.2f"%value
         else:
             ss = index[counter]
             if ss in main_hash:
@@ -807,8 +809,14 @@ class GAMSImporter(JSONPlugin):
         return (timeseries)
 
     def save(self):
-        self.network.scenarios[0].resourcescenarios = self.res_scenario
-        self.connection.call('update_scenario', {'scen':self.network.scenarios[0]})
+        log.info("Number of results: %s", len(self.res_scenario))
+
+        scenario_to_update = copy.deepcopy(self.network.scenarios[0])
+        scenario_to_update['resourcescenarios'] = self.res_scenario
+
+        f = open('/tmp/scenario.json', 'w')
+        json.dump(self.network.scenarios[0], f)
+        self.connection.call('update_scenario', {'scen':scenario_to_update})
 
 def set_gams_path_old():
     gams_path=get_gams_path()

@@ -277,7 +277,7 @@ def get_gdx_file(working_directory, args, cur_time):
     res_files={}
     cur_file=''
     cur_delta=0
-    files_list_keys=files_list.keys()
+    files_list_keys=sorted(files_list.keys())
     for i in range(0, len(files_list_keys)):
         file_=files_list_keys[i]
         if '_gams_py_' in  file_:
@@ -371,13 +371,18 @@ if __name__ == '__main__':
         write_progress(steps, steps)
         errors = [e.message]
         message = "An error has occurred"
+	raise Exception("An error has occurred: %s"%(e.message,))
     except Exception as e:
+	log.exception(e)
         errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):
+		raise Exception(e.message)
                 errors = [e.strerror]
         else:
             errors = [e.message]
+	    raise Exception(e.message)
+	raise Exception("An unknown error has occurred")
         log.exception(e)
         message = "An unknown error has occurred"
         write_progress(steps, steps)
