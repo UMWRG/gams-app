@@ -1,0 +1,1188 @@
+{
+   "status":"A",
+   "layout":{
+
+   },
+   "description":"",
+   "links":[
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "node_2_id":3,
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":11,
+               "attr_id":6,
+               "ref_key":"LINK",
+               "ref_id":3,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":12,
+               "attr_id":7,
+               "ref_key":"LINK",
+               "ref_id":3,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":13,
+               "attr_id":8,
+               "ref_key":"LINK",
+               "ref_id":3,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":14,
+               "attr_id":9,
+               "ref_key":"LINK",
+               "ref_id":3,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":27,
+               "attr_id":12,
+               "ref_key":"LINK",
+               "ref_id":3,
+               "attr_is_var":"Y"
+            }
+         ],
+         "node_1_id":4,
+         "id":3,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":6,
+               "template_id":1,
+               "name":"river_section"
+            }
+         ],
+         "name":"J1_EndPt"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "node_2_id":2,
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":15,
+               "attr_id":6,
+               "ref_key":"LINK",
+               "ref_id":2,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":16,
+               "attr_id":7,
+               "ref_key":"LINK",
+               "ref_id":2,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":17,
+               "attr_id":8,
+               "ref_key":"LINK",
+               "ref_id":2,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":18,
+               "attr_id":9,
+               "ref_key":"LINK",
+               "ref_id":2,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":28,
+               "attr_id":12,
+               "ref_key":"LINK",
+               "ref_id":2,
+               "attr_is_var":"Y"
+            }
+         ],
+         "node_1_id":4,
+         "id":2,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":6,
+               "template_id":1,
+               "name":"river_section"
+            }
+         ],
+         "name":"J1_Urb1"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "node_2_id":5,
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":7,
+               "attr_id":6,
+               "ref_key":"LINK",
+               "ref_id":4,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":8,
+               "attr_id":7,
+               "ref_key":"LINK",
+               "ref_id":4,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":9,
+               "attr_id":8,
+               "ref_key":"LINK",
+               "ref_id":4,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":10,
+               "attr_id":9,
+               "ref_key":"LINK",
+               "ref_id":4,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":29,
+               "attr_id":12,
+               "ref_key":"LINK",
+               "ref_id":4,
+               "attr_is_var":"Y"
+            }
+         ],
+         "node_1_id":1,
+         "id":4,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":6,
+               "template_id":1,
+               "name":"river_section"
+            }
+         ],
+         "name":"SR1_Ag1"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "node_2_id":4,
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":19,
+               "attr_id":6,
+               "ref_key":"LINK",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":20,
+               "attr_id":7,
+               "ref_key":"LINK",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":21,
+               "attr_id":8,
+               "ref_key":"LINK",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":22,
+               "attr_id":9,
+               "ref_key":"LINK",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":30,
+               "attr_id":12,
+               "ref_key":"LINK",
+               "ref_id":1,
+               "attr_is_var":"Y"
+            }
+         ],
+         "node_1_id":1,
+         "id":1,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":6,
+               "template_id":1,
+               "name":"river_section"
+            }
+         ],
+         "name":"SR1_J1"
+      }
+   ],
+   "resourcegroups":[
+
+   ],
+   "created_by":1,
+   "id":2,
+   "scenarios":[
+      {
+         "status":"A",
+         "resourcegroupitems":[
+
+         ],
+         "locked":"N",
+         "description":"Default scenario created by the CSV import plug-in.",
+         "network_id":2,
+         "start_time":"2018-01-01 00:00:00",
+         "created_by":1,
+         "cr_date":"2018-04-17 21:55:17",
+         "resourcescenarios":[
+            {
+               "resource_attr_id":5,
+               "attr_id":1,
+               "dataset_id":1,
+               "value":{
+                  "name":"CSV import",
+                  "value":"1",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"scalar",
+                  "id":1,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":6,
+               "attr_id":1,
+               "dataset_id":1,
+               "value":{
+                  "name":"CSV import",
+                  "value":"1",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"scalar",
+                  "id":1,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":1,
+               "attr_id":2,
+               "dataset_id":2,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":300,\"2018-02-01T00:00:00.000000000Z\":320,\"2018-03-01T00:00:00.000000000Z\":320,\"2018-04-01T00:00:00.000000000Z\":330,\"2018-05-01T00:00:00.000000000Z\":310,\"2018-06-01T00:00:00.000000000Z\":310}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":2,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":2,
+               "attr_id":3,
+               "dataset_id":3,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":10,\"2018-02-01T00:00:00.000000000Z\":10,\"2018-03-01T00:00:00.000000000Z\":10,\"2018-04-01T00:00:00.000000000Z\":10,\"2018-05-01T00:00:00.000000000Z\":10,\"2018-06-01T00:00:00.000000000Z\":10}}",
+                  "dimension":"Volume",
+                  "unit":"1e6 m^3",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":3,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":3,
+               "attr_id":4,
+               "dataset_id":4,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":500,\"2018-02-01T00:00:00.000000000Z\":500,\"2018-03-01T00:00:00.000000000Z\":500,\"2018-04-01T00:00:00.000000000Z\":500,\"2018-05-01T00:00:00.000000000Z\":500,\"2018-06-01T00:00:00.000000000Z\":500}}",
+                  "dimension":"Volume",
+                  "unit":"1e6 m^3",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":4,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":4,
+               "attr_id":5,
+               "dataset_id":5,
+               "value":{
+                  "name":"CSV import",
+                  "value":"450",
+                  "dimension":"Volume",
+                  "unit":"1e6 m^3",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"scalar",
+                  "id":5,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":19,
+               "attr_id":6,
+               "dataset_id":6,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":15,\"2018-02-01T00:00:00.000000000Z\":15,\"2018-03-01T00:00:00.000000000Z\":15,\"2018-04-01T00:00:00.000000000Z\":15,\"2018-05-01T00:00:00.000000000Z\":15,\"2018-06-01T00:00:00.000000000Z\":15}}",
+                  "dimension":"Monetary value",
+                  "unit":"USD",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":6,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":20,
+               "attr_id":7,
+               "dataset_id":7,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":1.0,\"2018-02-01T00:00:00.000000000Z\":0.9,\"2018-03-01T00:00:00.000000000Z\":1.0,\"2018-04-01T00:00:00.000000000Z\":0.95,\"2018-05-01T00:00:00.000000000Z\":1.0,\"2018-06-01T00:00:00.000000000Z\":1.0}}",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":7,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":21,
+               "attr_id":8,
+               "dataset_id":8,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":10,\"2018-02-01T00:00:00.000000000Z\":10,\"2018-03-01T00:00:00.000000000Z\":10,\"2018-04-01T00:00:00.000000000Z\":10,\"2018-05-01T00:00:00.000000000Z\":10,\"2018-06-01T00:00:00.000000000Z\":10}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":8,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":22,
+               "attr_id":9,
+               "dataset_id":9,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":310,\"2018-02-01T00:00:00.000000000Z\":300,\"2018-03-01T00:00:00.000000000Z\":300,\"2018-04-01T00:00:00.000000000Z\":300,\"2018-05-01T00:00:00.000000000Z\":310,\"2018-06-01T00:00:00.000000000Z\":300}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":9,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":7,
+               "attr_id":6,
+               "dataset_id":10,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":20,\"2018-02-01T00:00:00.000000000Z\":8,\"2018-03-01T00:00:00.000000000Z\":20,\"2018-04-01T00:00:00.000000000Z\":15,\"2018-05-01T00:00:00.000000000Z\":19,\"2018-06-01T00:00:00.000000000Z\":10}}",
+                  "dimension":"Monetary value",
+                  "unit":"USD",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":10,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":8,
+               "attr_id":7,
+               "dataset_id":11,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":1,\"2018-02-01T00:00:00.000000000Z\":1,\"2018-03-01T00:00:00.000000000Z\":1,\"2018-04-01T00:00:00.000000000Z\":1,\"2018-05-01T00:00:00.000000000Z\":1,\"2018-06-01T00:00:00.000000000Z\":1}}",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":11,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":9,
+               "attr_id":8,
+               "dataset_id":12,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":25,\"2018-02-01T00:00:00.000000000Z\":15,\"2018-03-01T00:00:00.000000000Z\":10,\"2018-04-01T00:00:00.000000000Z\":10,\"2018-05-01T00:00:00.000000000Z\":15,\"2018-06-01T00:00:00.000000000Z\":15}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":12,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":10,
+               "attr_id":9,
+               "dataset_id":13,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":200,\"2018-02-01T00:00:00.000000000Z\":210,\"2018-03-01T00:00:00.000000000Z\":210,\"2018-04-01T00:00:00.000000000Z\":200,\"2018-05-01T00:00:00.000000000Z\":200,\"2018-06-01T00:00:00.000000000Z\":200}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":13,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":15,
+               "attr_id":6,
+               "dataset_id":14,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":1,\"2018-02-01T00:00:00.000000000Z\":10,\"2018-03-01T00:00:00.000000000Z\":7,\"2018-04-01T00:00:00.000000000Z\":2,\"2018-05-01T00:00:00.000000000Z\":3,\"2018-06-01T00:00:00.000000000Z\":5}}",
+                  "dimension":"Monetary value",
+                  "unit":"USD",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":14,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":16,
+               "attr_id":7,
+               "dataset_id":15,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":0.95,\"2018-02-01T00:00:00.000000000Z\":0.85,\"2018-03-01T00:00:00.000000000Z\":0.9,\"2018-04-01T00:00:00.000000000Z\":0.85,\"2018-05-01T00:00:00.000000000Z\":0.9,\"2018-06-01T00:00:00.000000000Z\":1.0}}",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":15,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":17,
+               "attr_id":8,
+               "dataset_id":16,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":20,\"2018-02-01T00:00:00.000000000Z\":10,\"2018-03-01T00:00:00.000000000Z\":25,\"2018-04-01T00:00:00.000000000Z\":20,\"2018-05-01T00:00:00.000000000Z\":20,\"2018-06-01T00:00:00.000000000Z\":20}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":16,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":18,
+               "attr_id":9,
+               "dataset_id":17,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":220,\"2018-02-01T00:00:00.000000000Z\":250,\"2018-03-01T00:00:00.000000000Z\":240,\"2018-04-01T00:00:00.000000000Z\":230,\"2018-05-01T00:00:00.000000000Z\":240,\"2018-06-01T00:00:00.000000000Z\":250}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":17,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":11,
+               "attr_id":6,
+               "dataset_id":18,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":10,\"2018-02-01T00:00:00.000000000Z\":10,\"2018-03-01T00:00:00.000000000Z\":10,\"2018-04-01T00:00:00.000000000Z\":10,\"2018-05-01T00:00:00.000000000Z\":10,\"2018-06-01T00:00:00.000000000Z\":10}}",
+                  "dimension":"Monetary value",
+                  "unit":"USD",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":18,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":12,
+               "attr_id":7,
+               "dataset_id":11,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":1,\"2018-02-01T00:00:00.000000000Z\":1,\"2018-03-01T00:00:00.000000000Z\":1,\"2018-04-01T00:00:00.000000000Z\":1,\"2018-05-01T00:00:00.000000000Z\":1,\"2018-06-01T00:00:00.000000000Z\":1}}",
+                  "dimension":"dimensionless",
+                  "unit":"-",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":11,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":13,
+               "attr_id":8,
+               "dataset_id":19,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":10,\"2018-02-01T00:00:00.000000000Z\":30,\"2018-03-01T00:00:00.000000000Z\":30,\"2018-04-01T00:00:00.000000000Z\":30,\"2018-05-01T00:00:00.000000000Z\":30,\"2018-06-01T00:00:00.000000000Z\":30}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":19,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            },
+            {
+               "resource_attr_id":14,
+               "attr_id":9,
+               "dataset_id":20,
+               "value":{
+                  "name":"CSV import",
+                  "value":"{\"0\":{\"2018-01-01T00:00:00.000000000Z\":200,\"2018-02-01T00:00:00.000000000Z\":200,\"2018-03-01T00:00:00.000000000Z\":200,\"2018-04-01T00:00:00.000000000Z\":200,\"2018-05-01T00:00:00.000000000Z\":200,\"2018-06-01T00:00:00.000000000Z\":200}}",
+                  "dimension":"Volumetric flow rate",
+                  "unit":"1e6 m^3 mon^-1",
+                  "created_by":1,
+                  "hidden":"N",
+                  "type":"timeseries",
+                  "id":20,
+                  "cr_date":"2018-04-17 21:55:17",
+                  "metadata":"{\"user_id\": \"1\"}"
+               },
+               "cr_date":"2018-04-17 21:55:17"
+            }
+         ],
+         "end_time":"2018-06-01 00:00:00",
+         "time_step":"1 months",
+         "layout":{
+
+         },
+         "id":2,
+         "name":"CSV import"
+      }
+   ],
+   "attributes":[
+      {
+         "resourcescenario":{
+            "value":{
+               "name":null,
+               "value":null,
+               "hidden":"N",
+               "dimension":"dimensionless",
+               "unit":null,
+               "metadata":"{}"
+            }
+         },
+         "cr_date":"2018-04-17 21:55:17",
+         "id":23,
+         "attr_id":13,
+         "ref_key":"NETWORK",
+         "ref_id":2,
+         "attr_is_var":"Y"
+      }
+   ],
+   "nodes":[
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":6,
+               "attr_id":1,
+               "ref_key":"NODE",
+               "ref_id":5,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":24,
+               "attr_id":11,
+               "ref_key":"NODE",
+               "ref_id":5,
+               "attr_is_var":"Y"
+            }
+         ],
+         "y":"148849.9266000000",
+         "x":"494488.1362000000",
+         "id":5,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":3,
+               "template_id":1,
+               "name":"agricultural"
+            }
+         ],
+         "name":"Ag1"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "attributes":[
+
+         ],
+         "y":"140506.8892000000",
+         "x":"501129.8185000000",
+         "id":3,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":5,
+               "template_id":1,
+               "name":"discharge"
+            }
+         ],
+         "name":"EndPt"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "attributes":[
+
+         ],
+         "y":"164415.5771000000",
+         "x":"507143.6868000000",
+         "id":4,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":4,
+               "template_id":1,
+               "name":"junction"
+            }
+         ],
+         "name":"J1"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":1,
+               "attr_id":2,
+               "ref_key":"NODE",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":2,
+               "attr_id":3,
+               "ref_key":"NODE",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":3,
+               "attr_id":4,
+               "ref_key":"NODE",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":4,
+               "attr_id":5,
+               "ref_key":"NODE",
+               "ref_id":1,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":25,
+               "attr_id":10,
+               "ref_key":"NODE",
+               "ref_id":1,
+               "attr_is_var":"Y"
+            }
+         ],
+         "y":"169181.1477000000",
+         "x":"507046.8452000000",
+         "id":1,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":1,
+               "template_id":1,
+               "name":"surface_reservoir"
+            }
+         ],
+         "name":"SR1"
+      },
+      {
+         "status":"A",
+         "layout":{
+
+         },
+         "description":"",
+         "cr_date":"2018-04-17 21:55:17",
+         "attributes":[
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":5,
+               "attr_id":1,
+               "ref_key":"NODE",
+               "ref_id":2,
+               "attr_is_var":"N"
+            },
+            {
+               "resourcescenario":{
+                  "value":{
+                     "name":null,
+                     "value":null,
+                     "hidden":"N",
+                     "dimension":"dimensionless",
+                     "unit":null,
+                     "metadata":"{}"
+                  }
+               },
+               "cr_date":"2018-04-17 21:55:17",
+               "id":26,
+               "attr_id":11,
+               "ref_key":"NODE",
+               "ref_id":2,
+               "attr_is_var":"Y"
+            }
+         ],
+         "y":"169559.0095000000",
+         "x":"515264.8958000000",
+         "id":2,
+         "types":[
+            {
+               "template_name":"CostMinimisationDemo",
+               "id":2,
+               "template_id":1,
+               "name":"urban"
+            }
+         ],
+         "name":"Urb1"
+      }
+   ],
+   "project_id":2,
+   "cr_date":"2018-04-17 21:55:16",
+   "types":[
+      {
+         "template_name":"CostMinimisationDemo",
+         "id":7,
+         "template_id":1,
+         "name":"tutorial_model"
+      }
+   ],
+   "name":"Cost Minimisation network"
+}

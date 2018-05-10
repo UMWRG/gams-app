@@ -1,0 +1,20 @@
+{
+   "end_date":"06/01/2018",
+   "export_by_type":false,
+   "gams_date_time_index":false,
+   "gams_path":null,
+   "gdx_file":null,
+   "gms_file":"CostMinimisation.gms",
+   "link_name":false,
+   "network_id":"2",
+   "node_node":false,
+   "output":null,
+   "scenario_id":"2",
+   "server_url":null,
+   "session_id":null,
+   "start_date":"01/01/2018",
+   "template_id":null,
+   "time_step":"1 mon",
+   "template_id":null,
+   "time_axis":null 
+}

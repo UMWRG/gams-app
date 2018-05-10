@@ -1,0 +1,24 @@
+SETS
+
+links(i,j) vector of all links 
+/
+J1 . EndPt
+J1 . Urb1
+SR1 . Ag1
+SR1 . J1
+/
+
+* Link types
+
+links_types
+/
+river_section
+/
+
+river_section(i,j) 
+/
+J1 . EndPt
+J1 . Urb1
+SR1 . Ag1
+SR1 . J1
+/
