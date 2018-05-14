@@ -160,6 +160,11 @@ def commandline_parser():
     cmd_parser.add_argument('-c', '--session_id',
                         help='''Session ID. If this does not exist, a login will be
                         attempted based on details in config.''')
+
+    cmd_parser.add_argument('-sx', '--suppress-exceptions', action='store_true', 
+                            help='''
+                                If an exception is thrown, suppress it, and export the log to the plugin XML instead.
+                            ''')
     return cmd_parser
 
 def get_files_list(directory, ext):
@@ -350,13 +355,21 @@ def check_args(args):
             raise HydraPluginError('Output file directory '+ os.path.dirname(args.output)+' does not exist.')
 
 if __name__ == '__main__':
+    errors = []
+    
+    is_licensed=check_lic()
+
     try:
-        is_licensed=check_lic()
         steps=18
         write_progress(1, steps)
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
         check_args(args)
+    except:
+        raise HydraPluginError("Unable to parse arguments.")
+    
+    try:
+        raise HydraPluginError('test')
         exporter=export_network(is_licensed)
         #get_AVAILABLE_DO(exporter.network)
         #sys.exit()
@@ -364,17 +377,17 @@ if __name__ == '__main__':
         #if the mode is Auto, it will get the network from the exporter
         read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
         message="Run successfully"
-        errors = []
 
     except HydraPluginError, e:
         log.exception(e)
         write_progress(steps, steps)
-        errors = [e.message]
-        message = "An error has occurred"
-	raise Exception("An error has occurred: %s"%(e.message,))
+        if args.suppress_exceptions == True:
+            errors = [e.message]
+            message = "An error has occurred"
+        else:
+            raise Exception("An error has occurred: %s"%(e.message,))
     except Exception as e:
 	log.exception(e)
-        errors = []
         if e.message == '':
             if hasattr(e, 'strerror'):
 		raise Exception(e.message)
