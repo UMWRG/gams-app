@@ -61,7 +61,6 @@ class GAMSExporter(JSONPlugin):
                                                    'include_data': 'Y',
                                                    'template_id':self.template_id,
                                                    'scenario_ids':[self.scenario_id]})
-
         self.hydranetwork=net
         log.info("Network retrieved")
         self.prepare_network(is_licensed)
@@ -90,12 +89,12 @@ class GAMSExporter(JSONPlugin):
         log.info("Loading net into gams network.")
         self.network.load(self.hydranetwork, self.attrs)
         if (self.time_axis == None):
-            if ('start_time' in self.network.scenarios[0] and 'time_step' in self.network.scenarios[
-                0] and 'end_time' in self.hydranetwork.scenarios[
-                0]):
-                self.time_axis = self.get_time_axis(self.network.scenarios[0]['start_time'],
-                                                    self.network.scenarios[0]['end_time'],
-                                                    self.network.scenarios[0]['time_step'],
+            if ('start_time' in self.hydranetwork.scenarios[0] and \
+                'time_step' in self.hydranetwork.scenarios[0] and \
+                'end_time' in self.hydranetwork.scenarios[0]):
+                self.time_axis = self.get_time_axis(self.hydranetwork.scenarios[0]['start_time'],
+                                                    self.hydranetwork.scenarios[0]['end_time'],
+                                                    self.hydranetwork.scenarios[0]['time_step'],
                                                     time_axis=None)
         if (self.time_axis is None):
             self.get_time_axix_from_attributes_values(self.network.nodes)
@@ -225,8 +224,9 @@ class GAMSExporter(JSONPlugin):
                 if len(group_type_)==0:
                     continue
                 group_type=group_type_[0]
-            elif type(group_type_) is basestring:
+            elif isinstance(group_type_, basestring):
                 group_type=group_type_
+
             if group_type not in nodes_groups_types:
                 _list=[]
                 nodes_groups_types[group_type]=_list
