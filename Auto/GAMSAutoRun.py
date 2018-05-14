@@ -369,7 +369,6 @@ if __name__ == '__main__':
         raise HydraPluginError("Unable to parse arguments.")
     
     try:
-        raise HydraPluginError('test')
         exporter=export_network(is_licensed)
         #get_AVAILABLE_DO(exporter.network)
         #sys.exit()
