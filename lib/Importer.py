@@ -457,7 +457,7 @@ class GAMSImporter(JSONPlugin):
                     dataset['dimension'] = attr.resourcescenario.value.dimension
                     res_scen = dict(resource_attr_id=attr.id,
                                     attr_id=attr.attr_id,
-                                    value=dataset)
+                                    dataset=dataset)
                     self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
@@ -541,7 +541,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
                     #else:
                         #print "zero", gdxvar.name, link.name
@@ -645,7 +645,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
                     #else:
                         #print "zero", gdxvar.name, link.name
@@ -702,7 +702,7 @@ class GAMSImporter(JSONPlugin):
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
-                                        value=dataset)
+                                        dataset=dataset)
                         self.res_scenario.append(res_scen)
         # Node attributes
         nodes = dict()
@@ -778,7 +778,7 @@ class GAMSImporter(JSONPlugin):
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
-                                            value=dataset)
+                                            dataset=dataset)
                             self.res_scenario.append(res_scen)
 
         # Link attributes
@@ -871,7 +871,7 @@ class GAMSImporter(JSONPlugin):
                             dataset['dimension'] = attr.resourcescenario.value.dimension
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
-                                            value=dataset)
+                                            dataset=dataset)
                             self.res_scenario.append(res_scen)
 
 
