@@ -260,13 +260,15 @@ Exporting use time axis:
  python GAMSExport.py -t 4 -s 4  -tx 2000-01-01, 2000-02-01, 2000-03-01, 2000-04-01, 2000-05-01, 2000-06-01 -o "c:\temp\demo_2.dat"
 
 Exporting use start time, end time and time step:
-  
+
  python GAMSExport.py -t 40 -s 40  -st 2015-04-01 -en  2039-04-01 -dt "1 yr"  -o "c:\temp\CH2M_2.dat" -et
  python GAMSExport.py -s 37 -t 37 -o "F:\work\CAL_Model\csv data for California model\excel files final\input_f.txt" -st "1922-01-01"  -en "1993-12-01" -dt "1 mon"
 """
 
 import sys
 import os
+import argparse as ap
+import logging
 
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
@@ -277,17 +279,14 @@ if api_path not in sys.path:
 
 ##########################
 
-from HydraLib.HydraException import HydraPluginError
+from hydra_base.exceptions import HydraPluginError
+from hydra_client.output import write_progress, write_output, create_xml_response
+
 from HydraGAMSlib import check_lic
 from License import LicencePluginError
-
 from Exporter import GAMSExporter
-from HydraLib import PluginLib
-import argparse as ap
-from HydraLib.PluginLib import write_progress, write_output
 
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -374,7 +373,7 @@ def check_args(args):
     try:
         int(args.scenario_id)
     except (TypeError, ValueError):
-        raise HydraPluginError('No senario is specified')
+        raise HydraPluginError('No scenario is specified')
 
     output = os.path.dirname(args.output)
     if output == '':
@@ -386,10 +385,11 @@ def check_args(args):
                                'does not exist')
 
 if __name__ == '__main__':
-    is_licensed=check_lic()
-    message = None
-    errors  = []
-    steps=7
+    is_licensed = check_lic()
+    message     = None
+    errors      = []
+    steps       = 7
+
     try:
         write_progress(1, steps)
         parser = commandline_parser()
@@ -401,11 +401,11 @@ if __name__ == '__main__':
             link_export_flag = 'l'
         exporter=export_network(args, is_licensed)
         message="Run successfully"
-    except HydraPluginError, e:
+    except HydraPluginError as e:
         write_progress(steps, steps)
         log.exception(e)
         errors = [e.message]
-    except Exception, e:
+    except Exception as e:
         write_progress(steps, steps)
         log.exception(e)
         errors = []
@@ -414,11 +414,12 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e.message]
-    text = PluginLib.create_xml_response('GAMSExport',
-                                            args.network_id,
-                                            [args.scenario_id],
-                                            errors = errors,
-                                            message=message)
+    text = create_xml_response('GAMSExport',
+                               args.network_id,
+                               [args.scenario_id],
+                               errors = errors,
+                               message=message)
+
     #log.info(text)
     print (text)
 

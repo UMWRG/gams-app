@@ -1,14 +1,14 @@
-
 # (c) Copyright 2013, 2014, 2015 University of Manchester\
 
 import os
 import sys
+import logging
 
-from HydraLib.PluginLib import HydraResource, HydraNetwork
-from HydraLib.HydraException import HydraPluginError
+from hydra_client.resources import HydraResource, HydraNetwork
+from hydra_base.exceptions import HydraPluginError
+
 from License import License
 
-import logging
 log = logging.getLogger(__name__)
 
 class GamsModel(object):
@@ -85,7 +85,7 @@ class GamsModel(object):
         return result
 
     def check_model_status(self, status_key):
-        error=None
+        error = None
         if (status_key == 4):
             error='Infeasible model found.'
         elif status_key == 5:
@@ -160,6 +160,7 @@ class GamsModel(object):
             solvererror=self.check_solver_status(s_status)
             if(modelerror is not None or solvererror is not None):
                 raise HydraPluginError("Model error: "+str(modelerror)+"\nSolver error: "+str(solvererror))
+
 
 class GAMSnetwork(HydraNetwork):
     def gams_names_for_links(self, use_link_name=False, jun=None):
@@ -314,7 +315,7 @@ def get_gams_path():
                 #directories and picking the last one
                 if len(linuxtypes) > 0:
                     gams_path = base + linuxtypes[-1]
-        
+
         #try looking in the path
         if gams_path is None:
             path = os.environ['PATH']

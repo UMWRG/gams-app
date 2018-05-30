@@ -81,8 +81,10 @@ Example:
 import sys
 import os
 import time
-from datetime import datetime
+import logging
 import argparse as ap
+from datetime import datetime
+from dateutil import parser
 
 pythondir = os.path.dirname(os.path.realpath(__file__))
 gamslibpath=os.path.join(pythondir, '..', 'lib')
@@ -92,20 +94,17 @@ if api_path not in sys.path:
 
 ##########################
 
-
-from HydraLib.HydraException import HydraPluginError
+from hydra_base.exceptions import HydraPluginError
+from hydra_client.output import write_progress, write_output, create_xml_response
 from HydraGAMSlib import check_lic
+from HydraGAMSlib import GamsModel
 
 from Exporter import GAMSExporter
 from Importer import GAMSImporter
-from HydraLib import PluginLib
-from dateutil import parser
-from HydraLib.PluginLib import write_progress, write_output
-from HydraGAMSlib import GamsModel
-
 
 import logging
 log = logging.getLogger(__name__)
+
 
 def commandline_parser():
     cmd_parser = ap.ArgumentParser(
@@ -179,6 +178,7 @@ def get_files_list(directory, ext):
             files_list[file_]=time.ctime(absolute_path.st_mtime)
     return files_list
 
+
 def get_input_file_name(gams_model):
     '''
     return  output data file name if it is not provided by the user
@@ -215,6 +215,7 @@ def get_input_file_name(gams_model):
     log.info("Exporting data to: %s", inputfilename)
     return inputfilename
 
+
 def export_network(is_licensed):
     exporter = GAMSExporter(args)
 
@@ -246,6 +247,7 @@ def export_network(is_licensed):
 
     exporter.write_file()
     return exporter
+
 
 def run_gams_model(args):
     log.info("Running GAMS model .....")
@@ -302,6 +304,7 @@ def run_gams_model(args):
             else:
                 print "Results file: ", args.gdx_file
 
+
 def read_results(is_licensed, args, network, connection):
     """
         Instantiate a GAMSImport class, assign the network, read the
@@ -326,7 +329,6 @@ def read_results(is_licensed, args, network, connection):
 
     write_progress(15, steps)
     gdximport.read_gdx_data()
-
 
     write_progress(16, steps)
     gdximport.parse_variables('variables')
@@ -363,10 +365,11 @@ def check_args(args):
     elif os.path.exists(os.path.dirname(os.path.realpath(args.output)))==False:
             raise HydraPluginError('Output file directory '+ os.path.dirname(args.output)+' does not exist.')
 
+
 if __name__ == '__main__':
     try:
-        is_licensed=check_lic()
-        steps=18
+        is_licensed = check_lic()
+        steps = 18
         write_progress(1, steps)
         cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
@@ -377,10 +380,10 @@ if __name__ == '__main__':
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
         read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
-        message="Run successfully"
-        errors = []
+        message = "Run successfully"
+        errors  = []
 
-    except HydraPluginError, e:
+    except HydraPluginError as e:
         log.exception(e)
         write_progress(steps, steps)
         errors = [e.message]
@@ -395,6 +398,10 @@ if __name__ == '__main__':
         log.exception(e)
         message = "An unknown error has occurred"
         write_progress(steps, steps)
-    text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
+
+    if len(errors) > 0:
+        raise Exception("An Error occurred running the Model. ")
+ 
+    text = create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
     #log.info(text);
-print (text)
+    print(text)

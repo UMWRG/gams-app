@@ -40,11 +40,11 @@ Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
 Option                 Short  Parameter  Description
 ====================== ====== ========== =========================================
---server_url           -u     SERVER_URL Url of the server the plugin will 
+--server_url           -u     SERVER_URL Url of the server the plugin will
                                          connect to.
                                          Defaults to localhost.
---session_id           -c     SESSION_ID Session ID used by the calling software 
-                                         If left empty, the plugin will attempt 
+--session_id           -c     SESSION_ID Session ID used by the calling software
+                                         If left empty, the plugin will attempt
                                          to log in itself.
 
 **Manually specifying the gams path:**
@@ -68,27 +68,26 @@ python GAMSImport.py -t 4 -s 4 -f "c:\temp\Results.gdx" -m "c:\temp\Demo2.gms"
 '''
 import sys
 import os
+import logging
 import argparse as ap
 
-pythondir = os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(pythondir, '..', 'lib')
-api_path = os.path.realpath(gamslibpath)
+pythondir   = os.path.dirname(os.path.realpath(__file__))
+gamslibpath = os.path.join(pythondir, '..', 'lib')
+api_path    = os.path.realpath(gamslibpath)
 if api_path not in sys.path:
     sys.path.insert(0, api_path)
 ##########################
 
-from HydraLib.HydraException import HydraPluginError
-from  HydraGAMSlib import get_gams_path
+from hydra_client.output import write_progress, write_output, create_xml_response
+from hydra_base.exceptions import HydraPluginError
 
-from HydraLib import PluginLib
+from HydraGAMSlib import get_gams_path
 from HydraGAMSlib import check_lic
-
-from HydraLib.PluginLib import write_progress, write_output
 
 from Importer import GAMSImporter
 
-import logging
 log = logging.getLogger(__name__)
+
 
 def import_results(is_licensed, args):
     print ("=================================================================================================")
@@ -101,30 +100,30 @@ def import_results(is_licensed, args):
     log.info("<=====>")
     write_progress(3, steps)
     gdximport.load_gams_file(args.gms_file)
-    log.info("<=====>")
-   
+
     write_progress(4, steps)
     gdximport.parse_time_index()
-    
+
     write_progress(5, steps)
     log.info ("<================================>"+args.gdx_file)
     gdximport.open_gdx_file(args.gdx_file)
-    
+
     write_progress(6, steps)
     gdximport.read_gdx_data()
-    
+
     write_progress(7, steps)
     gdximport.parse_variables('variables')
     gdximport.parse_variables('positive variables')
     gdximport.parse_variables('positive variable')
     gdximport.parse_variables('binary variables')
     gdximport.parse_variables('parameters')
-    
+
     write_progress(8, steps)
     gdximport.assign_attr_data()
-    
+
     write_progress(9, steps)
     gdximport.save()
+
 
 def commandline_parser():
     parser = ap.ArgumentParser(
@@ -168,14 +167,16 @@ def check_args(args):
     elif os.path.isfile(args.gms_file)==False:
         raise HydraPluginError('Gams file: '+args.gms_file+', does not exist')
 
+
 if __name__ == '__main__':
     message=""
     try:
-        is_licensed=check_lic()
-        steps=9
-        parser = commandline_parser()
-        args = parser.parse_args()
-        errors = []
+        is_licensed = check_lic()
+        steps       = 9
+        parser      = commandline_parser()
+        args        = parser.parse_args()
+        errors      = []
+
         if(args.gams_path==None):
             args.gams_path=get_gams_path()
             log.info ("1===================>"+ args.gams_path)
@@ -196,11 +197,11 @@ if __name__ == '__main__':
         errors = []
         message="Import successful."
 
-    except HydraPluginError, e:
+    except HydraPluginError as e:
         log.exception(e)
         errors = [e.message]
         write_progress(steps, steps)
-    except Exception, e:
+    except Exception as e:
         log.exception(e)
         errors = []
         if e.message == '':
@@ -210,6 +211,6 @@ if __name__ == '__main__':
             errors = [e.message]
         write_progress(steps, steps)
 
-    text= PluginLib.create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)
+    text = create_xml_response('GAMSImport', args.network_id, [args.scenario_id],message=message, errors=errors)
     #log.info(text)
-    print (text)
+    print(text)
