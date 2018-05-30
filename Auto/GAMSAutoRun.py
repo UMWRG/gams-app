@@ -395,6 +395,11 @@ if __name__ == '__main__':
         log.exception(e)
         message = "An unknown error has occurred"
         write_progress(steps, steps)
+
+    #Hack to ensure the job queue correctly deals with errors
+    if len(errors) > 0:
+        raise Exception("An Error occurred running the Model. ")
+ 
     text=PluginLib.create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
     #log.info(text);
 print (text)
