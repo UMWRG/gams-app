@@ -32,6 +32,10 @@ class GAMSExporter(JSONPlugin):
         self.time_index = []
         self.time_axis =None
         self.sets=[]
+        
+        #things which get written to the file without any logic (pre-formateed gams input text, or comments, for example
+        self.direct_outputs = []
+        
         self.descriptors = {}
         self.hashtables_keys={}
         self.output=''
@@ -842,9 +846,11 @@ class GAMSExporter(JSONPlugin):
                 if attr.value not in descriptor_list:
                     descriptor_list.append(attr.value)
 
-
-            if (descriptor_list > 0):
-                self.descriptors[attribute.name]=descriptor_list
+            if (len(descriptor_list) > 0):
+                if len(descriptor_list) == 1:
+                    self.direct_outputs.append(descriptor_list[0])
+                else:
+                    self.descriptors[attribute.name]=descriptor_list
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
         """Export time series.
@@ -1977,11 +1983,21 @@ class GAMSExporter(JSONPlugin):
 
     def write_descriptors(self):
         log.info("Writing descriptor sets %s.", self.filename)
-        for key in self.descriptors.keys():
+        for key, valarray in self.descriptors.items():
+            #If there's only 1 element, assume that this isn't a set, but
+            #something which should be printed without any logic (a pre-formateed table, for example)
             self.sets +=('\nset '+key+'\n/')
-            for val in self.descriptors[key]:
+            for val in valarray:
                 self.sets +=('\n' + str(val))
             self.sets += ('\n/\n\n')
+
+
+    def write_direct_outputs(self):
+        log.info("Writing direct outputs")
+        for formatted_text in self.direct_outputs:
+            self.sets += '\n'
+            self.sets += formatted_text
+            self.sets += '\n'
 
     def write_file(self):
         log.info("Writing file %s.", self.filename)
@@ -2001,6 +2017,8 @@ class GAMSExporter(JSONPlugin):
                 index = "(" + ",".join(indices) + ")"
             self.sets += ('\n' + empty_group + index + '\n/')
             self.sets += ('\n/\n\n')
+
+        self.write_direct_outputs()
 
         with open(self.filename, 'w') as f:
             f.write(self.sets + self.output)
