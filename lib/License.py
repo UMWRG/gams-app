@@ -130,7 +130,7 @@ def get_machine_id():
 
 def  create_lic(type, period, file_name, key, machine_id):
      machine_id=decrypt(machine_id, key)
-     print machine_id
+     #print machine_id
      st=str(datetime.datetime.now())
      lic_str=type+","+st+","+str(period)+","+machine_id
      lic_str= encrypt(lic_str, key)

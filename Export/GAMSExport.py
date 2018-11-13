@@ -404,16 +404,16 @@ if __name__ == '__main__':
     except HydraPluginError as e:
         write_progress(steps, steps)
         log.exception(e)
-        errors = [e.message]
+        errors = [e]
     except Exception as e:
         write_progress(steps, steps)
         log.exception(e)
         errors = []
-        if e.message == '':
+        if e == '':
             if hasattr(e, 'strerror'):
                 errors = [e.strerror]
         else:
-            errors = [e.message]
+            errors = [e]
     text = create_xml_response('GAMSExport',
                                args.network_id,
                                [args.scenario_id],

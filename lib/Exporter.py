@@ -5,7 +5,7 @@ import logging
 from decimal import Decimal
 from string import ascii_lowercase
 
-from hydra_client.plugin import JSONPlugin
+from hydra_client.connection import JSONConnection
 from hydra_base.exceptions import HydraPluginError
 from hydra_base.util.hydra_dateutil import reindex_timeseries
 
@@ -14,7 +14,7 @@ from HydraGAMSlib import convert_date_to_timeindex
 
 log = logging.getLogger(__name__)
 
-class GAMSExporter(JSONPlugin):
+class GAMSExporter:
     def __init__(self, args):
         if args.template_id is not None:
             self.template_id = int(args.template_id)
@@ -45,7 +45,11 @@ class GAMSExporter(JSONPlugin):
         #explicitly specified using the 'dimensions' attribute on the group type in the template.
         self.group_dimensions = {}
 
-        self.connect(args)
+        self.connection = JSONConnection(app_name="GAMS Exporter", db_url='mysql+mysqldb://root:root@localhost/ebsd')
+
+        self.connection.connect()
+        self.connection.login()
+
         if args.time_axis is not None:
             args.time_axis = ' '.join(args.time_axis).split(' ')
 
@@ -60,30 +64,27 @@ class GAMSExporter(JSONPlugin):
             self.links_as_name = False
 
 
-        self.attrs = self.connection.call('get_all_attributes', {})
+        self.attrs = self.connection.get_attributes()
         self.attr_id_map = {}
         for a in self.attrs:
             self.attr_id_map[a.id] = a
         log.info("%s attributes retrieved", len(self.attrs))
 
     def get_network(self, is_licensed):
-        net = self.connection.call('get_network', {'network_id':self.network_id,
-                                                   'include_data': 'Y',
-                                                   'template_id':self.template_id,
-                                                   'scenario_ids':[self.scenario_id]})
-
+        net = self.connection.get_network(network_id=self.network_id,
+                                          include_data='Y',
+                                          template_id=self.template_id,
+                                          scenario_ids=[self.scenario_id])
 
         self.hydranetwork=net
         log.info("Network retrieved")
 
-        print "===>>>>", net.types
+        #print "===>>>>", net.types
 
         self.template_id = net.types[0].template_id
-        
-        self.template = self.connection.call('get_template', 
-                                        {'template_id':net.types[0].template_id})
+        self.template = self.connection.get_template(net.types[0].template_id) 
 
-        for t in self.template.types:
+        for t in self.template.templatetypes:
             self.type_attr_default_datasets[t.id] = {}
             for ta in t.typeattrs:
                 attr_name = self.attr_id_map[ta.attr_id].name
@@ -93,7 +94,7 @@ class GAMSExporter(JSONPlugin):
         self.link_types = []
         self.group_types = []
         self.network_type = None
-        for templatetype in self.template.types:
+        for templatetype in self.template.templatetypes:
             if templatetype.resource_type == 'NODE':
                 self.node_types.append(templatetype)
             elif templatetype.resource_type == 'LINK':
@@ -116,8 +117,8 @@ class GAMSExporter(JSONPlugin):
         log.info("Loading net into gams network.")
         self.network.load(net, self.attrs)
         if (self.time_axis == None):
-            if ('start_time' in net.scenarios[0] and 'time_step' in net.scenarios[0] and 'end_time' in net.scenarios[
-                0]):
+            s = net.scenarios[0]
+            if (s.start_time is not None and s.end_time is not None and s.time_step is not None):
                 self.time_axis = self.get_time_axis(net.scenarios[0]['start_time'],
                                                net.scenarios[0]['end_time'],
                                                net.scenarios[0]['time_step'],
@@ -504,7 +505,7 @@ class GAMSExporter(JSONPlugin):
             else:
                 subgroup_sets[subgrouptype] = subgroup_sets[subgrouptype] + contents
         
-        #Now that the data's in the correct format, print it
+        #Now that the data's in the correct format, #print it
         for subgrouptype, contents in subgroup_sets.items():
             parent_type = subgrouptype_parenttype_map[subgrouptype]
             index = subgroup_type_index[subgrouptype]
@@ -616,6 +617,7 @@ class GAMSExporter(JSONPlugin):
     def export_data_using_attributes (self):
         log.info("Exporting data")
         # Export node data for each node
+        self.get_longest_node_link_name()
 
         self.time_table={}
         data = ['\n* Network data\n']
@@ -840,7 +842,7 @@ class GAMSExporter(JSONPlugin):
                     descriptor_list.append(attr.value)
 
 
-            if (descriptor_list > 0):
+            if (len(descriptor_list) > 0):
                 self.descriptors[attribute.name]=descriptor_list
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
@@ -1140,26 +1142,24 @@ class GAMSExporter(JSONPlugin):
             for attr in resource.attributes:
                 if attr.dataset_type == 'array' and attr.is_var is False:
                     attr.name = translate_attr_name(attr.name)
-                    if attr.name  in ids.keys():
-                        ar=ids[attr.name ]
-                    else:
-                        ar=[]
-                        ids[attr.name ]=ar
-                    ar.append({resource:self.resourcescenarios_ids[attr.resource_attr_id]})
-                    if attr.name not in data_types.keys():
-                        type_=json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
-                        if "type" in type_.keys():
+                    if attr.name not in ids:
+                       ids[attr.name] = {}
+                    ids[attr.name][resource] = self.resourcescenarios_ids[attr.resource_attr_id]
+
+                    if attr.name not in data_types:
+                        type_=self.resourcescenarios_ids[attr.resource_attr_id].value.metadata
+                        if "type" in type_:
                             data_types[attr.name]=type_["type"].lower()
-                        if 'id' in type_.keys():
+                        if 'id' in type_:
                             id_=type_['id']
                              # "Found id and it -------------->", id_, attr.name
                             ids_key[attr.name]=id_
-                    if attr.name not in sets_namess.keys():
-                        if "key" in type_.keys():
+                    if attr.name not in sets_namess:
+                        if "key" in type_:
                             sets_namess[attr.name] = type_["key"].lower()
 
-                    if "sub_key" in type_.keys():
-                        if attr.name+"_sub_key" not in sets_namess.keys():
+                    if "sub_key" in type_:
+                        if attr.name+"_sub_key" not in sets_namess:
                             sets_namess[attr.name+"_sub_key"] = type_["sub_key"].lower()
 
         for attribute_name in ids.keys():
@@ -1168,20 +1168,19 @@ class GAMSExporter(JSONPlugin):
             t_ = ff.format('')
             counter=0
             type_= data_types[attribute_name]
-            if attribute_name in sets_namess.keys():
+            if attribute_name in sets_namess:
                 set_name=sets_namess[attribute_name]
             else:
                 set_name=attribute_name+"_index"
             if(type_ == "hashtable" or type_ == "seasonal" ):
-                for res in ids[attribute_name]:
-                    resource=res.keys()[0]
+                for resource, rs in ids[attribute_name].items():
                     add=resource.name+"_"+attribute_name
                     if add in self.added_pars:
                         continue
-                    value_=json.loads(res.values()[0].value.value)
+                    value_=json.loads(rs.dataset.value)
 
                     keys=value_[0]
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name]=keys
                     else:
                         keys_=self.hashtables_keys[set_name]
@@ -1198,7 +1197,7 @@ class GAMSExporter(JSONPlugin):
                                 id default is links start and end nodes and junction if have any
                                  if id is defined them it will be used to be the link id
                                 '''
-                                if attribute_name in ids_key.keys():
+                                if attribute_name in ids_key:
                                     id=ids_key[attribute_name]
                                 else:
                                     id= 'default'
@@ -1249,31 +1248,30 @@ class GAMSExporter(JSONPlugin):
                     else:
                         attr_outputs.append('\n' + ff.format(resource.name))
 
-                    for i in xrange(len(values)):
+                    for i in range(len(values)):
                         data=values[i]
                         if res_type != "NETWORK":
                             data_str = ff.format(str((data)))
                             attr_outputs.append(data_str)
                         else:
-                            #print "=========>", data, attribute_name, "----------------------->"
+                            ##print "=========>", data, attribute_name, "----------------------->"
                             data_str = ff.format(keys[i])+ff.format(str(float(data)))
                             attr_outputs.append(data_str+'\n')
             elif type_ =="hashtable_seasonal":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
+                for resource, rs in ids[attribute_name].items():
                     add=resource.name+"_"+attribute_name
 
                     if add in self.added_pars:
                         continue
-                    value_ = json.loads(res.values()[0].value.value)
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     values_=value_[1]
 
                     sub_key =value_[1][0]
                     values=value_[1][1]
-                    if attribute_name+"_sub_key" in sets_namess.keys():
+                    if attribute_name+"_sub_key" in sets_namess:
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
@@ -1281,14 +1279,14 @@ class GAMSExporter(JSONPlugin):
                     if not isinstance(values, dict):
                         values= (json.loads(values))
 
-                    list=[]
-                    for key in sorted(values.keys()):
+                    list_=[]
+                    for key in sorted(list(values.keys())):
                         try:
-                            list.append(int(key))
+                            list_.append(int(key))
                         except:
-                            list.append(key)
+                            list_.append(key)
 
-                    for key in sorted(list):
+                    for key in sorted(list_):
                         t_ = t_ + ff.format(key)
 
                     if (counter == 0):
@@ -1313,7 +1311,7 @@ class GAMSExporter(JSONPlugin):
                         elif res_type != "NETWORK":
                             attr_outputs.append('\n' + str(t_))
                     counter += 1
-                    for i in xrange(len(keys)):
+                    for i in range(len(keys)):
                         key=keys[i]
                         value_[1][i]
                         if islink == True:
@@ -1340,11 +1338,11 @@ class GAMSExporter(JSONPlugin):
                         if not isinstance(all_data, dict):
                             all_data = json.loads(all_data)
 
-                        if (sub_set_name not in self.hashtables_keys.keys()):
-                            self.hashtables_keys[sub_set_name] = list
+                        if (sub_set_name not in self.hashtables_keys):
+                            self.hashtables_keys[sub_set_name] =list_ 
 
-                        for j in xrange(len(list)):
-                            su_key=str(list[j])
+                        for j in range(len(list_)):
+                            su_key=str(list_[j])
                             if res_type != "NETWORK":
                                 data_str = ff.format(str((all_data[su_key])))
                                 attr_outputs.append(data_str)
@@ -1352,57 +1350,52 @@ class GAMSExporter(JSONPlugin):
                                 data_str = ff.format(keys[i]) + ff.format(str(float(all_data[su_key])))
                                 attr_outputs.append(data_str + '\n')
             elif type_ == "nodes_array_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.nodes, attribute_name, keys, set_name))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
 
             elif type_ == "links_array_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.links, attribute_name, keys, set_name, True))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
             elif type_ == "nodes_scalar_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.nodes, attribute_name, keys, set_name))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
             elif type_ == "links_scalar_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.links, attribute_name, keys, set_name, True))
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
 
             elif type_ == "links_set_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
-                    if attribute_name in ids_key.keys():
+                    if attribute_name in ids_key:
                         id=ids_key[attribute_name]
                     else:
                         id='default'
@@ -1411,11 +1404,10 @@ class GAMSExporter(JSONPlugin):
                         self.get_resourcess_set_collection(self.network.links, attribute_name, keys,id,
                                                                    True))
             elif type_ == "set_collection" and res_type == "NETWORK":
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
-                    value_ = json.loads(res.values()[0].value.value)
+                for resource, rs in ids[attribute_name].items():
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
-                    if attribute_name not in self.hashtables_keys.keys():
+                    if attribute_name not in self.hashtables_keys:
                         self.hashtables_keys[attribute_name]=keys
 
 
@@ -1448,22 +1440,20 @@ class GAMSExporter(JSONPlugin):
             for attr in resource.attributes:
                 if attr.dataset_type == 'array' and attr.is_var is False and self.is_it_in_list(attr.name, pars_collections)==True:
                     attr.name = translate_attr_name(attr.name)
-                    if attr.name in ids.keys():
-                        ar = ids[attr.name]
-                    else:
-                        ar = []
-                        ids[attr.name] = ar
-                    ar.append({resource: self.resourcescenarios_ids[attr.resource_attr_id]})
-                    if attr.name not in data_types.keys():
-                        type_ = json.loads(self.resourcescenarios_ids[attr.resource_attr_id].value.metadata)
-                        if "type" in type_.keys():
+                    if attr.name not in ids:
+                       ids[attr.name] = {}
+                    ids[attr.name][resource] = self.resourcescenarios_ids[attr.resource_attr_id]
+
+                    if attr.name not in data_types:
+                        type_ = self.resourcescenarios_ids[attr.resource_attr_id].value.metadata
+                        if "type" in type_:
                             data_types[attr.name] = type_["type"].lower()
-                    if attr.name not in sets_namess.keys():
-                        if "key" in type_.keys():
+                    if attr.name not in sets_namess:
+                        if "key" in type_:
                             sets_namess[attr.name] = type_["key"].lower()
                             main_key= type_["key"].lower()
-                    if "sub_key" in type_.keys():
-                        if attr.name + "_sub_key" not in sets_namess.keys():
+                    if "sub_key" in type_:
+                        if attr.name + "_sub_key" not in sets_namess:
                             sets_namess[attr.name + "_sub_key"] = type_["sub_key"].lower()
                             sub_key=type_["sub_key"].lower()
         if islink ==True:
@@ -1475,7 +1465,7 @@ class GAMSExporter(JSONPlugin):
             attr_outputs.append('*' + attribute_name)
             ff = '{0:<' + self.array_len + '}'
             type_ = data_types[attribute_name]
-            if attribute_name in sets_namess.keys():
+            if attribute_name in sets_namess:
                 set_name = sets_namess[attribute_name]
             else:
                 set_name = attribute_name + "_index"
@@ -1497,21 +1487,20 @@ class GAMSExporter(JSONPlugin):
                                 attr_outputs.append(
                                     'Parameter ' + attribute_name_ + ' (i, j, ' + set_name_ + ',' + main_key + ')')
                     attr_outputs.append('/')
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
+                for resesource, rs in ids[attribute_name].items():
                     add = resource.name + "_" + attribute_name
                     if not add in self.added_pars:
                         self.added_pars.append(add)
-                    value_ = json.loads(res.values()[0].value.value)
+                    value_ = json.loads(rs.dataset.value)
 
                     keys = value_[0]
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
                     else:
                         keys_ = self.hashtables_keys[set_name]
                         self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
                     values = value_[1]
-                    for i in xrange(len(values)):
+                    for i in range(len(values)):
                         k=str(keys[i])
                         data_str = ff.format(str((values[i])))
                         if islink == True:
@@ -1545,57 +1534,56 @@ class GAMSExporter(JSONPlugin):
                                 attr_outputs.append('Parameter ' + attribute_name_ + ' (' + main_key + ', ' + sub_key + ',' + set_name_ + ', i, jun_set, j)')
 
                     attr_outputs.append('/')
-                for res in ids[attribute_name]:
-                    resource = res.keys()[0]
+                for resource, rs in ids[attribute_name].items():
                     add = resource.name + "_" + attribute_name
                     if not add in self.added_pars:
                         self.added_pars.append(add)
-                    value_ = json.loads(res.values()[0].value.value)
+                    value_ = json.loads(rs.dataset.value)
                     keys = value_[0]
-                    if (set_name not in self.hashtables_keys.keys()):
+                    if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
-                    list = []
+                    list_ = []
                     for i in range (0, len(value_[1])):
                         if not isinstance(value_[1][i], dict):
                             vv = (json.loads(value_[1][i]))
                         else:
                             vv = value_[1][i]
-                        for key in sorted(vv.keys()):
+                        for key in sorted(list(vv.keys())):
                             try:
-                                if(not int(key) in list):
-                                    list.append(int(key))
+                                if(not int(key) in list_):
+                                    list_.append(int(key))
                             except:
-                                if (not key in list):
-                                    list.append(key)
-                    for i in xrange(len(keys)):
+                                if (not key in list_):
+                                    list_.append(key)
+                    for i in range(len(keys)):
                         key = keys[i]
                         if not isinstance(value_[1][i], dict):
                             vv = (json.loads(value_[1][i]))
                         else:
                             vv = (value_[1][i])
 
-                        for j in range(0, len(list)):
-                            if (not list[j] in vv.keys()):
+                        for j in range(0, len(list_)):
+                            if (not list_[j] in vv):
                                 continue
                             if islink:
                                 if self.links_as_name:
                                     attr_outputs.append(
-                                         (key + ' . ' +list[j] +' . '+ attribute_name+ ' . ' +resource.name+'    '+vv[list[j]]))
+                                         (key + ' . ' +list_[j] +' . '+ attribute_name+ ' . ' +resource.name+'    '+vv[list_[j]]))
 
 
                                 else:
                                     if self.use_jun == False:
-                                        attr_outputs.append((key + ' . ' + list[
-                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + str(vv[list[j]])))
+                                        attr_outputs.append((key + ' . ' + list_[
+                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + str(vv[list_[j]])))
                                     else:
                                         jun = self.junc_node[resource.name]
-                                        attr_outputs.append((key + ' . ' + list[
+                                        attr_outputs.append((key + ' . ' + list_[
                                             j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + jun+'.'+resource.to_node + '    ' +
-                                                             vv[list[j]]))
+                                                             vv[list_[j]]))
 
                             else:
                                 attr_outputs.append(
-                                    (key + ' . ' + list[j] + ' . ' + attribute_name + ' . ' + resource.name + '    ' + str(vv[list[j]])))
+                                    (key + ' . ' + list_[j] + ' . ' + attribute_name + ' . ' + resource.name + '    ' + str(vv[list_[j]])))
                 counter += 1
         #attr_outputs.append('/;')
         #ss='\n'.join(attr_outputs)
@@ -1622,16 +1610,12 @@ class GAMSExporter(JSONPlugin):
                 if attr.dataset_type == 'scalar' and attr.is_var is False and self.is_it_in_list(attr.name,
                                                                                                 pars_collections) == True:
                     attr.name = translate_attr_name(attr.name)
-                    if attr.name in ids.keys():
-                        ar = ids[attr.name]
-                    else:
-                        ar = []
-                        ids[attr.name] = ar
-                    ar.append({resource: self.resourcescenarios_ids[attr.resource_attr_id]})
-
+                    if attr.name not in ids:
+                       ids[attr.name] = {}
+                    ids[attr.name][resource] = self.resourcescenarios_ids[attr.resource_attr_id]
 
         counter = 0
-        for attribute_name in ids.keys():
+        for attribute_name in ids:
             attr_outputs.append('*' + attribute_name)
             ff = '{0:<' + self.array_len + '}'
             if counter == 0:
@@ -1647,12 +1631,11 @@ class GAMSExporter(JSONPlugin):
                     attr_outputs.append(
                         'Parameter ' + attribute_name_ + ' (i,' + set_name_ + ')')
                 attr_outputs.append('/')
-            for res in ids[attribute_name]:
-                resource = res.keys()[0]
+            for resource, rs in ids[attribute_name].items():
                 add = resource.name + "_" + attribute_name
                 if not add in self.added_pars:
                     self.added_pars.append(add)
-                value_ = (res.values()[0].value.value)
+                value_ = (rs.dataset.value)
                 if islink:
                     if self.links_as_name:
                         attr_outputs.append(
@@ -1844,13 +1827,13 @@ class GAMSExporter(JSONPlugin):
                         '''
                         i=0
                         attr_outputs.append(ff.format(resource.name))
-                        #print "len(dim): ", len(dim)
-                        #print "array len: ", len(array)
-                        #print array
+                        ##print "len(dim): ", len(dim)
+                        ##print "array len: ", len(array)
+                        ##print array
                         if(len(dim) is 1):
-                            #print "dime[0]: ", dim[0]
+                            ##print "dime[0]: ", dim[0]
                             for k  in range (dim[0]):
-                                #print k, "It is ", len(array)
+                                ##print k, "It is ", len(array)
                                 if len(array)==dim[0]:
                                     log.info(array)
                                     item=array[k]
@@ -1955,7 +1938,7 @@ class GAMSExporter(JSONPlugin):
                 time_index.append('Parameter timestamp(yr, mn, dy) ;\n\n')
             else:
                 time_index.append('Parameter timestamp(t) ;\n\n')
-            #print "wrinting time"
+            ##print "wrinting time"
             for t, date in enumerate(self.time_index):
                 if self.use_gams_date_index is True:
                     keyy=str(date.year)+"\",\""+str(date.month)+"\", \""+str(date.day)
@@ -1974,7 +1957,7 @@ class GAMSExporter(JSONPlugin):
 
     def write_descriptors(self):
         log.info("Writing descriptor sets %s.", self.filename)
-        for key in self.descriptors.keys():
+        for key in self.descriptors:
             self.sets +=('\nset '+key+'\n/')
             for val in self.descriptors[key]:
                 self.sets +=('\n' + str(val))
@@ -1983,7 +1966,7 @@ class GAMSExporter(JSONPlugin):
     def write_file(self):
         log.info("Writing file %s.", self.filename)
 
-        for key in self.hashtables_keys.keys():
+        for key in self.hashtables_keys:
             self.sets += ('\n' + key + '\n/')
             for val in self.hashtables_keys[key]:
                 self.sets += ('\n' + str(val))
@@ -2056,7 +2039,7 @@ def get_dict(obj):
 def get_resourcescenarios_ids(resourcescenarios):
     resourcescenarios_ids={}
     for res in resourcescenarios:
-        #print "==============================>", get_dict(res)
-        #print type(res)
+        ##print "==============================>", get_dict(res)
+        ##print type(res)
         resourcescenarios_ids[res.resource_attr_id]=res
     return resourcescenarios_ids

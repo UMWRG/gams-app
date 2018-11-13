@@ -144,7 +144,7 @@ class GamsModel(object):
         run the GAMS model
         and raise an error if something going wrong
         '''
-        self.job.run(checkpoint=self.cp)#, gams_options=options.ESolPrint)
+        self.job.run(checkpoint=self.cp)#, gams_options=options.ESol#print)
         if self.model_name is not None:
             try:
                 status=self.job.out_db["ms"].find_record().value
@@ -233,7 +233,7 @@ def import_gms_data(filename):
     Read whole .gms file and expand all $ include statements found.
     """
     basepath = os.path.dirname(filename)
-    print "gams files: "+filename
+    #print "gams files: "+filename
     gms_data = ''
     with open(filename) as f:
         while True:
@@ -254,7 +254,7 @@ def import_gms_data(filename):
                     ff=ff.replace('include','')
                     ff=ff.strip()
                  ##   for ll in lineparts:
-                     ##    print ll
+                     ##    #print ll
                      ####    if(ll.__contains__('include')|ll.__contains__('$')):
                         ##     continue
 
