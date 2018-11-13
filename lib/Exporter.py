@@ -5,6 +5,8 @@ import logging
 from decimal import Decimal
 from string import ascii_lowercase
 
+import pandas as pd
+
 from hydra_client.connection import JSONConnection
 from hydra_base.exceptions import HydraPluginError
 from hydra_base.util.hydra_dateutil import reindex_timeseries
@@ -1140,7 +1142,7 @@ class GAMSExporter:
         # names
         for resource in resources:
             for attr in resource.attributes:
-                if attr.dataset_type == 'array' and attr.is_var is False:
+                if attr.dataset_type in ('dataframe', 'array') and attr.is_var is False:
                     attr.name = translate_attr_name(attr.name)
                     if attr.name not in ids:
                        ids[attr.name] = {}
@@ -1150,6 +1152,8 @@ class GAMSExporter:
                         type_=self.resourcescenarios_ids[attr.resource_attr_id].value.metadata
                         if "type" in type_:
                             data_types[attr.name]=type_["type"].lower()
+                        else:
+                            data_types[attr.name]=self.resourcescenarios_ids[attr.resource_attr_id].type
                         if 'id' in type_:
                             id_=type_['id']
                              # "Found id and it -------------->", id_, attr.name
@@ -1172,22 +1176,21 @@ class GAMSExporter:
                 set_name=sets_namess[attribute_name]
             else:
                 set_name=attribute_name+"_index"
-            if(type_ == "hashtable" or type_ == "seasonal" ):
+            if(type_ == "dataframe"):
                 for resource, rs in ids[attribute_name].items():
                     add=resource.name+"_"+attribute_name
                     if add in self.added_pars:
                         continue
-                    value_=json.loads(rs.dataset.value)
-
-                    keys=value_[0]
+                    df = pd.read_json(rs.dataset.value) 
                     if (set_name not in self.hashtables_keys):
-                        self.hashtables_keys[set_name]=keys
+                        self.hashtables_keys[set_name]=list(df.index)
                     else:
                         keys_=self.hashtables_keys[set_name]
-                        self.hashtables_keys[set_name]=self.compare_sets(keys, keys_)
-                    values=value_[1]
-                    for key in keys:
+                        self.hashtables_keys[set_name]=self.compare_sets(list(df.index), keys_)
+
+                    for key in df.index:
                         t_ = t_ + ff.format(key)
+
                     if(counter ==0):
                         if islink == True:
                             if self.links_as_name:
@@ -1248,45 +1251,35 @@ class GAMSExporter:
                     else:
                         attr_outputs.append('\n' + ff.format(resource.name))
 
-                    for i in range(len(values)):
-                        data=values[i]
-                        if res_type != "NETWORK":
-                            data_str = ff.format(str((data)))
-                            attr_outputs.append(data_str)
-                        else:
-                            ##print "=========>", data, attribute_name, "----------------------->"
-                            data_str = ff.format(keys[i])+ff.format(str(float(data)))
-                            attr_outputs.append(data_str+'\n')
+                    for index in df.index:
+                        for column in df.columns:
+                            v = str(df[column][index])
+                            if res_type != "NETWORK":
+                                data_str = ff.format(v)
+                                attr_outputs.append(data_str)
+                            else:
+                                ##print "=========>", data, attribute_name, "----------------------->"
+                                data_str = ff.format(index)+ff.format(v)
+                                attr_outputs.append(data_str+'\n')
             elif type_ =="hashtable_seasonal":
                 for resource, rs in ids[attribute_name].items():
                     add=resource.name+"_"+attribute_name
 
                     if add in self.added_pars:
                         continue
-                    value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
-                    if (set_name not in self.hashtables_keys):
-                        self.hashtables_keys[set_name] = keys
-                    values_=value_[1]
 
-                    sub_key =value_[1][0]
-                    values=value_[1][1]
+                    df = pd.read_json(rs.dataset.value)
+
+                    keys = df.index
+                    if set_name not in self.hashtables_keys:
+                        self.hashtables_keys[set_name] = keys
+
                     if attribute_name+"_sub_key" in sets_namess:
                         sub_set_name = sets_namess[attribute_name+"_sub_key" ]
                     else:
                         sub_set_name = attribute_name + "sub_set__index"
-                    
-                    if not isinstance(values, dict):
-                        values= (json.loads(values))
-
-                    list_=[]
-                    for key in sorted(list(values.keys())):
-                        try:
-                            list_.append(int(key))
-                        except:
-                            list_.append(key)
-
-                    for key in sorted(list_):
+                   
+                    for key in df.columns:
                         t_ = t_ + ff.format(key)
 
                     if (counter == 0):
@@ -1311,9 +1304,7 @@ class GAMSExporter:
                         elif res_type != "NETWORK":
                             attr_outputs.append('\n' + str(t_))
                     counter += 1
-                    for i in range(len(keys)):
-                        key=keys[i]
-                        value_[1][i]
+                    for key in df.index:
                         if islink == True:
                             if self.links_as_name:
                                 attr_outputs.append(
@@ -1334,25 +1325,21 @@ class GAMSExporter:
                         else:
                             attr_outputs.append('\n' + ff.format(key+'.'+resource.name))
 
-                        all_data = value_[1][i]
-                        if not isinstance(all_data, dict):
-                            all_data = json.loads(all_data)
+                        if sub_set_name not in self.hashtables_keys:
+                            self.hashtables_keys[sub_set_name] = df.columns 
 
-                        if (sub_set_name not in self.hashtables_keys):
-                            self.hashtables_keys[sub_set_name] =list_ 
-
-                        for j in range(len(list_)):
-                            su_key=str(list_[j])
+                        for col in df.columns:
                             if res_type != "NETWORK":
-                                data_str = ff.format(str((all_data[su_key])))
+                                data_str = ff.format(str((df[col][key])))
                                 attr_outputs.append(data_str)
                             else:
-                                data_str = ff.format(keys[i]) + ff.format(str(float(all_data[su_key])))
+                                data_str = ff.format(keys[i]) + ff.format(str(float(df[col][key])))
                                 attr_outputs.append(data_str + '\n')
+
             elif type_ == "nodes_array_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.nodes, attribute_name, keys, set_name))
                     if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
@@ -1363,7 +1350,7 @@ class GAMSExporter:
             elif type_ == "links_array_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     attr_outputs.extend(self.get_resourcess_array_pars_collection(self.network.links, attribute_name, keys, set_name, True))
                     if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
@@ -1373,7 +1360,7 @@ class GAMSExporter:
             elif type_ == "nodes_scalar_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.nodes, attribute_name, keys, set_name))
                     if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
@@ -1383,7 +1370,7 @@ class GAMSExporter:
             elif type_ == "links_scalar_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     attr_outputs.extend(self.get_resourcess_scalar_pars_collection(self.network.links, attribute_name, keys, set_name, True))
                     if (set_name not in self.hashtables_keys):
                         self.hashtables_keys[set_name] = keys
@@ -1394,7 +1381,7 @@ class GAMSExporter:
             elif type_ == "links_set_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     if attribute_name in ids_key:
                         id=ids_key[attribute_name]
                     else:
@@ -1406,7 +1393,7 @@ class GAMSExporter:
             elif type_ == "set_collection" and res_type == "NETWORK":
                 for resource, rs in ids[attribute_name].items():
                     value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
+                    keys = value_
                     if attribute_name not in self.hashtables_keys:
                         self.hashtables_keys[attribute_name]=keys
 
@@ -1438,7 +1425,7 @@ class GAMSExporter:
         sub_key=''
         for resource in resources:
             for attr in resource.attributes:
-                if attr.dataset_type == 'array' and attr.is_var is False and self.is_it_in_list(attr.name, pars_collections)==True:
+                if attr.dataset_type == 'dataframe' and attr.is_var is False and self.is_it_in_list(attr.name, pars_collections)==True:
                     attr.name = translate_attr_name(attr.name)
                     if attr.name not in ids:
                        ids[attr.name] = {}
@@ -1448,6 +1435,8 @@ class GAMSExporter:
                         type_ = self.resourcescenarios_ids[attr.resource_attr_id].value.metadata
                         if "type" in type_:
                             data_types[attr.name] = type_["type"].lower()
+                        else:
+                            data_types[attr.name]=self.resourcescenarios_ids[attr.resource_attr_id].type
                     if attr.name not in sets_namess:
                         if "key" in type_:
                             sets_namess[attr.name] = type_["key"].lower()
@@ -1469,7 +1458,7 @@ class GAMSExporter:
                 set_name = sets_namess[attribute_name]
             else:
                 set_name = attribute_name + "_index"
-            if (type_ == "hashtable" or type_ == "seasonal"):
+            if (type_ == "dataframe"):
                 if counter==0:
                     if (islink == False):
                         attr_outputs.append(
@@ -1491,32 +1480,31 @@ class GAMSExporter:
                     add = resource.name + "_" + attribute_name
                     if not add in self.added_pars:
                         self.added_pars.append(add)
-                    value_ = json.loads(rs.dataset.value)
 
-                    keys = value_[0]
+                    df = pd.read_json(rs.dataset.value)
+
                     if (set_name not in self.hashtables_keys):
-                        self.hashtables_keys[set_name] = keys
+                        self.hashtables_keys[set_name] = list(df.index)
                     else:
                         keys_ = self.hashtables_keys[set_name]
-                        self.hashtables_keys[set_name] = self.compare_sets(keys, keys_)
-                    values = value_[1]
-                    for i in range(len(values)):
-                        k=str(keys[i])
-                        data_str = ff.format(str((values[i])))
-                        if islink == True:
-                            if self.links_as_name:
-                                attr_outputs.append(
-                                    resource.name+' . '+ attribute_name+k + ' . ' + '   ' + data_str)
-                            else:
-                                if self.use_jun == False:
-                                    attr_outputs.append(resource.from_node + ' . ' + resource.to_node+' . '+ attribute_name +k + '  ' +data_str)
-                                else:
-                                    jun = self.junc_node[resource.name]
-                                    attr_outputs.append(
-                                        resource.from_node + ' . ' + jun+' . '+resource.to_node + ' . ' + attribute_name + ' . '+k + '  ' + data_str)
+                        self.hashtables_keys[set_name] = self.compare_sets(list(df.index), keys_)
 
-                        else:
-                            attr_outputs.append(resource.name+ ' . ' + attribute_name+' . '+k + '   ' + data_str)
+                    for index in df.index:
+                        for column in df.columns:
+                            data_str = ff.format(str(df[column][index]))
+                            if islink == True:
+                                if self.links_as_name:
+                                    attr_outputs.append(
+                                        resource.name+' . '+ attribute_name+index + ' . ' + '   ' + data_str)
+                                else:
+                                    if self.use_jun == False:
+                                        attr_outputs.append(resource.from_node + ' . ' + resource.to_node+' . '+ attribute_name +index + '  ' +data_str)
+                                    else:
+                                        jun = self.junc_node[resource.name]
+                                        attr_outputs.append(
+                                            resource.from_node + ' . ' + jun+' . '+resource.to_node + ' . ' + attribute_name + ' . '+index + '  ' + data_str)
+                            else:
+                                attr_outputs.append(resource.name+ ' . ' + attribute_name+' . '+ str(index) + '   ' + data_str)
                 counter+=1
             elif type_ == "hashtable_seasonal":
                 if counter==0:
@@ -1538,52 +1526,29 @@ class GAMSExporter:
                     add = resource.name + "_" + attribute_name
                     if not add in self.added_pars:
                         self.added_pars.append(add)
-                    value_ = json.loads(rs.dataset.value)
-                    keys = value_[0]
-                    if (set_name not in self.hashtables_keys):
-                        self.hashtables_keys[set_name] = keys
-                    list_ = []
-                    for i in range (0, len(value_[1])):
-                        if not isinstance(value_[1][i], dict):
-                            vv = (json.loads(value_[1][i]))
-                        else:
-                            vv = value_[1][i]
-                        for key in sorted(list(vv.keys())):
-                            try:
-                                if(not int(key) in list_):
-                                    list_.append(int(key))
-                            except:
-                                if (not key in list_):
-                                    list_.append(key)
-                    for i in range(len(keys)):
-                        key = keys[i]
-                        if not isinstance(value_[1][i], dict):
-                            vv = (json.loads(value_[1][i]))
-                        else:
-                            vv = (value_[1][i])
 
-                        for j in range(0, len(list_)):
-                            if (not list_[j] in vv):
-                                continue
+                    df = pd.read_json(rs.dataset.value)
+
+                    if set_name not in self.hashtables_keys:
+                        self.hashtables_keys[set_name] = list(df.index)
+
+                    for index in df.index:
+                        for column in df.columns:
+                            v = str(df[column][index])
                             if islink:
                                 if self.links_as_name:
                                     attr_outputs.append(
-                                         (key + ' . ' +list_[j] +' . '+ attribute_name+ ' . ' +resource.name+'    '+vv[list_[j]]))
-
-
+                                         (index + ' . ' + column +' . '+ attribute_name+ ' . ' +resource.name+'    ' + v ))
                                 else:
                                     if self.use_jun == False:
-                                        attr_outputs.append((key + ' . ' + list_[
-                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + str(vv[list_[j]])))
+                                        attr_outputs.append((index + ' . ' + column + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + resource.to_node + '    ' + v))
                                     else:
                                         jun = self.junc_node[resource.name]
-                                        attr_outputs.append((key + ' . ' + list_[
-                                            j] + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + jun+'.'+resource.to_node + '    ' +
-                                                             vv[list_[j]]))
+                                        attr_outputs.append((index + ' . ' + column + ' . ' + attribute_name + ' . ' + resource.from_node + '.' + jun+'.'+resource.to_node + '    ' + v))
 
                             else:
                                 attr_outputs.append(
-                                    (key + ' . ' + list_[j] + ' . ' + attribute_name + ' . ' + resource.name + '    ' + str(vv[list_[j]])))
+                                    (str(index) + ' . ' + column + ' . ' + attribute_name + ' . ' + resource.name + '    ' + v))
                 counter += 1
         #attr_outputs.append('/;')
         #ss='\n'.join(attr_outputs)
@@ -1827,13 +1792,8 @@ class GAMSExporter:
                         '''
                         i=0
                         attr_outputs.append(ff.format(resource.name))
-                        ##print "len(dim): ", len(dim)
-                        ##print "array len: ", len(array)
-                        ##print array
                         if(len(dim) is 1):
-                            ##print "dime[0]: ", dim[0]
                             for k  in range (dim[0]):
-                                ##print k, "It is ", len(array)
                                 if len(array)==dim[0]:
                                     log.info(array)
                                     item=array[k]
