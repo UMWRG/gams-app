@@ -11,25 +11,40 @@ from hydra_client.connection import JSONConnection
 from hydra_base.exceptions import HydraPluginError
 from hydra_base.util.hydra_dateutil import reindex_timeseries
 
-from HydraGAMSlib import GAMSnetwork
-from HydraGAMSlib import convert_date_to_timeindex
+from hydra_gams.lib import GAMSnetwork, convert_date_to_timeindex
 
 log = logging.getLogger(__name__)
 
 class GAMSExporter:
-    def __init__(self, args):
-        if args.template_id is not None:
-            self.template_id = int(args.template_id)
+    def __init__(self, network_id,
+                       scenario_id,
+                       template_id,
+                 output,
+                 node_node,
+                 link_name,
+                 start_date,
+                 end_date,
+                 time_step,
+                 time_axis,
+                 export_by_type=False,
+                 gams_date_time_index=False,
+                 db_url=None):
+        if template_id is not None:
+            self.template_id = int(template_id)
 
         self.use_gams_date_index=False
-        self.network_id = int(args.network_id)
-        self.scenario_id = int(args.scenario_id)
-        self.template_id = int(args.template_id) if args.template_id is not None else None
+        self.network_id = int(network_id)
+        self.scenario_id = int(scenario_id)
+        self.template_id = int(template_id) if template_id is not None else None
         self.type_attr_default_datasets = {}
-        self.filename = args.output
+        self.filename = output
         self.time_index = []
         self.time_axis =None
         self.sets=[]
+        
+        #things which get written to the file without any logic (pre-formateed gams input text, or comments, for example
+        self.direct_outputs = []
+
         self.descriptors = {}
         self.hashtables_keys={}
         self.output=''
@@ -47,20 +62,20 @@ class GAMSExporter:
         #explicitly specified using the 'dimensions' attribute on the group type in the template.
         self.group_dimensions = {}
 
-        self.connection = JSONConnection(app_name="GAMS Exporter", db_url='mysql+mysqldb://root:root@localhost/ebsd')
+        self.connection = JSONConnection(app_name="GAMS Exporter", db_url=db_url)
 
         self.connection.connect()
         self.connection.login()
 
-        if args.time_axis is not None:
-            args.time_axis = ' '.join(args.time_axis).split(' ')
+        if time_axis is not None:
+            time_axis = ' '.join(time_axis).split(' ')
 
-        if(args.start_date is not None and args.end_date is not None and args.time_step is not None):
-            self.time_axis = self.get_time_axis(args.start_date,
-                                  args.end_date,
-                                  args.time_step,
-                                  time_axis=args.time_axis)
-        if args.link_name is True:
+        if(start_date is not None and end_date is not None and time_step is not None):
+            self.time_axis = self.get_time_axis(start_date,
+                                  end_date,
+                                  time_step,
+                                  time_axis=time_axis)
+        if link_name is True:
             self.links_as_name = True
         else:
             self.links_as_name = False
@@ -170,6 +185,10 @@ class GAMSExporter:
     def export_network(self):
         if self.links_as_name is False and len(self.junc_node)==0:
             self.check_links_between_nodes()
+
+        
+        #FIX ME: Export desriptors first as they don't rely on other entries, but others
+        #may well rely on them.
         self.sets += '* Network definition\n\n'
 
         log.info("Exporting nodes")
@@ -490,7 +509,7 @@ class GAMSExporter:
                 contents.append((parent, c))
             
             if subgroupdata.get('index') is not None:
-                subgroup_type_index[subgrouptype] =subgroupdata['index']
+                subgroup_type_index[subgrouptype] = subgroupdata['index']
             else:
                 if contents[0][1].count('.') == 0:
                     subgroup_type_index[subgrouptype] = "I"
@@ -845,7 +864,10 @@ class GAMSExporter:
 
 
             if (len(descriptor_list) > 0):
-                self.descriptors[attribute.name]=descriptor_list
+                if len(descriptor_list) == 1:
+                    self.direct_outputs.append(descriptor_list[0])
+                else:
+                    self.descriptors[attribute.name]=descriptor_list
 
     def export_timeseries_using_type(self, resources, obj_type, res_type=None):
         """Export time series.
@@ -1167,6 +1189,7 @@ class GAMSExporter:
                             sets_namess[attr.name+"_sub_key"] = type_["sub_key"].lower()
 
         for attribute_name in ids.keys():
+
             attr_outputs.append('\n\n\n*' + attribute_name)
             ff = '{0:<' + self.array_len + '}'
             t_ = ff.format('')
@@ -1476,7 +1499,7 @@ class GAMSExporter:
                                 attr_outputs.append(
                                     'Parameter ' + attribute_name_ + ' (i, j, ' + set_name_ + ',' + main_key + ')')
                     attr_outputs.append('/')
-                for resesource, rs in ids[attribute_name].items():
+                for resource, rs in ids[attribute_name].items():
                     add = resource.name + "_" + attribute_name
                     if not add in self.added_pars:
                         self.added_pars.append(add)
@@ -1795,7 +1818,6 @@ class GAMSExporter:
                         if(len(dim) is 1):
                             for k  in range (dim[0]):
                                 if len(array)==dim[0]:
-                                    log.info(array)
                                     item=array[k]
                                 elif len(array[0])==dim[0]:
                                      item=array[0][k]
@@ -1923,9 +1945,17 @@ class GAMSExporter:
                 self.sets +=('\n' + str(val))
             self.sets += ('\n/\n\n')
 
+
+    def write_direct_outputs(self):
+        log.info("Writing direct outputs")
+        for formatted_text in self.direct_outputs:
+            self.sets += '\n'
+            self.sets += formatted_text
+            self.sets += '\n'
+
     def write_file(self):
         log.info("Writing file %s.", self.filename)
-
+        
         for key in self.hashtables_keys:
             self.sets += ('\n' + key + '\n/')
             for val in self.hashtables_keys[key]:
@@ -1941,6 +1971,8 @@ class GAMSExporter:
                 index = "(" + ",".join(indices) + ")"
             self.sets += ('\n' + empty_group + index + '\n/')
             self.sets += ('\n/\n\n')
+
+        self.write_direct_outputs()
 
         with open(self.filename, 'w') as f:
             f.write(self.sets + self.output)

@@ -85,87 +85,17 @@ import logging
 import argparse as ap
 from datetime import datetime
 from dateutil import parser
-
-pythondir = os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(pythondir, '..', 'lib')
-api_path = os.path.realpath(gamslibpath)
-if api_path not in sys.path:
-    sys.path.insert(0, api_path)
-
-##########################
+import click
 
 from hydra_base.exceptions import HydraPluginError
 from hydra_client.output import write_progress, write_output, create_xml_response
-from HydraGAMSlib import check_lic
-from HydraGAMSlib import GamsModel
 
-from Exporter import GAMSExporter
-from Importer import GAMSImporter
+from hydra_gams.lib import GamsModel
+from hydra_gams.exporter import GAMSExporter
+from hydra_gams.importer import GAMSImporter
 
 import logging
 log = logging.getLogger(__name__)
-
-
-def commandline_parser():
-    cmd_parser = ap.ArgumentParser(
-        description=""" Export a network from Hydra to a gams input text file, Rum GAMS. and finally Import a gdx results file into Hydra.
-                    (c) Copyright 2014, Univeristy of Manchester.
-        """, epilog="For more information, web site will available soon",
-        formatter_class=ap.RawDescriptionHelpFormatter)
-
-    cmd_parser.add_argument('-G', '--gams-path',
-                        help='Path of the GAMS installation.')
-    cmd_parser.add_argument('-t', '--network-id',
-                        help='''ID of the network that will be exported.''')
-    cmd_parser.add_argument('-s', '--scenario-id',
-                        help='''ID of the scenario that will be exported.''')
-    cmd_parser.add_argument('-tp', '--template-id',
-                        help='''ID of the template to be used.''')
-    cmd_parser.add_argument('-m', '--gms-file',
-                        help='''Full path to the GAMS model (*.gms) used for
-                        the simulation.''')
-    cmd_parser.add_argument('-o', '--output',
-                        help='''Output file containing exported data''')
-    cmd_parser.add_argument('-nn', '--node-node', action='store_true',
-                        help="""(Default) Export links as 'from_name .
-                        end_name'.""")
-    cmd_parser.add_argument('-ln', '--link-name', action='store_true',
-                        help="""Export links as link name only. If two nodes
-                        can be connected by more than one link, you should
-                        choose this option.""")
-    cmd_parser.add_argument('-st', '--start-date',
-                        help='''Start date of the time period used for
-                        simulation.''')
-    cmd_parser.add_argument('-en', '--end-date',
-                        help='''End date of the time period used for
-                        simulation.''')
-
-    cmd_parser.add_argument('-dt', '--time-step',
-                        help='''Time step used for simulation.''')
-    cmd_parser.add_argument('-tx', '--time-axis', nargs='+',
-                        help='''Time axis for the modelling period (a list of
-                        comma separated time stamps).''')
-    cmd_parser.add_argument('-f', '--gdx-file',
-                        help='GDX file containing GAMS results.')
-
-    cmd_parser.add_argument('-et', '--export_by_type',action='store_true',
-                        help='''Use this switch to export data based on type, rather than attribute.''')
-
-    cmd_parser.add_argument('-debug', '--turn-debug-on', action='store_true',
-                            help='''Use this switch to send highly technical info and GAMS log to stdout.''')
-
-    cmd_parser.add_argument('-u', '--server-url',
-                        help='''Specify the URL of the server to which this
-                        plug-in connects.''')
-
-    cmd_parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
-                        help='''Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)''')
-
-
-    cmd_parser.add_argument('-c', '--session_id',
-                        help='''Session ID. If this does not exist, a login will be
-                        attempted based on details in config.''')
-    return cmd_parser
 
 def get_files_list(directory, ext):
     '''
@@ -181,15 +111,19 @@ def get_files_list(directory, ext):
 
 def get_input_file_name(gams_model):
     '''
-    return  output data file name if it is not provided by the user
+       Identify the name of the input file used by the model. if it is not provided by the user
     '''
+
+
+    if os.path.isfile(os.path.expanduser(gams_model))==False:
+        raise HydraPluginError('Gams file '+args.gms_file+' not found.')
+
     inputfilename=None
     gamsfile=open(gams_model, "r")
     for line in gamsfile:
             if "include" not in line.lower():
                 continue
             sline = line.strip()
-            print sline
             if len(sline) > 0 and sline[0].startswith('$'):
                 lineparts = sline.split()
                 if lineparts[1] == 'include':
@@ -212,16 +146,24 @@ def get_input_file_name(gams_model):
                     break
 
     gamsfile.close()
+
+    if inputfilename is None:
+        raise HydraPluginError('Unable to identify the name of the input file required by the model. Please specify the name of the input filename.')
+
+    if os.path.exists(os.path.dirname(os.path.realpath(inputfilename)))==False:
+            raise HydraPluginError('Output file directory '+ os.path.dirname(inputfilename)+' does not exist.')
+
     log.info("Exporting data to: %s", inputfilename)
+
     return inputfilename
 
 
-def export_network(is_licensed):
+def export_network():
     exporter = GAMSExporter(args)
 
     write_progress(2, steps)
 
-    exporter.get_network(is_licensed)
+    exporter.get_network()
 
     write_progress(3, steps)
 
@@ -271,7 +213,6 @@ def run_gams_model(args):
     if args.gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
-        print "===========================>", files_list.keys
         if sol_pool in files_list:
             dt = parser.parse(files_list[sol_pool])
             dt_2 = parser.parse(files_list[res])
@@ -287,25 +228,21 @@ def run_gams_model(args):
                         dt = parser.parse(files_list[sol_pool])
                         delta = (dt - cur_time).total_seconds()
                         if delta >= 0:
-                            print "file: ", file_
                             gdx_list.append(os.path.join(working_directory, file_))
                 args.gdx_file = gdx_list
-                print "It is multi mga", len(args.gdx_file)
         else:
             for file_ in files_list:
-                print "Toz: ", file_
                 dt = parser.parse(files_list[file_])
                 delta = (dt-cur_time).total_seconds()
                 if delta>=0:
                     args.gdx_file = os.path.join(working_directory, file_)
-                    print "Toz: 2", args.gdx_file
             if args.gdx_file is None:
                   raise HydraPluginError('Result file is not provided/found.')
             else:
-                print "Results file: ", args.gdx_file
+                log.info("Results file: ", args.gdx_file)
 
 
-def read_results(is_licensed, args, network, connection):
+def read_results(args, network, connection):
     """
         Instantiate a GAMSImport class, assign the network, read the
         gdx and gms files, update the network's data and then save
@@ -318,13 +255,12 @@ def read_results(is_licensed, args, network, connection):
     gdximport.load_gams_file(args.gms_file)
 
     write_progress(12, steps)
-    gdximport.set_network(is_licensed, network)
+    gdximport.set_network(network)
 
     write_progress(13, steps)
     gdximport.parse_time_index()
 
     write_progress(14, steps)
-    print "===================================================="
     gdximport.open_gdx_file(args.gdx_file)
 
     write_progress(15, steps)
@@ -344,42 +280,22 @@ def read_results(is_licensed, args, network, connection):
     gdximport.save()
 
 
-def check_args(args):
+def export_run_import():
+    """
+        1. Export a hydra network to a GAMS input text file
+        2. Run the specified model, using the newly created input file
+        3. Import the results from the produced GDX file into the scenario specified.
+    """
     try:
-        int(args.network_id)
-    except (TypeError, ValueError):
-        raise HydraPluginError('No network is specified.')
-    try:
-        int(args.scenario_id)
-    except (TypeError, ValueError):
-        raise HydraPluginError('No senario is specified.')
-
-    if args.gms_file is None:
-        raise HydraPluginError('Gams file is not specifed.')
-    elif os.path.isfile(os.path.expanduser(args.gms_file))==False:
-        raise HydraPluginError('Gams file '+args.gms_file+' not found.')
-    elif args.output==None:
-        args.output=get_input_file_name(args.gms_file)
-        if args.output is None:
-            raise HydraPluginError('No output file specified')
-    elif os.path.exists(os.path.dirname(os.path.realpath(args.output)))==False:
-            raise HydraPluginError('Output file directory '+ os.path.dirname(args.output)+' does not exist.')
-
-
-if __name__ == '__main__':
-    try:
-        is_licensed = check_lic()
         steps = 18
         write_progress(1, steps)
-        cmd_parser = commandline_parser()
         args = cmd_parser.parse_args()
-        check_args(args)
-        exporter=export_network(is_licensed)
+        exporter=export_network()
         #get_AVAILABLE_DO(exporter.network)
         #sys.exit()
         run_gams_model(args)
         #if the mode is Auto, it will get the network from the exporter
-        read_results(is_licensed, args, exporter.hydranetwork, exporter.connection)
+        read_results(args, exporter.hydranetwork, exporter.connection)
         message = "Run successfully"
         errors  = []
 
@@ -403,5 +319,3 @@ if __name__ == '__main__':
         raise Exception("An Error occurred running the Model. ")
  
     text = create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
-    #log.info(text);
-    print(text)

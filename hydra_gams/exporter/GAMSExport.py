@@ -268,139 +268,79 @@ Exporting use start time, end time and time step:
 import sys
 import os
 import argparse as ap
-import logging
+import click
 
-
-pythondir = os.path.dirname(os.path.realpath(__file__))
-gamslibpath=os.path.join(pythondir, '..', 'lib')
-api_path = os.path.realpath(gamslibpath)
-if api_path not in sys.path:
-    sys.path.insert(0, api_path)
-
-##########################
 
 from hydra_base.exceptions import HydraPluginError
 from hydra_client.output import write_progress, write_output, create_xml_response
 
-from HydraGAMSlib import check_lic
-from License import LicencePluginError
-from Exporter import GAMSExporter
+from .exporter import GAMSExporter
 
-
+import logging
 log = logging.getLogger(__name__)
 
 
-def commandline_parser():
-    parser = ap.ArgumentParser(
-        description="""Export a network from Hydra to a gams input text file.
-                    (c) Copyright 2014, Univeristy of Manchester.
-        """, epilog="For more information, web site will available soon",
-        formatter_class=ap.RawDescriptionHelpFormatter)
-
-    parser.add_argument('-t', '--network-id',
-                        help='''ID of the network that will be exported.''')
-    parser.add_argument('-s', '--scenario-id',
-                        help='''ID of the scenario that will be exported.''')
-    parser.add_argument('-tp', '--template-id',
-                        help='''ID of the template to be used.''')
-
-    parser.add_argument('-o', '--output',
-                        help='''Output file containing exported data''')
-    parser.add_argument('-nn', '--node-node', action='store_true',
-                        help="""(Default) Export links as 'from_name .
-                        end_name'.""")
-    parser.add_argument('-ln', '--link-name', action='store_true',
-                        help="""Export links as link name only. If two nodes
-                        can be connected by more than one link, you should
-                        choose this option.""")
-    parser.add_argument('-st', '--start-date',
-                        help='''Start date of the time period used for
-                        simulation.''')
-    parser.add_argument('-en', '--end-date',
-                        help='''End date of the time period used for
-                        simulation.''')
-    parser.add_argument('-dt', '--time-step',
-                        help='''Time step used for simulation.''')
-    parser.add_argument('-tx', '--time-axis', nargs='+',
-                        help='''Time axis for the modelling period (a list of
-                        comma separated time stamps).''')
-    parser.add_argument('-et', '--export_by_type', action='store_true',
-                        help='''to export data based on types, set this otion to 'y' or 'yes', default is export data by attributes.''')
-    parser.add_argument('-gd', '--gams_date_time_index', action='store_true',
-                        help='''Set the time indexes to be timestamps which are compatible with gams date format (dd.mm.yyyy)''')
-    parser.add_argument('-u', '--server-url',
-                        help='''Specify the URL of the server to which this
-                        plug-in connects.''')
-    parser.add_argument('-c', '--session_id',
-                        help='''Session ID. If this does not exist, a login will be
-                        attempted based on details in config.''')
-    return parser
-
-def export_network(args, is_licensed):
-
-        write_progress(2, steps)
-        exporter = GAMSExporter(args)
-
-
-        write_progress(3, steps)
-        exporter.get_network(is_licensed)
-
-        write_progress(4, steps)
-        exporter.export_network()
-
-        write_progress(5, steps)
-        if(args.gams_date_time_index is True):
-            exporter.use_gams_date_index=True
-
-        exporter.write_time_index()
-
-        if args.export_by_type is True:
-            exporter.export_data_using_types()
-        else:
-            exporter.export_data_using_attributes()
-
-        write_progress(6, steps)
-        exporter.write_file()
-
-
-        write_progress(7, steps)
-
-def check_args(args):
-    try:
-        int(args.network_id)
-    except (TypeError, ValueError):
-        raise HydraPluginError('No network is specified')
-    try:
-        int(args.scenario_id)
-    except (TypeError, ValueError):
-        raise HydraPluginError('No scenario is specified')
-
-    output = os.path.dirname(args.output)
-    if output == '':
-        output = '.'
-
-    if  os.path.exists(output)==False:
-        raise HydraPluginError('Output file directory '+
-                               os.path.dirname(args.output)+
-                               'does not exist')
-
-if __name__ == '__main__':
-    is_licensed = check_lic()
+def export_network(network_id,
+                   scenario_id,
+                   template_id,
+                   output,
+                   node_node,
+                   link_name,
+                   start_date,
+                   end_date,
+                   time_step,
+                   time_axis,
+                   export_by_type=False,
+                   gams_date_time_index=False,
+                   db_url=None):
+    """
+        Export a network to a GAMS text input file.
+    """
     message     = None
     errors      = []
     steps       = 7
 
     try:
-        write_progress(1, steps)
-        parser = commandline_parser()
-        args = parser.parse_args()
-        check_args(args)
+        write_progress(2, steps)
+        exporter = GAMSExporter(network_id,
+                   scenario_id,
+                   template_id,
+                   output,
+                   node_node,
+                   link_name,
+                   start_date,
+                   end_date,
+                   time_step,
+                   time_axis,
+                   export_by_type=export_by_type,
+                   gams_date_time_index=gams_date_time_index,
+                   db_url=db_url)
 
-        link_export_flag = 'nn'
-        if args.link_name is True:
-            link_export_flag = 'l'
-        exporter=export_network(args, is_licensed)
-        message="Run successfully"
+
+        write_progress(3, steps)
+        exporter.get_network(True)
+
+        write_progress(5, steps)
+        if(gams_date_time_index is True):
+            exporter.use_gams_date_index=True
+
+        exporter.write_time_index()
+        if export_by_type is True:
+            exporter.export_data_using_types()
+        else:
+            exporter.export_data_using_attributes()
+
+        write_progress(4, steps)
+        exporter.write_descriptors()
+
+        write_progress(4, steps)
+        exporter.export_network()
+
+        write_progress(6, steps)
+        exporter.write_file()
+
+        write_progress(7, steps)
+
     except HydraPluginError as e:
         write_progress(steps, steps)
         log.exception(e)
@@ -414,13 +354,12 @@ if __name__ == '__main__':
                 errors = [e.strerror]
         else:
             errors = [e]
+
     text = create_xml_response('GAMSExport',
-                               args.network_id,
-                               [args.scenario_id],
+                               network_id,
+                               [scenario_id],
                                errors = errors,
                                message=message)
 
     #log.info(text)
     print (text)
-
-
