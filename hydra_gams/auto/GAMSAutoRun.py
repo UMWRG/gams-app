@@ -167,7 +167,7 @@ def run_gams_model(gms_file, gdx_file, gams_path, debug=False):
     model = GamsModel(gams_path, working_directory, debug)
     model.add_job(gms_file)
     write_output("Running GAMS model, please note that this may take time")
-    #model.run()
+    model.run()
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
     sol_pool='solnpool.gdx'
