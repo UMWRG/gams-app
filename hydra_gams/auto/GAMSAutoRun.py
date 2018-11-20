@@ -91,8 +91,7 @@ from hydra_base.exceptions import HydraPluginError
 from hydra_client.output import write_progress, write_output, create_xml_response
 
 from hydra_gams.lib import GamsModel
-from hydra_gams.exporter import GAMSExporter
-from hydra_gams.importer import GAMSImporter
+from hydra_gams import GAMSExporter, GAMSImporter
 
 import logging
 log = logging.getLogger(__name__)
@@ -158,59 +157,22 @@ def get_input_file_name(gams_model):
     return inputfilename
 
 
-def export_network():
-    exporter = GAMSExporter(args)
-
-    write_progress(2, steps)
-
-    exporter.get_network()
-
-    write_progress(3, steps)
-
-    exporter.get_longest_node_link_name();
-
-    if(args.gams_date_time_index is True):
-            exporter.use_gams_date_index=True
-
-    write_progress(4, steps)
-    exporter.write_time_index()
-
-    if args.export_by_type is True:
-        exporter.export_data_using_types()
-    else:
-        exporter.export_data_using_attributes()
-
-    exporter.write_descriptors()
-
-    exporter.export_network()
-
-    write_progress(5, steps)
-    write_output("Writing output file")
-
-    exporter.write_file()
-    return exporter
-
-
-def run_gams_model(args):
-    log.info("Running GAMS model .....")
+def run_gams_model(gms_file, gdx_file, gams_path, debug=False):
+    log.info("Running GAMS model.")
     cur_time=datetime.now().replace(microsecond=0)
-    write_progress(6, steps)
-    working_directory=os.path.dirname(args.gms_file)
+    working_directory=os.path.dirname(gms_file)
     if working_directory == '':
         working_directory = '.'
 
-    model = GamsModel(args.gams_path, working_directory, args.turn_debug_on)
-    write_progress(7, steps)
-    model.add_job(args.gms_file)
-    write_progress(8, steps)
+    model = GamsModel(gams_path, working_directory, debug)
+    model.add_job(gms_file)
     write_output("Running GAMS model, please note that this may take time")
-    model.run()
-    write_progress(9, steps)
+    #model.run()
     log.info("Running GAMS model finsihed")
     # if result file is not provided, it looks for it automatically at GAMS WD
     sol_pool='solnpool.gdx'
     res = 'results_MGA.gdx'
-    if args.gdx_file is None:
+    if gdx_file is None:
         log.info("Extracting results from %s.", working_directory)
         files_list=get_files_list(working_directory, '.gdx')
         if sol_pool in files_list:
@@ -221,7 +183,7 @@ def run_gams_model(args):
             # todo chaeck if dgx files exist
             if delta >= 0 and delta_2 >= 0:
                 gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
-                args.gdx_file =gdx_list
+                gdx_file =gdx_list
                 return
                 for file_ in files_list:
                     if 'soln' in file_ and file_ != sol_pool:
@@ -229,58 +191,36 @@ def run_gams_model(args):
                         delta = (dt - cur_time).total_seconds()
                         if delta >= 0:
                             gdx_list.append(os.path.join(working_directory, file_))
-                args.gdx_file = gdx_list
+                gdx_file = gdx_list
         else:
             for file_ in files_list:
                 dt = parser.parse(files_list[file_])
                 delta = (dt-cur_time).total_seconds()
                 if delta>=0:
-                    args.gdx_file = os.path.join(working_directory, file_)
-            if args.gdx_file is None:
+                    gdx_file = os.path.join(working_directory, file_)
+            if gdx_file is None:
                   raise HydraPluginError('Result file is not provided/found.')
             else:
-                log.info("Results file: ", args.gdx_file)
+                log.info("Results file: ", gdx_file)
+    return gdx_file
 
-
-def read_results(args, network, connection):
-    """
-        Instantiate a GAMSImport class, assign the network, read the
-        gdx and gms files, update the network's data and then save
-        the network.
-    """
-    write_progress(10, steps)
-    gdximport = GAMSImporter(args, connection)
-
-    write_progress(11, steps)
-    gdximport.load_gams_file(args.gms_file)
-
-    write_progress(12, steps)
-    gdximport.set_network(network)
-
-    write_progress(13, steps)
-    gdximport.parse_time_index()
-
-    write_progress(14, steps)
-    gdximport.open_gdx_file(args.gdx_file)
-
-    write_progress(15, steps)
-    gdximport.read_gdx_data()
-
-    write_progress(16, steps)
-    gdximport.parse_variables('variables')
-    gdximport.parse_variables('positive variables')
-    gdximport.parse_variables('positive variable')
-    gdximport.parse_variables('binary variables')
-    gdximport.parse_variables('parameters')
-
-    write_progress(17, steps)
-    gdximport.assign_attr_data()
-
-    write_progress(18, steps)
-    gdximport.save()
-
-
-def export_run_import():
+def export_run_import(network_id,
+                            scenario_id,
+                            template_id,
+                            gms_file,
+                            output,
+                            node_node,
+                            link_name,
+                            start_date,
+                            end_date,
+                            time_step,
+                            time_axis,
+                            gdx_file,
+                            export_by_type,
+                            gams_date_time_index,
+                            gams_path=None,
+                            debug=False,
+                            db_url=None):
     """
         1. Export a hydra network to a GAMS input text file
         2. Run the specified model, using the newly created input file
@@ -288,34 +228,59 @@ def export_run_import():
     """
     try:
         steps = 18
-        write_progress(1, steps)
-        args = cmd_parser.parse_args()
-        exporter=export_network()
-        #get_AVAILABLE_DO(exporter.network)
-        #sys.exit()
-        run_gams_model(args)
-        #if the mode is Auto, it will get the network from the exporter
-        read_results(args, exporter.hydranetwork, exporter.connection)
+
+
+        if output is None:
+            output=get_input_file_name(gms_file)
+
+        exporter = GAMSExporter(network_id,
+                   scenario_id,
+                   template_id,
+                   output,
+                   node_node,
+                   link_name,
+                   start_date,
+                   end_date,
+                   time_step,
+                   time_axis,
+                   export_by_type=False,
+                   gams_date_time_index=False,
+                   db_url=None)
+
+        exporter.export()
+
+        model_gdx_file = run_gams_model(gms_file, gdx_file, gams_path, debug=debug)
+        
+        importer = GAMSImporter(network_id,
+                    scenario_id,
+                    gms_file,
+                    model_gdx_file,
+                    gams_path=gams_path,
+                    db_url=db_url)
+
+        importer.import_data()
+
         message = "Run successfully"
         errors  = []
 
     except HydraPluginError as e:
         log.exception(e)
-        write_progress(steps, steps)
-        errors = [e.message]
+        errors = [e]
         message = "An error has occurred"
     except Exception as e:
         errors = []
-        if e.message == '':
+        if e == '':
             if hasattr(e, 'strerror'):
                 errors = [e.strerror]
         else:
-            errors = [e.message]
+            errors = [e]
         log.exception(e)
         message = "An unknown error has occurred"
-        write_progress(steps, steps)
+    
+    write_progress(steps, steps)
+
 
     if len(errors) > 0:
         raise Exception("An Error occurred running the Model. ")
  
-    text = create_xml_response('GAMSAuto', args.network_id, [args.scenario_id], message=message, errors=errors)
+    text = create_xml_response('GAMSAuto', network_id, [scenario_id], message=message, errors=errors)

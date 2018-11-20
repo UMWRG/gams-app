@@ -1,9 +1,7 @@
-# (c) Copyright 2013, 2014, 2015 University of Manchester\
-
+# (c) Copyright 2013-2019 University of Manchester
 import os
 import sys
 import re
-import logging
 import json
 import copy
 
@@ -14,12 +12,32 @@ from hydra_base.exceptions import HydraPluginError
 from hydra_base.util.hydra_dateutil import ordinal_to_timestamp, date_to_string
 from hydra_client.plugin import JSONPlugin
 
-from hydra_gams.lib import import_gms_data, get_gams_path
+from hydra_gams.lib import import_gms_data, get_gams_path, check_gams_installation
 
+from hydra_client.output import write_progress, write_output, create_xml_response
+
+from hydra_client.connection import JSONConnection
+
+import logging
 log = logging.getLogger(__name__)
+
+from hydra_base.lib.objects import JSONObject
 
 gdxcc=None
 
+
+def import_data(network_id,
+                   scenario_id,
+                   gms_file,
+                   gdx_file,
+                   gams_path,
+                   db_url=None):
+
+    """
+        Import results from a GDX file into a network
+    """
+    gdximport = GAMSImporter(network_id, scenario_id, gms_file, gdx_file)
+    gdximport.import_data()
 
 def get_gdx_files(filename):
     if filename is None:
@@ -69,7 +87,6 @@ class GDXvariable(object):
 
 def get_index(index_file_names):
     import gdxcc
-    gdxcc = gdxcc
     gdx_handle = gdxcc.new_gdxHandle_tp()
     rc = gdxcc.gdxCreate(gdx_handle, gdxcc.GMS_SSSIZE)
     gdxcc.gdxOpenRead(gdx_handle, index_file_names)
@@ -88,8 +105,8 @@ def get_index(index_file_names):
         return MGA_index
 
 
-class GAMSImporter(JSONPlugin):
-    def __init__(self, args, connection=None):
+class GAMSImporter:
+    def __init__(self, network_id, scenario_id, gms_file, gdx_file, gams_path=None, connection=None, db_url=None):
         import gdxcc
         self.gdxcc=gdxcc
         self.gdx_handle = gdxcc.new_gdxHandle_tp()
@@ -103,24 +120,105 @@ class GAMSImporter(JSONPlugin):
         self.gdx_variables = dict()
         self.gams_units = dict()
         self.gdx_ts_vars = dict()
-        self.network_id = args.network_id
-        self.scenario_id = args.scenario_id
+
+        self.steps       = 9
+        self.current_step = 0
+
         self.network = None
         self.res_scenario = None
         self.attrs = dict()
         self.time_axis = dict()
+
+        self.gms_file = gms_file
+        self.gdx_file = gdx_file
+        self.gams_path = gams_path
+        self.network_id=network_id
+        self.scenario_id=scenario_id
+        self.template_id=None
+
         self.gms_data = []
-        self.connection = connection
 
+        #There may be an open connection from the 'auto' app
+        if connection is None:
+            self.connection = JSONConnection(app_name="GAMS Exporter", db_url=db_url)
+            self.connection.connect()
+            self.connection.login()
+        else:
+            self.connection = connection
 
-        if self.connection is None:
-            self.connect(args)
-
-        attrslist = self.connection.call('get_all_attributes', {})
+        attrslist = self.connection.get_attributes()
         for attr in attrslist:
             self.attrs.update({attr.id: attr.name})
 
-    def load_network(self, is_licensed, network_id=None, scenario_id=None):
+    def write_progress(self, step=None):
+        """
+            Utility function which automatically increments the current 'step'
+            so as to avoid having to state it explicitly
+            If 'step' is specified, it'll write that step.
+        """
+
+        if step is None:
+            write_progress(self.current_step, self.steps)
+            self.current_step = self.current_step+1
+        else:
+            write_progress(step, self.steps)
+
+    def import_data(self):
+
+        errors      = []
+        message="Import successful."
+        try: 
+            check_gams_installation(self.gams_path)
+            self.write_progress()
+
+            self.load_network()
+            self.write_progress()
+        
+            self.load_gams_file()
+            self.write_progress()
+
+            self.parse_time_index()
+            self.write_progress()
+
+            self.open_gdx_file()
+            self.write_progress()
+
+            self.read_gdx_data()
+            self.write_progress()
+
+            self.parse_variables('variables')
+            self.parse_variables('positive variables')
+            self.parse_variables('positive variable')
+            self.parse_variables('binary variables')
+            self.parse_variables('parameters')
+            self.write_progress()
+
+            self.assign_attr_data()
+            self.write_progress()
+
+            self.save()
+            self.write_progress()
+
+        except HydraPluginError as e:
+            log.exception(e)
+            errors = [e]
+            message = "An error has occurred"
+        except Exception as e:
+            log.exception(e)
+            errors = []
+            message = "An unknown error has occurred"
+            if e == '':
+                if hasattr(e, 'strerror'):
+                    errors = [e.strerror]
+            else:
+                errors = [e]
+        
+        self.write_progress(self.steps)
+
+        text = create_xml_response('GAMSImport', self.network_id, [self.scenario_id],message=message, errors=errors)
+        print(text)
+
+    def load_network(self, is_licensed=True):
         """
          Load network and scenario from the server. If the network
          has been set externally (to save getting it again) then simply
@@ -131,24 +229,23 @@ class GAMSImporter(JSONPlugin):
         # the network id read from the gms file
         self.is_licensed=is_licensed
         try:
-            network_id = int(network_id)
+            network_id = int(self.network_id)
         except (TypeError, ValueError):
-            network_id = self.network_id
+            pass
         if network_id is None:
             raise HydraPluginError("No network specified.")
 
         try:
-            scenario_id = int(scenario_id)
+            scenario_id = int(self.scenario_id)
         except (TypeError, ValueError):
-            scenario_id = self.scenario_id
+            pass
         if scenario_id is None:
             raise HydraPluginError("No scenario specified.")
 
-        self.network = self.connection.call('get_network',
-                                            {'network_id': int(network_id),
-                                             'include_data': 'Y',
-                                             'scenario_ids': [int(scenario_id)],
-                                             'template_id': None})
+        self.network = self.connection.get_network(network_id=self.network_id,
+                                          include_data='Y',
+                                          template_id=self.template_id,
+                                          scenario_ids=[self.scenario_id])
 
         self.res_scenario = self.network.scenarios[0].resourcescenarios
         if(is_licensed is False):
@@ -187,22 +284,29 @@ class GAMSImporter(JSONPlugin):
         '''
 
     #####################################################
-    def open_gdx_file(self, filename):
+    def open_gdx_file(self):
         """
         Open the GDX file and read some basic information.
         """
-        if filename is None:
+
+        log.info("Reading GDX file")
+
+        try:
+            self.gdx_file = json.loads(self.gdx_file)
+        except:
+            pass
+
+        if self.gdx_file is None:
             raise HydraPluginError("gdx file not specified.")
 
-        if type(filename) is list:
-            self.is_MGS=True
-            self.get_mga_index(filename[0])
-            self.filename=filename[1]
+        if type(self.gdx_file) is list:
+            self.is_MGA=True
+            self.get_mga_index(os.path.expanduser(self.gdx_file[0]))
+            self.gdx_file=os.path.expanduser(self.gdx_file[1])
         else:
-            self.is_MGS = False
-            self.filename=filename
+            self.is_MGA = False
         #filename = os.path.abspath(filename)
-        self.gdxcc.gdxOpenRead(self.gdx_handle, self.filename)
+        self.gdxcc.gdxOpenRead(self.gdx_handle, os.path.expanduser(self.gdx_file))
 
         x, self.symbol_count, self.element_count = \
             self.gdxcc.gdxSystemInfo(self.gdx_handle)
@@ -216,7 +320,10 @@ class GAMSImporter(JSONPlugin):
         """
            Read variables and data from GDX file.
         """
-        self.gdxcc.gdxOpenRead(self.gdx_handle, self.filename)
+
+        log.info("Reading GDX Data")
+
+        self.gdxcc.gdxOpenRead(self.gdx_handle, self.gdx_file)
 
         for i in range(self.symbol_count):
             gdx_variable = GDXvariable()
@@ -234,13 +341,13 @@ class GAMSImporter(JSONPlugin):
             self.gdx_variables.update({gdx_variable.name: gdx_variable})
 
 
-    def load_gams_file(self, gms_file):
+    def load_gams_file(self):
         """Read in the .gms file.
         """
-        if gms_file is None:
+        if self.gms_file is None:
             raise HydraPluginError(".gms file not specified.")
 
-        gms_file = os.path.abspath(gms_file)
+        gms_file = os.path.abspath(self.gms_file)
 
         gms_data = import_gms_data(gms_file)
 
@@ -317,6 +424,9 @@ class GAMSImporter(JSONPlugin):
         """For all variables stored in the gdx file, check if these are time
         time series or not.
         """
+
+        log.info("Parsing variables %s", variable)
+
         for i, line in enumerate(self.gms_data):
             if line.strip().lower() == variable:
                 break
@@ -343,8 +453,6 @@ class GAMSImporter(JSONPlugin):
                                 re.search(r'\[(.*?)\]', line).group(1)})
             else:
                 error_message="Units are missing, units need to be added in square brackets where the variables are specified in the .gms file, ex: v1(i, t) my variable [m^3]"
-                #raise HydraPluginError(error_message)
-                #: "+ args.gms_file)
             if 't' in params:
                 self.gdx_ts_vars.update({varname: params.index('t')})
             elif('yr' in params and 'mn' in params and 'dy' in params):
@@ -355,7 +463,9 @@ class GAMSImporter(JSONPlugin):
     def assign_attr_data(self):
         """Assign data to all variable attributes in the network.
             """
-        if self.is_MGS == False:
+        log.info("Assigning attribute data")
+
+        if self.is_MGA == False:
             self.attr_data_for_single_sol()
         else:
             self.attr_data_for_MGA()
@@ -365,6 +475,7 @@ class GAMSImporter(JSONPlugin):
             if key_.lower()==key.lower():
                 return key
         return None
+
     def check_for_empty_values(selfself, values_):
         '''
         {"0": {}, "1": {}, "2": {}, "3": {}, "4": {}, "5": {}, "6": {}, "7": {}, "8": {}, "9": {}, "10": {}, "11": {}, "12": {}, "13": {}, "14": {}, "15": {}, "16": {}, "17": {}, "18": {}, "19": {}}
@@ -387,10 +498,10 @@ class GAMSImporter(JSONPlugin):
                 MGA_values = {}
                 metadata = {}
                 dataset = {}
-                for j in range(0, len(self.MGA_index)):
-                     _key =self.get_key(self.attrs[attr.attr_id] ,self.gdx_variables)
+                _key =self.get_key(self.attrs[attr.attr_id] ,self.gdx_variables)
+                if _key!=None:
+                    for j in range(len(self.MGA_index)):
 
-                     if _key!=None:
                         gdxvar = self.gdx_variables[_key]
                         dataset ['name']= gdxvar.name
                         dataset ['name']= gdxvar.name
@@ -416,27 +527,24 @@ class GAMSImporter(JSONPlugin):
                             try:
                                 data_ = float(data)
                                 dataset['type'] = 'scalar'
-                                #dataset['value'] = json.dumps(data)
-                                #MGA_values[j]=json.dumps(data)
                                 MGA_values[j] = data
                             except ValueError:
                                 dataset['type'] = 'descriptor'
                                 #dataset['value'] = data
                                 MGA_values[j]=data
                         elif gdxvar.dim > 0 :
-                            continue
-                            dataset['type'] = 'array'
-                            metadata["data_type"] = "hashtable"
-                            #dataset['value'] = self.create_array(gdxvar.index, gdxvar.data)
-                            MGA_values[j]= self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data)
+                            dataset['type'] = 'dataframe'
+                            MGA_values.update(self.create_dataframe_from_mga_results(j, self.MGA_index[j], gdxvar.index, gdxvar.data))
+
+                            
                         # Add data
                 if len(MGA_values)>0 and self.check_for_empty_values(MGA_values)==True:
                     dataset['value']=json.dumps(MGA_values)
-                    dataset['type'] = 'descriptor'
+                    dataset['type'] = 'dataframe'
                     metadata["sol_type"] = "MGA"
                     if gdxvar.var_domain!=None:
                         metadata['domain']=gdxvar.domain
-                    dataset['metadata'] = json.dumps(metadata)
+                    dataset['metadata'] = metadata
                     dataset['dimension'] = attr.resourcescenario.value.dimension
                     res_scen = dict(resource_attr_id=attr.id,
                                     attr_id=attr.attr_id,
@@ -448,12 +556,14 @@ class GAMSImporter(JSONPlugin):
             nodes.update({node.id: node.name})
             for attr in node.attributes:
                 if attr.attr_is_var == 'Y':
+                    if attr.name.lower() == 'al':
+                        import pudb; pudb.set_trace()
                     MGA_values = {}
                     metadata = {}
                     dataset = {}
-                    for j in range(0, len(self.MGA_index)):
-                        _key = self.get_key(self.attrs[attr.attr_id], self.gdx_variables)
-                        if _key!=None:
+                    _key = self.get_key(self.attrs[attr.attr_id], self.gdx_variables)
+                    if _key is not None:
+                        for j in range(len(self.MGA_index)):
                             gdxvar = self.gdx_variables[_key]
                             dataset['name']= gdxvar.name
 
@@ -481,7 +591,6 @@ class GAMSImporter(JSONPlugin):
                                         try:
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
-                                            #MGA_values[j] = json.dumps(data)
                                             MGA_values[j] = data
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
@@ -491,18 +600,18 @@ class GAMSImporter(JSONPlugin):
                             elif gdxvar.dim > 2:
                                 index = []
                                 data = []
-                                MGA_values[j] = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index, gdxvar.data, node.name)
-                                dataset['type'] = 'array'
+                                MGA_values.update(self.create_dataframe_from_mga_results(j, self.MGA_index[j], gdxvar.index, gdxvar.data, node.name))
+                                dataset['type'] = 'dataframe'
 
                     if len(MGA_values) > 0 and self.check_for_empty_values(MGA_values)==True:
                         metadata["sol_type"] = "MGA"
-                        metadata["data_type"] = "hashtable"
                         if gdxvar.var_domain != None:
                             metadata['domain'] = gdxvar.domain
                         dataset['value']=json.dumps(MGA_values)
-                        dataset['type'] = 'descriptor'
-                        dataset['metadata'] = json.dumps(metadata)
-                        dataset['dimension'] = attr.resourcescenario.value.dimension
+                        
+                        dataset['type'] = 'dataframe'
+                        dataset['metadata'] = metadata
+                        dataset['dimension'] = attr.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
                                         dataset=dataset)
@@ -511,13 +620,16 @@ class GAMSImporter(JSONPlugin):
         for link in self.network.links:
             for attr in link.attributes:
                 if attr.attr_is_var == 'Y':
+
                     MGA_values = {}
                     metadata = {}
                     dataset = {}
-                    for j in range(0, len(self.MGA_index)):
+
+                    _key =self.get_key(self.attrs[attr.attr_id] ,self.gdx_variables)
+                    if _key!=None:
                         fromnode = nodes[link.node_1_id]
                         tonode = nodes[link.node_2_id]
-                        if self.attrs[attr.attr_id] in self.gdx_variables.keys():
+                        for j in range(len(self.MGA_index)):
                             #dataset['value']=MGA_values
                             gdxvar = self.gdx_variables[self.attrs[attr.attr_id]]
                             dataset['name']=gdxvar.name
@@ -547,7 +659,6 @@ class GAMSImporter(JSONPlugin):
                                         try:
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
-                                            #MGA_values[j] = json.dumps(data)
                                             MGA_values[j] = data
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
@@ -569,27 +680,24 @@ class GAMSImporter(JSONPlugin):
                                             is_in = True
                                             break
                                 if is_in is False:
+
+                                    df = self.create_dataframe_from_mga_results(j, self.MGA_index[j], gdxvar.index, gdxvar.data, link.name)
                                     # continue
-                                    MGA_values[j] = self.create_arrayfrom_Mga_results(self.MGA_index[j], gdxvar.index,
-                                                                         gdxvar.data, link.name)
+                                    MGA_values.update(df)
 
-                                    # Should be removed later
-                                    dataset['type'] = 'array'
-                                        #sys.exit()
+                                    if attr.name.lower() == 'al' and df:
+                                        self.create_dataframe_from_mga_results(j, self.MGA_index[j], gdxvar.index, gdxvar.data, link.name)
 
-                                        # dataset['value'] = self.create_array(gdxvar.index,
-                                    #
-                                    #
-                    #
+                                    dataset['type'] = 'dataframe'
+
                     if len(MGA_values) > 0 and self.check_for_empty_values(MGA_values)==True:
                         dataset['value']=json.dumps(MGA_values)
-                        dataset['type'] = 'descriptor'
+                        dataset['type'] = 'dataframe'
                         metadata["sol_type"] = "MGA"
-                        metadata["data_type"] = "hashtable"
                         if gdxvar.var_domain != None:
                             metadata['domain'] = gdxvar.domain
-                        dataset['metadata'] = json.dumps(metadata)
-                        dataset['dimension'] = attr.resourcescenario.value.dimension
+                        dataset['metadata'] = metadata
+                        dataset['dimension'] = attr.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
                                         dataset=dataset)
@@ -623,21 +731,24 @@ class GAMSImporter(JSONPlugin):
                         try:
                             data_ = float(data)
                             dataset['type'] = 'scalar'
-                            dataset['value'] = data
                         except ValueError:
-                            dataset['type'] = 'descriptor'
-                            dataset['value'] = data
+                            dataset['type'] = 'dataframe'
+
+                        if data == {}:
+                            continue
+
+                        dataset['value'] = data
                     elif gdxvar.dim > 0:
                         continue
                         dataset['type'] = 'array'
                         dataset['value'] = self.create_array(gdxvar.index,
                                                              gdxvar.data)
                     # Add data
-                    if dataset.has_key('value'):
-                        dataset['value']=json.dumps(dataset['value'])
+                    if dataset.get('value') is not None:
+                        dataset['value']=dataset['value']
                         if gdxvar.var_domain != None:
                             metadata['domain'] = gdxvar.domain
-                        dataset['metadata'] = json.dumps(metadata)
+                        dataset['metadata'] = metadata
                         dataset['dimension'] = attr.resourcescenario.value.dimension
                         res_scen = dict(resource_attr_id=attr.id,
                                         attr_id=attr.attr_id,
@@ -696,15 +807,17 @@ class GAMSImporter(JSONPlugin):
                                     data.append(dat[i])
 
                             dataset['value'] = self.create_array(gdxvar.index, gdxvar.data, node.name)
-                            dataset['type'] = 'descriptor'
-                            metadata["data_type"] = "hashtable"
+                            dataset['type'] = 'dataframe'
 
-                        if dataset.has_key('value'):
-                            dataset['value'] = json.dumps(dataset['value'])
+                            if dataset['value'] == {}:
+                                continue
+
+                        if dataset.get('value') is not None:
+                            dataset['value'] = dataset['value']
                             if gdxvar.var_domain != None:
                                 metadata['domain'] = gdxvar.domain
-                            dataset['metadata'] = json.dumps(metadata)
-                            dataset['dimension'] = attr.resourcescenario.value.dimension
+                            dataset['metadata'] = metadata
+                            dataset['dimension'] = attr.dimension
 
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
@@ -750,7 +863,7 @@ class GAMSImporter(JSONPlugin):
                                         dataset['value'] = data
                                     except ValueError:
                                         dataset['type'] = 'descriptor'
-                                        dataset['value'] = json.dumps(data)
+                                        dataset['value'] = data
                                     break
                         elif gdxvar.dim > 2:
                             is_in = False
@@ -761,10 +874,10 @@ class GAMSImporter(JSONPlugin):
                                         try:
                                             data_ = float(data)
                                             dataset['type'] = 'scalar'
-                                            dataset['value'] = json.dumps(data)
+                                            dataset['value'] = data
                                         except ValueError:
                                             dataset['type'] = 'descriptor'
-                                            dataset['value'] = json.dumps(data)
+                                            dataset['value'] = data
                                         is_in = True
                                         break
                             if is_in is False:
@@ -785,16 +898,17 @@ class GAMSImporter(JSONPlugin):
                                                                      gdxvar.data, link.name)
 
                                 # Should be removed later
-                                dataset['type'] = 'descriptor'
-                                metadata["data_type"] = "hashtable"
-                                # dataset['value'] = self.create_array(gdxvar.index,
-                                #                                    gdxvar.data)
-                        if dataset.has_key('value'):
-                            dataset['value'] = json.dumps(dataset['value'])
+                                dataset['type'] = 'dataframe'
+
+                                if dataset['value'] == {}:
+                                    continue
+
+                        if dataset.get('value') is not None:
+                            dataset['value'] = dataset['value']
                             if gdxvar.var_domain != None:
                                 metadata['domain'] = gdxvar.domain
-                            dataset['metadata'] = json.dumps(metadata)
-                            dataset['dimension'] = attr.resourcescenario.value.dimension
+                            dataset['metadata'] = metadata
+                            dataset['dimension'] = attr.dimension
                             res_scen = dict(resource_attr_id=attr.id,
                                             attr_id=attr.attr_id,
                                             dataset=dataset)
@@ -804,7 +918,7 @@ class GAMSImporter(JSONPlugin):
 
     ########################################################################################
                             ################
-    def create_arrayfrom_Mga_results(slf, soln_, index, data, res):
+    def create_dataframe_from_mga_results(self, idx, soln_, index, data, res):
         elements = {}
         for i in range(0, len(index)):
             if(index[i][0]==soln_):
@@ -812,52 +926,51 @@ class GAMSImporter(JSONPlugin):
                     name = index[i][1] + "_" + index[i][2] + "_" + index[i][3]
                     if name == res:
                         key = index[i][4]
-                        elements[key] = data[i]
+                        elements[idx] = {key : data[i]}
                         continue
                 if '_' in res and len(index[i]) == 6:
                     name = index[i][1] + "_" + index[i][2] + "_" + index[i][3]
                     if name.lower() == res.lower():
                         if 'j_'+index[i][4].strip().lower() == index[i][2].strip().lower():
                             key = index[i][5]
-                            elements[key] = data[i]
+                            elements[idx] = {key : data[i]}
                             continue
                         else:
                             key = index[i][5]
-                            if key in elements:
-                                elements[key][index[i][4]] = data[i]
+                            col = "%s.%s"%(index[i][4], idx)
+                            if col in elements:
+                                elements[col][key] = data[i]
                             else:
-                                val = {index[i][4]: data[i]}
-                                elements[key] = val
+                                val = {key: data[i]}
+                                elements[col] = val
                             continue
                     elif str(res).lower() == str(index[i][2] + "_" + index[i][3] + "_" + index[i][4]).lower():
                         if 'j_'+index[i][3].strip().lower() == index[i][1].strip().lower():
                             key = index[i][5]
-                            elements[key] = data[i]
+                            elements[idx] = {key : data[i]}
                             continue
                         else:
                             key = index[i][5]
-                            if key in elements:
-                                elements[key][index[i][4]] = data[i]
+                            col = "!%s.%s"%(index[i][4], idx)
+                            if col in elements:
+                                elements[col][key] = data[i]
                             else:
-                                val = {index[i][4]: data[i]}
-                                elements[key] = val
+                                val = {key: data[i]}
+                                elements[col] = val
                             continue
                 if len(index[i]) == 4 and index[i][3].strip().lower() == res.strip().lower():
+                    col = "%s.%s" % (index[i][2], idx)
                     key = index[i][1]
-                    if key in elements:
-                        elements[key][index[i][2]] = data[i]
+                    if col in elements:
+                        elements[col][key] = data[i]
                     else:
-                        val = {index[i][2]: data[i]}
-                        elements[key] = val
+                        val = {key: data[i]}
+                        elements[col] = val
 
                 elif len(index[i]) == 3 and index[i][1].strip().lower() == res.strip().lower():
-                    val = {index[i][1]: data[i]}
-                    # elements[index[i][0]] = json.dumps(val)
-                    elements[index[i][1]] = (val)
+                    elements[idx] = {index[i][1]: data[i]}
 
-                    # elements[index[i][0]] = data[i]
-        return (elements)
-        # return json.dumps(elements)
+        return elements
     #######################################################################################
     def create_array(self, index, data, res):
 
@@ -893,89 +1006,12 @@ class GAMSImporter(JSONPlugin):
             elif len(index[i]) == 2 and index[i][1].strip().lower() == res.strip().lower():
                 val = {index[i][0]: data[i]}
 
-                # elements[index[i][0]] = json.dumps(val)
                 elements[index[i][0]] = (val)
 
                 # elements[index[i][0]] = data[i]
         return (elements)
-        # return json.dumps(elements)
-
-    def create_array_(self, index, data):
-        elements={}
-        i=0;
-        for key in index:
-            if type (key) is list and len(key) is 1:
-                try:
-                    elements[int (key[0])]=data[i]
-                except Exception:
-                    elements[key[0]]=data[i]
-            i+=1
-        values=[]
-        sss=sorted(elements.keys())
-        for s in sss:
-            values.append(elements[s])
-        return values
-        #return json.dumps(values)
-
-    def create_timeseries(self, index, data):
-        timeseries = {'0': {}}
-        for i, idx in enumerate(index):
-             if idx.find(".") is -1:
-                 timeseries['0'][self.time_axis[int(idx)]] = data [i]#json.dumps(data[i])
-             else:
-                 timeseries['0'][self.time_axis[idx]] = data[i]#json.dumps(data[i])
-
-        return (timeseries)
-        #return json.dumps(timeseries)
-        #return (timeseries)
-
-    def create_array_(self, index, data):
-        dimension = len(index[0])
-        extent = []
-        for n in range(dimension):
-            n_idx = []
-            for idx in index:
-                try:
-                    n_idx.append(int(idx[n]))
-                except:
-                    break
-            extent.append(max(n_idx))
-
-        array = 0
-        for e in extent:
-            new_array = [array for i in range(e)]
-            array = new_array
-
-        array = data
-        while len(extent) > 1:
-            i = 0
-            outer_array = []
-            for m in range(reduce(mul, extent[0:-1])):
-                inner_array = []
-                for n in range(extent[-1]):
-                    inner_array.append(array[i])
-                    i += 1
-                outer_array.append(inner_array)
-            array = outer_array
-            extent = extent[0:-1]
-        hydra_array = dict(arr_data = PluginLib.create_dict(array))
-
-        return hydra_array
 
     def save(self):
+        log.info("Saving")
         self.network.scenarios[0].resourcescenarios = self.res_scenario
-        self.connection.call('update_scenario', {'scen':self.network.scenarios[0]})
-
-def set_gams_path_old():
-    gams_path=get_gams_path()
-    if gams_path is not None:
-        gams_path = os.path.abspath(gams_path)
-        os.environ['LD_LIBRARY_PATH'] = gams_path
-        gams_python_api_path = os.path.join(gams_path, 'apifiles', 'Python', 'api')
-        if os.environ.get('PYTHONPATH') is not None:
-            if os.environ['PYTHONPATH'].find(gams_python_api_path) < 0:
-                os.environ['PYTHONPATH'] = "%s;%s"%(os.environ['PYTHONPATH'], gams_python_api_path)
-                sys.path.append(gams_python_api_path)
-        else:
-            os.environ['PYTHONPATH'] = gams_python_api_path
-            sys.path.append(gams_python_api_path)
+        self.connection.update_scenario(scenario=JSONObject(self.network.scenarios[0]))

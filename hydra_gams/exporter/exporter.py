@@ -11,9 +11,70 @@ from hydra_client.connection import JSONConnection
 from hydra_base.exceptions import HydraPluginError
 from hydra_base.util.hydra_dateutil import reindex_timeseries
 
+from hydra_client.output import write_progress, write_output, create_xml_response
+
 from hydra_gams.lib import GAMSnetwork, convert_date_to_timeindex
 
 log = logging.getLogger(__name__)
+
+def export_network(network_id,
+                   scenario_id,
+                   template_id,
+                   output,
+                   node_node,
+                   link_name,
+                   start_date,
+                   end_date,
+                   time_step,
+                   time_axis,
+                   export_by_type=False,
+                   gams_date_time_index=False,
+                   db_url=None):
+
+    """
+        Export a network to a GAMS text input file.
+    """
+    message     = None
+    errors      = []
+
+    try:
+        e = GAMSExporter(network_id,
+                   scenario_id,
+                   template_id,
+                   output,
+                   node_node,
+                   link_name,
+                   start_date,
+                   end_date,
+                   time_step,
+                   time_axis,
+                   export_by_type=export_by_type,
+                   gams_date_time_index=gams_date_time_index,
+                   db_url=db_url)
+        e.export()
+
+    except HydraPluginError as e:
+        write_progress(steps, steps)
+        log.exception(e)
+        errors = [e]
+    except Exception as e:
+        write_progress(steps, steps)
+        log.exception(e)
+        errors = []
+        if e == '':
+            if hasattr(e, 'strerror'):
+                errors = [e.strerror]
+        else:
+            errors = [e]
+    
+    text = create_xml_response('GAMSExport',
+                               network_id,
+                              [scenario_id],
+                               errors = errors,
+                               message=message)
+
+    return exporter
+
 
 class GAMSExporter:
     def __init__(self, network_id,
@@ -33,6 +94,8 @@ class GAMSExporter:
             self.template_id = int(template_id)
 
         self.use_gams_date_index=False
+        self.gams_date_time_index = gams_date_time_index
+        self.export_by_type = export_by_type
         self.network_id = int(network_id)
         self.scenario_id = int(scenario_id)
         self.template_id = int(template_id) if template_id is not None else None
@@ -41,6 +104,8 @@ class GAMSExporter:
         self.time_index = []
         self.time_axis =None
         self.sets=[]
+        self.steps = 7 
+        self.current_step=0
         
         #things which get written to the file without any logic (pre-formateed gams input text, or comments, for example
         self.direct_outputs = []
@@ -87,6 +152,50 @@ class GAMSExporter:
             self.attr_id_map[a.id] = a
         log.info("%s attributes retrieved", len(self.attrs))
 
+    def write_progress(self, step=None):
+        """
+            Utility function which automatically increments the current 'step'
+            so as to avoid having to state it explicitly
+            If 'step' is specified, it'll write that step.
+        """
+
+        if step is None:
+            write_progress(self.current_step, self.steps)
+            self.current_step = self.current_step+1
+        else:
+            write_progress(step, self.steps)
+
+    def export(self):
+        """
+            Export a network to a GAMS text input file.
+        """
+        write_output("Exporting Network")
+        log.info("Exporting Network")
+        self.write_progress()
+        self.get_network(True)
+
+        self.write_progress()
+        if(self.gams_date_time_index is True):
+            self.use_gams_date_index=True
+
+        self.write_time_index()
+        if self.export_by_type is True:
+            self.export_data_using_types()
+        else:
+            self.export_data_using_attributes()
+
+        self.write_progress()
+        self.write_descriptors()
+
+        self.write_progress()
+        self.export_network()
+
+        self.write_progress()
+        self.write_file()
+
+        write_output("Network exported successfully")
+        log.info("Network exported successfully")
+
     def get_network(self, is_licensed):
         net = self.connection.get_network(network_id=self.network_id,
                                           include_data='Y',
@@ -95,8 +204,6 @@ class GAMSExporter:
 
         self.hydranetwork=net
         log.info("Network retrieved")
-
-        #print "===>>>>", net.types
 
         self.template_id = net.types[0].template_id
         self.template = self.connection.get_template(net.types[0].template_id) 
