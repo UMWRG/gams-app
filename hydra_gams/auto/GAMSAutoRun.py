@@ -184,14 +184,9 @@ def run_gams_model(gms_file, gdx_file, gams_path, debug=False):
             if delta >= 0 and delta_2 >= 0:
                 gdx_list=[os.path.join(working_directory, sol_pool) ,os.path.join(working_directory, res)]
                 gdx_file =gdx_list
-                return
-                for file_ in files_list:
-                    if 'soln' in file_ and file_ != sol_pool:
-                        dt = parser.parse(files_list[sol_pool])
-                        delta = (dt - cur_time).total_seconds()
-                        if delta >= 0:
-                            gdx_list.append(os.path.join(working_directory, file_))
-                gdx_file = gdx_list
+                return gdx_file
+            else:
+                raise HydraPluginError("Tried looking for %s and %s created since the model was run, but was unable to find them."%(sol_pool, res))
         else:
             for file_ in files_list:
                 dt = parser.parse(files_list[file_])
